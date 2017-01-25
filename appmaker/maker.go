@@ -2,6 +2,7 @@ package appmaker
 
 import (
 	_ "fmt"
+	"sort"
 	"strings"
 
 	unversioned "k8s.io/client-go/pkg/api/unversioned" // Should eventually migrate to "k8s.io/apimachinery/pkg/apis/meta/v1"?
@@ -96,26 +97,41 @@ func (i *AppComponent) GetMeta() kapi.ObjectMeta {
 	}
 }
 
-func (i *AppComponent) MakeContainer(params AppParams) kapi.Container {
-	name, _ := i.GetNameAndLabels()
-	container := kapi.Container{Name: name, Image: i.Image}
+func (i *AppComponent) maybeAddEnvVars(params AppParams, container *kapi.Container) {
+	keys := []string{}
+	for k, _ := range i.Env {
+		keys = append(keys, k)
+	}
+
+	if len(keys) == 0 {
+		return
+	}
+
+	sort.Strings(keys)
 
 	env := []kapi.EnvVar{}
-	for k, v := range i.Env {
-		env = append(env, kapi.EnvVar{Name: k, Value: v})
+	for _, j := range keys {
+		for k, v := range i.Env {
+			if k == j {
+				env = append(env, kapi.EnvVar{Name: k, Value: v})
+			}
+		}
 	}
-	if len(env) > 0 {
-		container.Env = env
-	}
+	container.Env = env
+}
 
-	port := kapi.ContainerPort{
-		Name:          name,
-		ContainerPort: params.DefaultPort,
+func (i *AppComponent) MakeContainer(params AppParams, name string) kapi.Container {
+	container := kapi.Container{Name: name, Image: i.Image}
+
+	i.maybeAddEnvVars(params, &container)
+
+	if !i.Opts.WithoutPorts {
+		container.Ports = []kapi.ContainerPort{{
+			Name:          name,
+			ContainerPort: i.getPort(params),
+		}}
+		i.maybeAddProbes(params, &container)
 	}
-	if i.Port != 0 {
-		port.ContainerPort = i.Port
-	}
-	container.Ports = []kapi.ContainerPort{port}
 
 	return container
 }
@@ -157,20 +173,7 @@ func (i *AppComponent) maybeAddProbes(params AppParams, container *kapi.Containe
 
 func (i *AppComponent) MakePod(params AppParams) *kapi.PodTemplateSpec {
 	name, labels := i.GetNameAndLabels()
-	container := kapi.Container{Name: name, Image: i.Image}
-
-	env := []kapi.EnvVar{}
-	for k, v := range i.Env {
-		env = append(env, kapi.EnvVar{Name: k, Value: v})
-	}
-	if len(env) > 0 {
-		container.Env = env
-	}
-
-	port := kapi.ContainerPort{ContainerPort: i.getPort(params)}
-	container.Ports = []kapi.ContainerPort{port}
-
-	i.maybeAddProbes(params, &container)
+	container := i.MakeContainer(params, name)
 
 	pod := kapi.PodTemplateSpec{
 		ObjectMeta: kapi.ObjectMeta{
