@@ -1,6 +1,7 @@
 package appmaker
 
 import (
+	"encoding/json"
 	_ "fmt"
 	"sort"
 	"strings"
@@ -15,34 +16,35 @@ import (
 // within inside the object, often affecting sub-fields within sub-fields,
 // for more trivial things (like hostNetwork) we have setters and getters
 type AppComponentOpts struct {
-	PrometheusPath   string
-	PrometheusScrape bool
+	PrometheusPath   string `json:",omitempty"`
+	PrometheusScrape bool   `json:",omitempty"`
+
 	// WithoutPorts implies ExcludeService and StandardProbes
-	WithoutPorts                   bool
-	WithoutStandardProbes          bool
-	WithoutStandardSecurityContext bool
-	HealthPath                     string
-	LivenessPath                   string
+	WithoutPorts                   bool   `json:",omitempty"`
+	WithoutStandardProbes          bool   `json:",omitempty"`
+	WithoutStandardSecurityContext bool   `json:",omitempty"`
+	HealthPath                     string `json:",omitempty"`
+	LivenessPath                   string `json:",omitempty"`
 	// XXX we can add these here, but may be they belong elsewhere?
 	//WithProbes interface{}
 	//WithSecurityContext interface{}
 	// WithoutService disables building of the service
-	WithoutService bool
+	WithoutService bool `json:",omitempty"`
 }
 
 type AppComponent struct {
 	Image    string
-	Name     string
-	Port     int32
-	Replicas *int32
-	Opts     AppComponentOpts
-	Env      map[string]string
+	Name     string            `json:",omitempty"`
+	Port     int32             `json:",omitempty"`
+	Replicas *int32            `json:",omitempty"`
+	Opts     AppComponentOpts  `json:",omitempty"`
+	Env      map[string]string `json:",omitempty"`
 	// It's probably okay for now, but we'd eventually want to
 	// inherit properties defined outside of the AppComponent struct,
 	// that it anything we'd use setters and getters for, so we might
 	// want to figure out intermediate struct or just write more
 	// some tests to see how things would work without that...
-	BasedOn *AppComponent
+	BasedOn *AppComponent `json:",omitempty"`
 }
 
 // Global defaults
@@ -300,4 +302,12 @@ func (i *App) MakeAll() []AppComponentResourcePair {
 	}
 
 	return list
+}
+
+func NewFromJSON(manifest []byte) (*App, error) {
+	app := &App{}
+	if err := json.Unmarshal(manifest, app); err != nil {
+		return nil, err
+	}
+	return app, nil
 }
