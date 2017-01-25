@@ -39,7 +39,7 @@ func makeSockShop() *appmaker.App {
 	altPromPath := appmaker.AppComponentOpts{PrometheusPath: "/prometheus"}
 
 	zipkinEnv := map[string]string{
-		"IPKIN": "http://zipkin:9411/api/v1/spans",
+		"ZIPKIN": "http://zipkin:9411/api/v1/spans",
 	}
 
 	mongo := appmaker.AppComponent{
