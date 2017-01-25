@@ -4,4 +4,4 @@ install:
 - go get github.com/Masterminds/glide
 - glide up
 
-script: go test -v ./appmaker
+script: make test
