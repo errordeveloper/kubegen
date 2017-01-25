@@ -1,0 +1,10 @@
+package: github.com/errordeveloper/kubegen
+import:
+- package: k8s.io/client-go
+  version: ^2.0.0-alpha.1
+  subpackages:
+  - kubernetes
+  - pkg/api/unversioned
+  - pkg/api/v1
+  - pkg/apis/extensions/v1beta1
+  - pkg/util/intstr
