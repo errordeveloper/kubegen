@@ -214,6 +214,14 @@ func (i *AppComponentResourcePair) WithConfig(configMapData interface{}) AppComp
 	return *i
 }
 
+func (i *AppComponentResourcePair) WithExtraLabels(map[string]string) AppComponentResourcePair {
+	return *i
+}
+
+func (i *AppComponentResourcePair) WithExtraAnnotations(map[string]string) AppComponentResourcePair {
+	return *i
+}
+
 func (i *AppComponentResourcePair) UseHostNetwork() AppComponentResourcePair {
 	return *i
 }
