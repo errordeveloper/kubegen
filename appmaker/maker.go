@@ -17,7 +17,7 @@ import (
 // for more trivial things (like hostNetwork) we have custom setters
 type AppComponentOpts struct {
 	// Deployment, DaemonSet, StatefullSet ...etc
-	Kind             int
+	Kind             int    `json:",omitempty"`
 	PrometheusPath   string `json:",omitempty"`
 	PrometheusScrape bool   `json:",omitempty"`
 
@@ -46,8 +46,8 @@ type AppComponent struct {
 	// that it anything we'd use setters and getters for, so we might
 	// want to figure out intermediate struct or just write more
 	// some tests to see how things would work without that...
-	BasedOn   *AppComponent `json:",omitempty"`
-	Customize func(*AppComponentResourcePair)
+	BasedOn   *AppComponent                   `json:",omitempty"`
+	Customize func(*AppComponentResourcePair) `json:"-"`
 }
 
 // Global defaults
