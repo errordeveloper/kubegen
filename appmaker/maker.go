@@ -2,7 +2,7 @@ package appmaker
 
 import (
 	"encoding/json"
-	_ "fmt"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -435,6 +435,46 @@ func (i *App) MarshalToJSON() ([]map[int][]byte, error) {
 		data = append(data, componentData)
 	}
 	return data, nil
+}
+
+func (i *App) MarshalToCombinedJSON() ([]byte, error) {
+	data, err := i.MarshalToJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	fragments := []string{}
+	for _, component := range data {
+		for _, resource := range component {
+			fragments = append(fragments, string(resource))
+		}
+	}
+
+	listFormat := `{"apiVersion":"v1","kind":"List","items":[%s]}`
+	return []byte(fmt.Sprintf(listFormat, strings.Join(fragments, ","))), nil
+}
+
+func (i *App) ToList() (*kapi.List, error) {
+	data, err := i.MarshalToCombinedJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	list := &kapi.List{}
+	if err := json.Unmarshal(data, list); err != nil {
+		return nil, err
+	}
+
+	return list, nil
+}
+
+func (i *App) MarshalIndentToCombinedJSON() ([]byte, error) {
+	list, err := i.ToList()
+	if err != nil {
+		return nil, err
+	}
+
+	return json.MarshalIndent(list, "", "  ")
 }
 
 func NewFromJSON(manifest []byte) (*App, error) {
