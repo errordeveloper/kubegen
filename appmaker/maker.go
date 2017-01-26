@@ -14,8 +14,10 @@ import (
 
 // AppComponentOpts hold highlevel fields which map to a non-trivial settings
 // within inside the object, often affecting sub-fields within sub-fields,
-// for more trivial things (like hostNetwork) we have setters and getters
+// for more trivial things (like hostNetwork) we have custom setters
 type AppComponentOpts struct {
+	// Deployment, DaemonSet, StatefullSet ...etc
+	Kind             int
 	PrometheusPath   string `json:",omitempty"`
 	PrometheusScrape bool   `json:",omitempty"`
 
@@ -44,7 +46,8 @@ type AppComponent struct {
 	// that it anything we'd use setters and getters for, so we might
 	// want to figure out intermediate struct or just write more
 	// some tests to see how things would work without that...
-	BasedOn *AppComponent `json:",omitempty"`
+	BasedOn   *AppComponent `json:",omitempty"`
+	Customize func(*AppComponentResourcePair)
 }
 
 // Global defaults
@@ -76,7 +79,7 @@ type AppComponentResourcePair struct {
 	Service    *kapi.Service
 }
 
-func (i *AppComponent) GetNameAndLabels() (string, map[string]string) {
+func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
 	var name string
 
 	imageParts := strings.Split(strings.Split(i.Image, ":")[0], "/")
@@ -91,12 +94,19 @@ func (i *AppComponent) GetNameAndLabels() (string, map[string]string) {
 	return name, labels
 }
 
-func (i *AppComponent) GetMeta() kapi.ObjectMeta {
-	name, labels := i.GetNameAndLabels()
+func (i *AppComponent) getMeta() kapi.ObjectMeta {
+	name, labels := i.getNameAndLabels()
 	return kapi.ObjectMeta{
 		Name:   name,
 		Labels: labels,
 	}
+}
+
+func (i *AppComponent) getPort(params AppParams) int32 {
+	if i.Port != 0 {
+		return i.Port
+	}
+	return params.DefaultPort
 }
 
 func (i *AppComponent) maybeAddEnvVars(params AppParams, container *kapi.Container) {
@@ -120,29 +130,6 @@ func (i *AppComponent) maybeAddEnvVars(params AppParams, container *kapi.Contain
 		}
 	}
 	container.Env = env
-}
-
-func (i *AppComponent) MakeContainer(params AppParams, name string) kapi.Container {
-	container := kapi.Container{Name: name, Image: i.Image}
-
-	i.maybeAddEnvVars(params, &container)
-
-	if !i.Opts.WithoutPorts {
-		container.Ports = []kapi.ContainerPort{{
-			Name:          name,
-			ContainerPort: i.getPort(params),
-		}}
-		i.maybeAddProbes(params, &container)
-	}
-
-	return container
-}
-
-func (i *AppComponent) getPort(params AppParams) int32 {
-	if i.Port != 0 {
-		return i.Port
-	}
-	return params.DefaultPort
 }
 
 func (i *AppComponent) maybeAddProbes(params AppParams, container *kapi.Container) {
@@ -173,8 +160,24 @@ func (i *AppComponent) maybeAddProbes(params AppParams, container *kapi.Containe
 	}
 }
 
+func (i *AppComponent) MakeContainer(params AppParams, name string) kapi.Container {
+	container := kapi.Container{Name: name, Image: i.Image}
+
+	i.maybeAddEnvVars(params, &container)
+
+	if !i.Opts.WithoutPorts {
+		container.Ports = []kapi.ContainerPort{{
+			Name:          name,
+			ContainerPort: i.getPort(params),
+		}}
+		i.maybeAddProbes(params, &container)
+	}
+
+	return container
+}
+
 func (i *AppComponent) MakePod(params AppParams) *kapi.PodTemplateSpec {
-	name, labels := i.GetNameAndLabels()
+	name, labels := i.getNameAndLabels()
 	container := i.MakeContainer(params, name)
 
 	pod := kapi.PodTemplateSpec{
@@ -211,19 +214,11 @@ func (i *AppComponentResourcePair) WithConfig(configMapData interface{}) AppComp
 	return *i
 }
 
-func (i *AppComponentResourcePair) SetHostNetwork(bool) AppComponentResourcePair {
+func (i *AppComponentResourcePair) UseHostNetwork() AppComponentResourcePair {
 	return *i
 }
 
-func (i *AppComponentResourcePair) GetHostNetwork() AppComponentResourcePair {
-	return *i
-}
-
-func (i *AppComponentResourcePair) SetHostPID(bool) AppComponentResourcePair {
-	return *i
-}
-
-func (i *AppComponentResourcePair) GetHostPID() AppComponentResourcePair {
+func (i *AppComponentResourcePair) UseHostPID(bool) AppComponentResourcePair {
 	return *i
 }
 
@@ -232,7 +227,7 @@ func (i *AppComponent) MakeDeployment(params AppParams, pod *kapi.PodTemplateSpe
 		return nil
 	}
 
-	meta := i.GetMeta()
+	meta := i.getMeta()
 
 	replicas := params.DefaultReplicas
 
@@ -259,7 +254,7 @@ func (i *AppComponent) MakeDeployment(params AppParams, pod *kapi.PodTemplateSpe
 }
 
 func (i *AppComponent) MakeService(params AppParams) *kapi.Service {
-	meta := i.GetMeta()
+	meta := i.getMeta()
 
 	port := kapi.ServicePort{Port: i.getPort(params)}
 	if i.Port != 0 {
@@ -278,12 +273,16 @@ func (i *AppComponent) MakeService(params AppParams) *kapi.Service {
 }
 
 func (i *AppComponent) MakeAll(params AppParams) AppComponentResourcePair {
-	pod := i.MakePod(params)
-
-	return AppComponentResourcePair{
-		i.MakeDeployment(params, pod),
+	resources := AppComponentResourcePair{
+		i.MakeDeployment(params, i.MakePod(params)),
 		i.MakeService(params),
 	}
+
+	if i.Customize != nil {
+		i.Customize(&resources)
+	}
+
+	return resources
 }
 
 func (i *App) MakeAll() []AppComponentResourcePair {
