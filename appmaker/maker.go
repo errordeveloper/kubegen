@@ -18,7 +18,7 @@ import (
 type AppComponentOpts struct {
 	PrometheusPath   string `json:",omitempty"`
 	PrometheusScrape bool   `json:",omitempty"`
-	// WithoutPorts implies ExcludeService and StandardProbes
+	// WithoutPorts implies WithoutService and WithoutStandardProbes
 	WithoutPorts                   bool   `json:",omitempty"`
 	WithoutStandardProbes          bool   `json:",omitempty"`
 	WithoutStandardSecurityContext bool   `json:",omitempty"`
@@ -55,7 +55,7 @@ type AppComponent struct {
 
 type (
 	GeneralCustomizer func(
-		*AppComponentResourcePair,
+		*AppComponentResources,
 	)
 	ContainersCustomizer func(
 		[]kapi.Container,
@@ -87,6 +87,9 @@ const (
 	DaemonSet
 	// StatefullSet
 	StatefullSet
+	Service
+	ConfigMap
+	Secret
 )
 
 // Everything we want to controll per-app
@@ -103,14 +106,14 @@ type App struct {
 	Group []AppComponent
 }
 
-type AppComponentResourcePair struct {
+type AppComponentResources struct {
 	deployment *kext.Deployment
 	service    *kapi.Service
 	manifest   AppComponent
 }
 
-func marshalMultipleToJSON(resources ...interface{}) ([][]byte, error) {
-	data := make([][]byte, len(resources))
+func marshalMultipleToJSON(resources map[int]interface{}) (map[int][]byte, error) {
+	data := map[int][]byte{}
 	var err error
 	for n, resource := range resources {
 		if data[n], err = json.Marshal(resource); err != nil {
@@ -295,8 +298,8 @@ func (i *AppComponent) MakeService(params AppParams) *kapi.Service {
 	return service
 }
 
-func (i *AppComponent) MakeAll(params AppParams) *AppComponentResourcePair {
-	resources := AppComponentResourcePair{manifest: *i}
+func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
+	resources := AppComponentResources{manifest: *i}
 
 	switch i.Kind {
 	case Deployment:
@@ -326,17 +329,17 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResourcePair {
 	return &resources
 }
 
-func (i *AppComponent) MarshalToJSON(params AppParams) ([]byte, []byte, error) {
+func (i *AppComponent) MarshalToJSON(params AppParams) (map[int][]byte, error) {
 	return i.MakeAll(params).MarshalToJSON()
 }
 
-func (i *AppComponentResourcePair) AppendContainer(container kapi.Container) AppComponentResourcePair {
+func (i *AppComponentResources) AppendContainer(container kapi.Container) AppComponentResources {
 	containers := &i.Deployment().Spec.Template.Spec.Containers
 	*containers = append(*containers, container)
 	return *i
 }
 
-func (i *AppComponentResourcePair) MountDataVolume() AppComponentResourcePair {
+func (i *AppComponentResources) MountDataVolume() AppComponentResources {
 	// TODO append to volumes and volume mounts based on few simple parameters
 	// when user uses more then one container, they will have to do it in a low-level way
 	// secrets and config maps would be handled separatelly, so we call this MountDataVolume()
@@ -344,52 +347,66 @@ func (i *AppComponentResourcePair) MountDataVolume() AppComponentResourcePair {
 	return *i
 }
 
-func (i *AppComponentResourcePair) WithSecret(secretData interface{}) AppComponentResourcePair {
+func (i *AppComponentResources) WithSecret(secretData interface{}) AppComponentResources {
 	return *i
 }
 
-func (i *AppComponentResourcePair) WithConfig(configMapData interface{}) AppComponentResourcePair {
+func (i *AppComponentResources) WithConfig(configMapData interface{}) AppComponentResources {
 	return *i
 }
 
-func (i *AppComponentResourcePair) WithExtraLabels(map[string]string) AppComponentResourcePair {
+func (i *AppComponentResources) WithExtraLabels(map[string]string) AppComponentResources {
 	return *i
 }
 
-func (i *AppComponentResourcePair) WithExtraAnnotations(map[string]string) AppComponentResourcePair {
+func (i *AppComponentResources) WithExtraAnnotations(map[string]string) AppComponentResources {
 	return *i
 }
 
-func (i *AppComponentResourcePair) WithExtraPorts(interface{}) AppComponentResourcePair {
+func (i *AppComponentResources) WithExtraPorts(interface{}) AppComponentResources {
 	// TODO May be this should be a customizer, i.e. PortsCustomizer closure
 	return *i
 }
 
-func (i *AppComponentResourcePair) UseHostNetwork() AppComponentResourcePair {
+func (i *AppComponentResources) UseHostNetwork() AppComponentResources {
 	return *i
 }
 
-func (i *AppComponentResourcePair) UseHostPID() AppComponentResourcePair {
+func (i *AppComponentResources) UseHostPID() AppComponentResources {
 	return *i
 }
 
-func (i *AppComponentResourcePair) Deployment() *kext.Deployment {
+func (i *AppComponentResources) Deployment() *kext.Deployment {
 	return i.deployment
 }
 
-func (i *AppComponentResourcePair) Service() *kapi.Service {
+func (i *AppComponentResources) Service() *kapi.Service {
 	return i.service
 }
 
-func (i *AppComponentResourcePair) MarshalToJSON() ([]byte, []byte, error) {
-	data, err := marshalMultipleToJSON(i.deployment, i.service)
-	if err != nil {
-		return nil, nil, err
+func (i *AppComponentResources) MarshalToJSON() (map[int][]byte, error) {
+	resources := make(map[int]interface{})
+
+	switch i.manifest.Kind {
+	case Deployment:
+		resources[Deployment] = i.deployment
 	}
-	return data[0], data[1], nil
+
+	if i.service != nil {
+		resources[Service] = i.service
+	}
+
+	//if i.configMap != nil { ...
+	//if i.secret != nil { ...
+
+	data, err := marshalMultipleToJSON(resources)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
-func (i *App) MakeAll() []*AppComponentResourcePair {
+func (i *App) MakeAll() []*AppComponentResources {
 	params := AppParams{
 		Namespace:       i.Name,
 		DefaultReplicas: DEFAULT_REPLICAS,
@@ -398,13 +415,26 @@ func (i *App) MakeAll() []*AppComponentResourcePair {
 		// standardTmpVolume?
 	}
 
-	list := []*AppComponentResourcePair{}
+	list := []*AppComponentResources{}
 
 	for _, service := range i.Group {
 		list = append(list, service.MakeAll(params))
 	}
 
 	return list
+}
+
+func (i *App) MarshalToJSON() ([]map[int][]byte, error) {
+	components := i.MakeAll()
+	data := make([]map[int][]byte, len(components))
+	for _, component := range components {
+		componentData, err := component.MarshalToJSON()
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, componentData)
+	}
+	return data, nil
 }
 
 func NewFromJSON(manifest []byte) (*App, error) {
