@@ -16,11 +16,8 @@ import (
 // within inside the object, often affecting sub-fields within sub-fields,
 // for more trivial things (like hostNetwork) we have custom setters
 type AppComponentOpts struct {
-	// Deployment, DaemonSet, StatefullSet ...etc
-	Kind             int    `json:",omitempty"`
 	PrometheusPath   string `json:",omitempty"`
 	PrometheusScrape bool   `json:",omitempty"`
-
 	// WithoutPorts implies ExcludeService and StandardProbes
 	WithoutPorts                   bool   `json:",omitempty"`
 	WithoutStandardProbes          bool   `json:",omitempty"`
@@ -41,6 +38,8 @@ type AppComponent struct {
 	Replicas *int32            `json:",omitempty"`
 	Opts     AppComponentOpts  `json:",omitempty"`
 	Env      map[string]string `json:",omitempty"`
+	// Deployment, DaemonSet, StatefullSet ...etc
+	Kind int `json:",omitempty"`
 	// It's probably okay for now, but we'd eventually want to
 	// inherit properties defined outside of the AppComponent struct,
 	// that it anything we'd use setters and getters for, so we might
@@ -79,6 +78,17 @@ const (
 	DEFAULT_PORT     = int32(80)
 )
 
+const (
+	// Deployment is the default kind of general workload, this is what you most likely need to use
+	Deployment = iota
+	// ReplicaSet is a lower-level kind for a general workload, it's the same as KindDeployment, expcept it doesn't support rolloouts
+	ReplicaSet
+	// DaemonSet
+	DaemonSet
+	// StatefullSet
+	StatefullSet
+)
+
 // Everything we want to controll per-app
 type AppParams struct {
 	Namespace              string
@@ -93,13 +103,9 @@ type App struct {
 	Group []AppComponent
 }
 
-// TODO figure out how to use kapi.List here, if we can
-// TODO find a way to use something other then Deployment
-// e.g. StatefullSet or DaemonSet, also attach a ConfigMap
-// or a secret or several of those things
 type AppComponentResourcePair struct {
-	Deployment *kext.Deployment
-	Service    *kapi.Service
+	deployment *kext.Deployment
+	service    *kapi.Service
 }
 
 func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
@@ -224,7 +230,7 @@ func (i *AppComponent) MakePod(params AppParams) *kapi.PodTemplateSpec {
 }
 
 func (i *AppComponentResourcePair) AppendContainer(container kapi.Container) AppComponentResourcePair {
-	containers := &i.Deployment.Spec.Template.Spec.Containers
+	containers := &i.Deployment().Spec.Template.Spec.Containers
 	*containers = append(*containers, container)
 	return *i
 }
@@ -320,20 +326,39 @@ func (i *AppComponent) MakeService(params AppParams) *kapi.Service {
 	return service
 }
 
+func (i *AppComponentResourcePair) Deployment() *kext.Deployment {
+	return i.deployment
+}
+
+func (i *AppComponentResourcePair) Service() *kapi.Service {
+	return i.service
+}
+
+func (i *AppComponentResourcePair) All() *kapi.List {
+	// TODO figure out how to use kapi.List here, if we can
+	return nil
+}
+
 func (i *AppComponent) MakeAll(params AppParams) AppComponentResourcePair {
-	resources := AppComponentResourcePair{
-		i.MakeDeployment(params, i.MakePod(params)),
-		i.MakeService(params),
+	resources := AppComponentResourcePair{}
+
+	switch i.Kind {
+	case Deployment:
+		resources.deployment = i.MakeDeployment(params, i.MakePod(params))
 	}
 
-	if i.CustomizePorts != nil {
-		containers := resources.Deployment.Spec.Template.Spec.Containers
+	if !i.Opts.WithoutService {
+		resources.service = i.MakeService(params)
+	}
+
+	if i.CustomizePorts != nil && !i.Opts.WithoutPorts {
+		containers := resources.Deployment().Spec.Template.Spec.Containers
 		containerPorts := make([][]kapi.ContainerPort, len(containers))
 		for n, container := range containers {
 			containerPorts[n] = container.Ports
 		}
 		i.CustomizePorts(
-			resources.Service.Spec.Ports,
+			nil, //resources.Service().Spec.Ports,
 			containerPorts...,
 		)
 	}

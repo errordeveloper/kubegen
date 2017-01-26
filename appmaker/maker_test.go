@@ -34,7 +34,7 @@ func TestMakeAll(t *testing.T) {
 	}
 
 	for _, resources := range app.MakeAll() {
-		data, err := json.Marshal(resources.Deployment)
+		data, err := json.Marshal(resources.Deployment())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -45,7 +45,7 @@ func TestMakeAll(t *testing.T) {
 
 		generated = append(generated, temp)
 
-		data, err = json.Marshal(resources.Service)
+		data, err = json.Marshal(resources.Service())
 		if err != nil {
 			t.Fatal(err)
 		}
