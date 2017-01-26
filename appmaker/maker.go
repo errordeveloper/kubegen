@@ -106,6 +106,18 @@ type App struct {
 type AppComponentResourcePair struct {
 	deployment *kext.Deployment
 	service    *kapi.Service
+	manifest   AppComponent
+}
+
+func marshalMultipleToJSON(resources ...interface{}) ([][]byte, error) {
+	data := make([][]byte, len(resources))
+	var err error
+	for n, resource := range resources {
+		if data[n], err = json.Marshal(resource); err != nil {
+			return nil, err
+		}
+	}
+	return data, nil
 }
 
 func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
@@ -229,49 +241,6 @@ func (i *AppComponent) MakePod(params AppParams) *kapi.PodTemplateSpec {
 	return &pod
 }
 
-func (i *AppComponentResourcePair) AppendContainer(container kapi.Container) AppComponentResourcePair {
-	containers := &i.Deployment().Spec.Template.Spec.Containers
-	*containers = append(*containers, container)
-	return *i
-}
-
-func (i *AppComponentResourcePair) MountDataVolume() AppComponentResourcePair {
-	// TODO append to volumes and volume mounts based on few simple parameters
-	// when user uses more then one container, they will have to do it in a low-level way
-	// secrets and config maps would be handled separatelly, so we call this MountDataVolume()
-	// and not something else
-	return *i
-}
-
-func (i *AppComponentResourcePair) WithSecret(secretData interface{}) AppComponentResourcePair {
-	return *i
-}
-
-func (i *AppComponentResourcePair) WithConfig(configMapData interface{}) AppComponentResourcePair {
-	return *i
-}
-
-func (i *AppComponentResourcePair) WithExtraLabels(map[string]string) AppComponentResourcePair {
-	return *i
-}
-
-func (i *AppComponentResourcePair) WithExtraAnnotations(map[string]string) AppComponentResourcePair {
-	return *i
-}
-
-func (i *AppComponentResourcePair) WithExtraPorts(interface{}) AppComponentResourcePair {
-	// TODO May be this should be a customizer, i.e. PortsCustomizer closure
-	return *i
-}
-
-func (i *AppComponentResourcePair) UseHostNetwork() AppComponentResourcePair {
-	return *i
-}
-
-func (i *AppComponentResourcePair) UseHostPID() AppComponentResourcePair {
-	return *i
-}
-
 func (i *AppComponent) MakeDeployment(params AppParams, pod *kapi.PodTemplateSpec) *kext.Deployment {
 	if pod == nil {
 		return nil
@@ -326,21 +295,8 @@ func (i *AppComponent) MakeService(params AppParams) *kapi.Service {
 	return service
 }
 
-func (i *AppComponentResourcePair) Deployment() *kext.Deployment {
-	return i.deployment
-}
-
-func (i *AppComponentResourcePair) Service() *kapi.Service {
-	return i.service
-}
-
-func (i *AppComponentResourcePair) All() *kapi.List {
-	// TODO figure out how to use kapi.List here, if we can
-	return nil
-}
-
-func (i *AppComponent) MakeAll(params AppParams) AppComponentResourcePair {
-	resources := AppComponentResourcePair{}
+func (i *AppComponent) MakeAll(params AppParams) *AppComponentResourcePair {
+	resources := AppComponentResourcePair{manifest: *i}
 
 	switch i.Kind {
 	case Deployment:
@@ -367,10 +323,73 @@ func (i *AppComponent) MakeAll(params AppParams) AppComponentResourcePair {
 		i.Customize(&resources)
 	}
 
-	return resources
+	return &resources
 }
 
-func (i *App) MakeAll() []AppComponentResourcePair {
+func (i *AppComponent) MarshalToJSON(params AppParams) ([]byte, []byte, error) {
+	return i.MakeAll(params).MarshalToJSON()
+}
+
+func (i *AppComponentResourcePair) AppendContainer(container kapi.Container) AppComponentResourcePair {
+	containers := &i.Deployment().Spec.Template.Spec.Containers
+	*containers = append(*containers, container)
+	return *i
+}
+
+func (i *AppComponentResourcePair) MountDataVolume() AppComponentResourcePair {
+	// TODO append to volumes and volume mounts based on few simple parameters
+	// when user uses more then one container, they will have to do it in a low-level way
+	// secrets and config maps would be handled separatelly, so we call this MountDataVolume()
+	// and not something else
+	return *i
+}
+
+func (i *AppComponentResourcePair) WithSecret(secretData interface{}) AppComponentResourcePair {
+	return *i
+}
+
+func (i *AppComponentResourcePair) WithConfig(configMapData interface{}) AppComponentResourcePair {
+	return *i
+}
+
+func (i *AppComponentResourcePair) WithExtraLabels(map[string]string) AppComponentResourcePair {
+	return *i
+}
+
+func (i *AppComponentResourcePair) WithExtraAnnotations(map[string]string) AppComponentResourcePair {
+	return *i
+}
+
+func (i *AppComponentResourcePair) WithExtraPorts(interface{}) AppComponentResourcePair {
+	// TODO May be this should be a customizer, i.e. PortsCustomizer closure
+	return *i
+}
+
+func (i *AppComponentResourcePair) UseHostNetwork() AppComponentResourcePair {
+	return *i
+}
+
+func (i *AppComponentResourcePair) UseHostPID() AppComponentResourcePair {
+	return *i
+}
+
+func (i *AppComponentResourcePair) Deployment() *kext.Deployment {
+	return i.deployment
+}
+
+func (i *AppComponentResourcePair) Service() *kapi.Service {
+	return i.service
+}
+
+func (i *AppComponentResourcePair) MarshalToJSON() ([]byte, []byte, error) {
+	data, err := marshalMultipleToJSON(i.deployment, i.service)
+	if err != nil {
+		return nil, nil, err
+	}
+	return data[0], data[1], nil
+}
+
+func (i *App) MakeAll() []*AppComponentResourcePair {
 	params := AppParams{
 		Namespace:       i.Name,
 		DefaultReplicas: DEFAULT_REPLICAS,
@@ -379,7 +398,7 @@ func (i *App) MakeAll() []AppComponentResourcePair {
 		// standardTmpVolume?
 	}
 
-	list := []AppComponentResourcePair{}
+	list := []*AppComponentResourcePair{}
 
 	for _, service := range i.Group {
 		list = append(list, service.MakeAll(params))
