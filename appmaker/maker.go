@@ -46,9 +46,32 @@ type AppComponent struct {
 	// that it anything we'd use setters and getters for, so we might
 	// want to figure out intermediate struct or just write more
 	// some tests to see how things would work without that...
-	BasedOn   *AppComponent                   `json:",omitempty"`
-	Customize func(*AppComponentResourcePair) `json:"-"`
+	BasedOn            *AppComponent        `json:",omitempty"`
+	Customize          GeneralCustomizer    `json:"-"`
+	CustomizeCotainers ContainersCustomizer `json:"-"`
+	CustomizePod       PodCustomizer        `json:"-"`
+	CustomizeService   ServiceCustomizer    `json:"-"`
+	CustomizePorts     PortsCustomizer      `json:"-"`
 }
+
+type (
+	GeneralCustomizer func(
+		*AppComponentResourcePair,
+	)
+	ContainersCustomizer func(
+		[]kapi.Container,
+	)
+	PodCustomizer func(
+		*kapi.PodSpec,
+	)
+	ServiceCustomizer func(
+		*kapi.ServiceSpec,
+	)
+	PortsCustomizer func(
+		servicePorts []kapi.ServicePort,
+		podPorts ...[]kapi.ContainerPort,
+	)
+)
 
 // Global defaults
 const (
@@ -189,6 +212,14 @@ func (i *AppComponent) MakePod(params AppParams) *kapi.PodTemplateSpec {
 		},
 	}
 
+	if i.CustomizePod != nil {
+		i.CustomizePod(&pod.Spec)
+	}
+
+	if i.CustomizeCotainers != nil {
+		i.CustomizeCotainers(pod.Spec.Containers)
+	}
+
 	return &pod
 }
 
@@ -222,11 +253,16 @@ func (i *AppComponentResourcePair) WithExtraAnnotations(map[string]string) AppCo
 	return *i
 }
 
+func (i *AppComponentResourcePair) WithExtraPorts(interface{}) AppComponentResourcePair {
+	// TODO May be this should be a customizer, i.e. PortsCustomizer closure
+	return *i
+}
+
 func (i *AppComponentResourcePair) UseHostNetwork() AppComponentResourcePair {
 	return *i
 }
 
-func (i *AppComponentResourcePair) UseHostPID(bool) AppComponentResourcePair {
+func (i *AppComponentResourcePair) UseHostPID() AppComponentResourcePair {
 	return *i
 }
 
@@ -277,6 +313,10 @@ func (i *AppComponent) MakeService(params AppParams) *kapi.Service {
 		},
 	}
 
+	if i.CustomizeService != nil {
+		i.CustomizeService(&service.Spec)
+	}
+
 	return service
 }
 
@@ -284,6 +324,18 @@ func (i *AppComponent) MakeAll(params AppParams) AppComponentResourcePair {
 	resources := AppComponentResourcePair{
 		i.MakeDeployment(params, i.MakePod(params)),
 		i.MakeService(params),
+	}
+
+	if i.CustomizePorts != nil {
+		containers := resources.Deployment.Spec.Template.Spec.Containers
+		containerPorts := make([][]kapi.ContainerPort, len(containers))
+		for n, container := range containers {
+			containerPorts[n] = container.Ports
+		}
+		i.CustomizePorts(
+			resources.Service.Spec.Ports,
+			containerPorts...,
+		)
 	}
 
 	if i.Customize != nil {
