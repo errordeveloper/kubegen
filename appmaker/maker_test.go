@@ -10,10 +10,7 @@ import (
 	"testing"
 )
 
-func TestMakeAll(t *testing.T) {
-	generated := make([]interface{}, 0)
-	temp := new(interface{})
-
+func parseManifest(t *testing.T) (*App, []string) {
 	data, err := ioutil.ReadFile("assets/sockshop.json")
 	if err != nil {
 		t.Fatal(err)
@@ -33,6 +30,15 @@ func TestMakeAll(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	return app, appResources
+}
+
+func TestMakeAll(t *testing.T) {
+	generated := make([]interface{}, 0)
+	temp := new(interface{})
+
+	app, serialized := parseManifest(t)
+
 	for _, resources := range app.MakeAll() {
 		data, err := json.Marshal(resources.Deployment())
 		if err != nil {
@@ -45,8 +51,7 @@ func TestMakeAll(t *testing.T) {
 
 		generated = append(generated, temp)
 
-		data, err = json.Marshal(resources.Service())
-		if err != nil {
+		if data, err = json.Marshal(resources.Service()); err != nil {
 			t.Fatal(err)
 		}
 
@@ -57,7 +62,72 @@ func TestMakeAll(t *testing.T) {
 		generated = append(generated, temp)
 	}
 
-	for i, acceptable := range appResources {
+	for i, acceptable := range serialized {
+		if err := json.Unmarshal([]byte(acceptable), temp); err != nil {
+			t.Fatal(err)
+		}
+
+		if !reflect.DeepEqual(generated[i], temp) {
+			t.FailNow()
+		}
+	}
+}
+
+func TestMarshalMakeAllEachToJSON(t *testing.T) {
+	generated := make([]interface{}, 0)
+	temp := new(interface{})
+
+	app, serialized := parseManifest(t)
+
+	for _, resources := range app.MakeAll() {
+		dataMap, err := resources.MarshalToJSON()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, data := range dataMap {
+			if err := json.Unmarshal(data, temp); err != nil {
+				t.Fatal(err)
+			}
+
+			generated = append(generated, temp)
+		}
+	}
+
+	for i, acceptable := range serialized {
+		if err := json.Unmarshal([]byte(acceptable), temp); err != nil {
+			t.Fatal(err)
+		}
+
+		if !reflect.DeepEqual(generated[i], temp) {
+			t.FailNow()
+		}
+	}
+}
+
+func TestMarshalAllToJSON(t *testing.T) {
+	generated := make([]interface{}, 0)
+	temp := new(interface{})
+
+	app, serialized := parseManifest(t)
+
+	all, err := app.MarshalToJSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, dataMap := range all {
+
+		for _, data := range dataMap {
+			if err := json.Unmarshal(data, temp); err != nil {
+				t.Fatal(err)
+			}
+
+			generated = append(generated, temp)
+		}
+	}
+
+	for i, acceptable := range serialized {
 		if err := json.Unmarshal([]byte(acceptable), temp); err != nil {
 			t.Fatal(err)
 		}
