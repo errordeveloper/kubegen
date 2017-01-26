@@ -12,14 +12,14 @@ func main() {
 	generated := []string{}
 	app := makeSockShop()
 	for _, resources := range app.MakeAll() {
-		deployment, err := json.Marshal(resources.Deployment)
+		deployment, err := json.Marshal(resources.Deployment())
 		if err != nil {
 			panic(err)
 		}
 
 		generated = append(generated, string(deployment))
 
-		service, err := json.Marshal(resources.Service)
+		service, err := json.Marshal(resources.Service())
 		if err != nil {
 			panic(err)
 		}
