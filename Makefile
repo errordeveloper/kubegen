@@ -7,11 +7,11 @@ install:
 	go install ./appmaker
 
 test:
-	@$(MAKE) -C ./appmaker/assets
+	@$(MAKE) -C ./appmaker/assets test
 	@go test -v ./appmaker
 
 build:
 	go build ./
 
 assets:
-	go run $(ASSETS_GENERATOR) > $(ASSETS_MANIFEST)
+	@$(MAKE) -C ./appmaker/assets rebuild
