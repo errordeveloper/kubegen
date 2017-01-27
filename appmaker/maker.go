@@ -113,11 +113,23 @@ type AppComponentResources struct {
 }
 
 func marshalMultipleToJSON(resources map[int]interface{}) (map[int][]byte, error) {
-	data := map[int][]byte{}
 	var err error
-	for n, resource := range resources {
-		if data[n], err = json.Marshal(resource); err != nil {
-			return nil, err
+
+	keys := []int{}
+	for k, _ := range resources {
+		keys = append(keys, k)
+	}
+
+	sort.Ints(keys)
+
+	data := map[int][]byte{}
+	for _, j := range keys {
+		for k, v := range resources {
+			if k == j {
+				if data[k], err = json.Marshal(v); err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 	return data, nil
@@ -427,12 +439,24 @@ func (i *App) MakeAll() []*AppComponentResources {
 func (i *App) MarshalToJSON() ([]map[int][]byte, error) {
 	components := i.MakeAll()
 	data := make([]map[int][]byte, len(components))
-	for _, component := range components {
-		componentData, err := component.MarshalToJSON()
-		if err != nil {
-			return nil, err
+
+	keys := []int{}
+	for k, _ := range components {
+		keys = append(keys, k)
+	}
+
+	sort.Ints(keys)
+
+	for _, j := range keys {
+		for k, v := range components {
+			if k == j {
+				componentData, err := v.MarshalToJSON()
+				if err != nil {
+					return nil, err
+				}
+				data = append(data, componentData)
+			}
 		}
-		data = append(data, componentData)
 	}
 	return data, nil
 }
