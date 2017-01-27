@@ -11,7 +11,7 @@ import (
 )
 
 func parseManifest(t *testing.T) (*App, []string) {
-	data, err := ioutil.ReadFile("assets/sockshop.json")
+	data, err := ioutil.ReadFile("assets/sockshop-basic.json")
 	if err != nil {
 		t.Fatal(err)
 	}
