@@ -81,25 +81,14 @@ func (i *App) MarshalIndentToCombinedJSON() ([]byte, error) {
 }
 
 func (i *App) MarshalToJSON() ([]map[int][]byte, error) {
+	var err error
+
 	components := i.MakeAll()
+
 	data := make([]map[int][]byte, len(components))
-
-	keys := []int{}
-	for k, _ := range components {
-		keys = append(keys, k)
-	}
-
-	sort.Ints(keys)
-
-	for _, j := range keys {
-		for k, v := range components {
-			if k == j {
-				componentData, err := v.MarshalToJSON()
-				if err != nil {
-					return nil, err
-				}
-				data = append(data, componentData)
-			}
+	for k, v := range components {
+		if data[k], err = v.MarshalToJSON(); err != nil {
+			return nil, err
 		}
 	}
 	return data, nil
