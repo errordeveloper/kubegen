@@ -21,29 +21,6 @@ func marshalMultipleToJSON(resources map[int]interface{}) (map[int][]byte, error
 	return data, nil
 }
 
-//func marshalMultipleToSliceJSON(resources map[int]interface{}) ([][]byte, error) {
-//	keys := []int{}
-//	for k, _ := range resources {
-//		keys = append(keys, k)
-//	}
-//
-//	sort.Ints(keys)
-//
-//	data := [][]byte{}
-//	for _, j := range keys {
-//		for k, v := range resources {
-//			if k == j {
-//				temp, err := json.Marshal(v)
-//				if err != nil {
-//					return nil, err
-//				}
-//				data = append(data, temp)
-//			}
-//		}
-//	}
-//	return data, nil
-//}
-
 func NewFromJSON(manifest []byte) (*App, error) {
 	app := &App{}
 	if err := json.Unmarshal(manifest, app); err != nil {
@@ -142,25 +119,3 @@ func (i *AppComponentResources) MarshalToJSON() (map[int][]byte, error) {
 	}
 	return data, nil
 }
-
-//func (i *AppComponentResources) MarshalToSliceJSON() ([][]byte, error) {
-//	resources := make(map[int]interface{})
-//
-//	switch i.manifest.Kind {
-//	case Deployment:
-//		resources[Deployment] = i.deployment
-//	}
-//
-//	if i.service != nil {
-//		resources[Service] = i.service
-//	}
-//
-//	//if i.configMap != nil { ...
-//	//if i.secret != nil { ...
-//
-//	data, err := marshalMultipleToSliceJSON(resources)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return data, nil
-//}
