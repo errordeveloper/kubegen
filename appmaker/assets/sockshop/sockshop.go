@@ -27,8 +27,8 @@ func MakeSockShop() *appmaker.App {
 	}
 
 	return &appmaker.App{
-		Name: "sock-shop",
-		Group: []appmaker.AppComponent{
+		GroupName: "sock-shop",
+		Components: []appmaker.AppComponent{
 			{
 				Name:    "cart-db",
 				BasedOn: &mongo,

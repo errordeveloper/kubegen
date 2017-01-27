@@ -100,8 +100,8 @@ type AppParams struct {
 }
 
 type App struct {
-	Name  string
-	Group []AppComponent
+	GroupName  string
+	Components []AppComponent
 }
 
 type AppComponentResources struct {
@@ -375,7 +375,7 @@ func (i *AppComponentResources) Service() *kapi.Service {
 // TODO: params argument
 func (i *App) MakeAll() []*AppComponentResources {
 	params := AppParams{
-		Namespace:       i.Name,
+		Namespace:       i.GroupName,
 		DefaultReplicas: DEFAULT_REPLICAS,
 		DefaultPort:     DEFAULT_PORT,
 		// standardSecurityContext
@@ -384,7 +384,7 @@ func (i *App) MakeAll() []*AppComponentResources {
 
 	list := []*AppComponentResources{}
 
-	for _, service := range i.Group {
+	for _, service := range i.Components {
 		list = append(list, service.MakeAll(params))
 	}
 
