@@ -34,6 +34,7 @@ type AppComponent struct {
 	Name     string            `json:",omitempty"`
 	Port     int32             `json:",omitempty"`
 	Replicas *int32            `json:",omitempty"`
+	Flavor   string            `json:",omitempty"`
 	Opts     AppComponentOpts  `json:",omitempty"`
 	Env      map[string]string `json:",omitempty"`
 	// Deployment, DaemonSet, StatefullSet ...etc
@@ -225,14 +226,6 @@ func (i *AppComponent) MakePod(params AppParams) *kapi.PodTemplateSpec {
 		},
 	}
 
-	if i.CustomizePod != nil {
-		i.CustomizePod(&pod.Spec)
-	}
-
-	if i.CustomizeCotainers != nil {
-		i.CustomizeCotainers(pod.Spec.Containers)
-	}
-
 	return &pod
 }
 
@@ -283,35 +276,52 @@ func (i *AppComponent) MakeService(params AppParams) *kapi.Service {
 		},
 	}
 
-	if i.CustomizeService != nil {
-		i.CustomizeService(&service.Spec)
-	}
-
 	return service
 }
 
 func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 	resources := AppComponentResources{manifest: *i}
 
+	// TODO BasedOn
+
+	pod := i.MakePod(params)
+
 	switch i.Kind {
 	case Deployment:
-		resources.deployment = i.MakeDeployment(params, i.MakePod(params))
+		resources.deployment = i.MakeDeployment(params, pod)
 	}
 
 	if !i.Opts.WithoutService {
 		resources.service = i.MakeService(params)
 	}
 
+	if i.Flavor != "" {
+		if fn, ok := Flavors[i.Flavor]; ok {
+			fn(&resources)
+		}
+	}
+
 	if i.CustomizePorts != nil && !i.Opts.WithoutPorts {
-		containers := resources.Deployment().Spec.Template.Spec.Containers
-		containerPorts := make([][]kapi.ContainerPort, len(containers))
-		for n, container := range containers {
-			containerPorts[n] = container.Ports
+		ports := make([][]kapi.ContainerPort, len(pod.Spec.Containers))
+		for n, container := range pod.Spec.Containers {
+			ports[n] = container.Ports
 		}
 		i.CustomizePorts(
-			nil, //resources.Service().Spec.Ports,
-			containerPorts...,
+			resources.service.Spec.Ports,
+			ports...,
 		)
+	}
+
+	if i.CustomizeCotainers != nil {
+		i.CustomizeCotainers(pod.Spec.Containers)
+	}
+
+	if i.CustomizePod != nil {
+		i.CustomizePod(&pod.Spec)
+	}
+
+	if i.CustomizeService != nil {
+		i.CustomizeService(&resources.service.Spec)
 	}
 
 	if i.Customize != nil {
@@ -352,7 +362,7 @@ func (i *AppComponentResources) WithExtraAnnotations(map[string]string) AppCompo
 }
 
 func (i *AppComponentResources) WithExtraPorts(interface{}) AppComponentResources {
-	// TODO May be this should be a customizer, i.e. PortsCustomizer closure
+	// TODO May be this should be a customizer, i.e. it'd basically create a PortsCustomizer closure and return it
 	return *i
 }
 
@@ -370,6 +380,26 @@ func (i *AppComponentResources) Deployment() *kext.Deployment {
 
 func (i *AppComponentResources) Service() *kapi.Service {
 	return i.service
+}
+
+func (i *AppComponentResources) getPod() *kapi.PodSpec {
+	switch i.manifest.Kind {
+	case Deployment:
+		return &i.deployment.Spec.Template.Spec
+	default:
+		return nil
+	}
+
+}
+
+func (i *AppComponentResources) getContainers() []kapi.Container {
+	switch i.manifest.Kind {
+	case Deployment:
+		return i.deployment.Spec.Template.Spec.Containers
+	default:
+		return nil
+	}
+
 }
 
 // TODO: params argument

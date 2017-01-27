@@ -12,12 +12,9 @@ func MakeSockShop() *appmaker.App {
 	}
 
 	mongo := appmaker.AppComponent{
-		Image: "mongo",
-		Port:  27017,
-		Opts: appmaker.AppComponentOpts{
-			PrometheusScrape:      false,
-			WithoutStandardProbes: true,
-		},
+		Image:  "mongo",
+		Port:   27017,
+		Flavor: "minimal",
 		//security:
 		//  capabilities:
 		//    drop: [ all ]
