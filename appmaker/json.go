@@ -12,25 +12,37 @@ import (
 func marshalMultipleToJSON(resources map[int]interface{}) (map[int][]byte, error) {
 	var err error
 
-	keys := []int{}
-	for k, _ := range resources {
-		keys = append(keys, k)
-	}
-
-	sort.Ints(keys)
-
 	data := map[int][]byte{}
-	for _, j := range keys {
-		for k, v := range resources {
-			if k == j {
-				if data[k], err = json.Marshal(v); err != nil {
-					return nil, err
-				}
-			}
+	for k, v := range resources {
+		if data[k], err = json.Marshal(v); err != nil {
+			return nil, err
 		}
 	}
 	return data, nil
 }
+
+//func marshalMultipleToSliceJSON(resources map[int]interface{}) ([][]byte, error) {
+//	keys := []int{}
+//	for k, _ := range resources {
+//		keys = append(keys, k)
+//	}
+//
+//	sort.Ints(keys)
+//
+//	data := [][]byte{}
+//	for _, j := range keys {
+//		for k, v := range resources {
+//			if k == j {
+//				temp, err := json.Marshal(v)
+//				if err != nil {
+//					return nil, err
+//				}
+//				data = append(data, temp)
+//			}
+//		}
+//	}
+//	return data, nil
+//}
 
 func NewFromJSON(manifest []byte) (*App, error) {
 	app := &App{}
@@ -48,8 +60,19 @@ func (i *App) MarshalToCombinedJSON() ([]byte, error) {
 
 	fragments := []string{}
 	for _, component := range data {
-		for _, resource := range component {
-			fragments = append(fragments, string(resource))
+		keys := []int{}
+		for k, _ := range component {
+			keys = append(keys, k)
+		}
+
+		sort.Ints(keys)
+
+		for _, j := range keys {
+			for k, resource := range component {
+				if k == j {
+					fragments = append(fragments, string(resource))
+				}
+			}
 		}
 	}
 
@@ -119,3 +142,25 @@ func (i *AppComponentResources) MarshalToJSON() (map[int][]byte, error) {
 	}
 	return data, nil
 }
+
+//func (i *AppComponentResources) MarshalToSliceJSON() ([][]byte, error) {
+//	resources := make(map[int]interface{})
+//
+//	switch i.manifest.Kind {
+//	case Deployment:
+//		resources[Deployment] = i.deployment
+//	}
+//
+//	if i.service != nil {
+//		resources[Service] = i.service
+//	}
+//
+//	//if i.configMap != nil { ...
+//	//if i.secret != nil { ...
+//
+//	data, err := marshalMultipleToSliceJSON(resources)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return data, nil
+//}
