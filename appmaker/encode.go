@@ -3,11 +3,15 @@ package appmaker
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/pkg/api"
-	"k8s.io/client-go/tools/clientcmd/api/latest"
+	_ "k8s.io/client-go/pkg/api/install"
+	"k8s.io/client-go/pkg/api/v1"
+	_ "k8s.io/client-go/pkg/apis/extensions/install"
+	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
 func (i *App) Encode() ([]byte, error) {
 	components := &api.List{}
+	codec := api.Codecs.LegacyCodec(v1.SchemeGroupVersion, v1beta1.SchemeGroupVersion)
 	for _, component := range i.MakeAll() {
 		switch component.manifest.Kind {
 		case Deployment:
@@ -19,11 +23,11 @@ func (i *App) Encode() ([]byte, error) {
 		}
 	}
 
-	if err := runtime.EncodeList(latest.Codec, components.Items); err != nil {
+	if err := runtime.EncodeList(codec, components.Items); err != nil {
 		return nil, err
 	}
 
-	data, err := runtime.Encode(latest.Codec, components)
+	data, err := runtime.Encode(codec, components)
 	if err != nil {
 		return nil, err
 	}
