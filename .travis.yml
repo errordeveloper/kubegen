@@ -2,6 +2,6 @@ language: go
 
 install:
 - go get github.com/Masterminds/glide
-- glide up
+- glide up --strip-vendor
 
 script: make test

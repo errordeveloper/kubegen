@@ -1,10 +1,17 @@
 package: github.com/errordeveloper/kubegen
 import:
 - package: k8s.io/client-go
-  version: ^2.0.0-alpha.1
+  version: fb6075f
   subpackages:
   - kubernetes
   - pkg/api/unversioned
   - pkg/api/v1
   - pkg/apis/extensions/v1beta1
   - pkg/util/intstr
+  - tools/clientcmd
+- package: k8s.io/apimachinery
+  version: 3c75d32
+  subpackages:
+  - pkg/runtime
+  - pkg/apis/meta/v1
+- package: github.com/spf13/cobra

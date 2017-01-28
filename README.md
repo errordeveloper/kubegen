@@ -25,7 +25,7 @@ Get the source code and build the dependencies:
 go get github.com/Masterminds/glide
 go get -d github.com/errordeveloper/kubegen
 cd $GOPATH/src/github.com/errordeveloper/kubegen
-$GOPATH/bin/glide up
+$GOPATH/bin/glide up --strip-vendor
 go install ./appmaker
 ```
 

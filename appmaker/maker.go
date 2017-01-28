@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	unversioned "k8s.io/client-go/pkg/api/unversioned" // Should eventually migrate to "k8s.io/apimachinery/pkg/apis/meta/v1"?
+	kmeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kapi "k8s.io/client-go/pkg/api/v1"
 	kext "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
@@ -131,9 +131,9 @@ func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
 	return name, labels
 }
 
-func (i *AppComponent) getMeta() kapi.ObjectMeta {
+func (i *AppComponent) getMeta() kmeta.ObjectMeta {
 	name, labels := i.getNameAndLabels()
-	return kapi.ObjectMeta{
+	return kmeta.ObjectMeta{
 		Name:   name,
 		Labels: labels,
 	}
@@ -218,7 +218,7 @@ func (i *AppComponent) MakePod(params AppParams) *kapi.PodTemplateSpec {
 	container := i.MakeContainer(params, name)
 
 	pod := kapi.PodTemplateSpec{
-		ObjectMeta: kapi.ObjectMeta{
+		ObjectMeta: kmeta.ObjectMeta{
 			Labels: labels,
 		},
 		Spec: kapi.PodSpec{
@@ -244,7 +244,7 @@ func (i *AppComponent) MakeDeployment(params AppParams, pod *kapi.PodTemplateSpe
 
 	deploymentSpec := kext.DeploymentSpec{
 		Replicas: &replicas,
-		Selector: &unversioned.LabelSelector{MatchLabels: meta.Labels},
+		Selector: &kmeta.LabelSelector{MatchLabels: meta.Labels},
 		Template: *pod,
 	}
 
