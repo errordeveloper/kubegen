@@ -24,7 +24,6 @@ func main() {
 	rootCmd.Flags().StringVarP(&flavor, "flavor", "", "default", "Flavor of generator to use")
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }

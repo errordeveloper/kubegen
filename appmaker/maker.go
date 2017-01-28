@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	kmeta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/pkg/api"
 	kapi "k8s.io/client-go/pkg/api/v1"
 	kext "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
@@ -331,6 +333,23 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 	return &resources
 }
 
+func (i *AppComponent) MakeList(params AppParams) *api.List {
+	resources := i.MakeAll(params)
+
+	list := &api.List{}
+	switch i.Kind {
+	case Deployment:
+		list.Items = append(list.Items, runtime.Object(resources.deployment))
+	}
+
+	if resources.service != nil {
+		list.Items = append(list.Items, runtime.Object(resources.service))
+
+	}
+
+	return list
+}
+
 func (i *AppComponentResources) AppendContainer(container kapi.Container) AppComponentResources {
 	containers := &i.Deployment().Spec.Template.Spec.Containers
 	*containers = append(*containers, container)
@@ -402,20 +421,34 @@ func (i *AppComponentResources) getContainers() []kapi.Container {
 
 }
 
-// TODO: params argument
-func (i *App) MakeAll() []*AppComponentResources {
-	params := AppParams{
+func (i *App) makeDefaultParams() AppParams {
+	return AppParams{
 		Namespace:       i.GroupName,
 		DefaultReplicas: DEFAULT_REPLICAS,
 		DefaultPort:     DEFAULT_PORT,
 		// standardSecurityContext
 		// standardTmpVolume?
 	}
+}
+
+// TODO: params argument
+func (i *App) MakeAll() []*AppComponentResources {
+	params := i.makeDefaultParams()
 
 	list := []*AppComponentResources{}
+	for _, component := range i.Components {
+		list = append(list, component.MakeAll(params))
+	}
 
-	for _, service := range i.Components {
-		list = append(list, service.MakeAll(params))
+	return list
+}
+
+func (i *App) MakeList() *api.List {
+	params := i.makeDefaultParams()
+
+	list := &api.List{} // TODO is metadata used for anything in lists?
+	for _, component := range i.Components {
+		list.Items = append(list.Items, component.MakeList(params).Items...)
 	}
 
 	return list
