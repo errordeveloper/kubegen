@@ -26,14 +26,6 @@ func NewFromJSON(manifest []byte) (*App, error) {
 	return app, nil
 }
 
-func (i *App) MarshalToCombinedJSON() ([]byte, error) {
-	return i.EncodeListToJSON()
-}
-
-func (i *App) MarshalIndentToCombinedJSON() ([]byte, error) {
-	return i.EncodeListToPrettyJSON()
-}
-
 func (i *App) MarshalToJSON() ([]map[int][]byte, error) {
 	var err error
 
@@ -46,10 +38,6 @@ func (i *App) MarshalToJSON() ([]map[int][]byte, error) {
 		}
 	}
 	return data, nil
-}
-
-func (i *AppComponent) MarshalToJSON(params AppParams) (map[int][]byte, error) {
-	return i.MakeAll(params).MarshalToJSON()
 }
 
 func (i *AppComponentResources) MarshalToJSON() (map[int][]byte, error) {

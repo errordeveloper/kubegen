@@ -9,7 +9,7 @@ import (
 
 func main() {
 	app := sockshop.MakeSockShop()
-	generated, err := app.MarshalToCombinedJSON()
+	generated, err := app.EncodeListToJSON()
 	if err != nil {
 		panic(err)
 	}
