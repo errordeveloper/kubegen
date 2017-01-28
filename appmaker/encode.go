@@ -1,6 +1,8 @@
 package appmaker
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/pkg/api"
@@ -10,21 +12,25 @@ import (
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
-var codec runtime.Codec
-
-func init() {
-	serializer, ok := runtime.SerializerInfoForMediaType(
+func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
+	serializerInfo, ok := runtime.SerializerInfoForMediaType(
 		api.Codecs.SupportedMediaTypes(),
-		"application/yaml", // TODO both of JSON and YAML don't give us `kind` & `apiVersion`, why?
+		contentType,
 	)
 
 	if !ok {
-		panic("Unable to create a serializer")
+		return nil, fmt.Errorf("Unable to create a serializer")
 	}
 
-	codec = api.Codecs.CodecForVersions(
-		serializer.Serializer,
-		serializer.Serializer,
+	serializer := serializerInfo.Serializer
+
+	if pretty && serializerInfo.PrettySerializer != nil {
+		serializer = serializerInfo.PrettySerializer
+	}
+
+	codec := api.Codecs.CodecForVersions(
+		serializer,
+		serializer,
 		schema.GroupVersions(
 			[]schema.GroupVersion{
 				v1.SchemeGroupVersion,
@@ -33,11 +39,17 @@ func init() {
 		),
 		runtime.InternalGroupVersioner,
 	)
+
+	return codec, nil
 }
 
-func (i *App) Encode() ([]byte, error) {
+func (i *App) encodeList(contentType string, pretty bool) ([]byte, error) {
 	components := i.MakeList()
 
+	codec, err := makeCodec(contentType, pretty)
+	if err != nil {
+		return nil, err
+	}
 	// XXX: uncommenting this results in the following error:
 	// json: error calling MarshalJSON for type runtime.RawExtension: invalid character 'a' looking for beginning of value
 	//if err := runtime.EncodeList(codec, components.Items); err != nil {
@@ -50,4 +62,16 @@ func (i *App) Encode() ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func (i *App) EncodeListToYAML() ([]byte, error) {
+	return i.encodeList("application/yaml", false)
+}
+
+func (i *App) EncodeListToJSON() ([]byte, error) {
+	return i.encodeList("application/json", false)
+}
+
+func (i *App) EncodeListToPrettyJSON() ([]byte, error) {
+	return i.encodeList("application/json", true)
 }

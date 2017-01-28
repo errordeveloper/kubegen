@@ -4,11 +4,6 @@ package appmaker
 
 import (
 	"encoding/json"
-	"fmt"
-	"sort"
-	"strings"
-
-	kapi "k8s.io/client-go/pkg/api/v1"
 )
 
 func marshalMultipleToJSON(resources map[int]interface{}) (map[int][]byte, error) {
@@ -32,54 +27,11 @@ func NewFromJSON(manifest []byte) (*App, error) {
 }
 
 func (i *App) MarshalToCombinedJSON() ([]byte, error) {
-	data, err := i.MarshalToJSON()
-	if err != nil {
-		return nil, err
-	}
-
-	fragments := []string{}
-	for _, component := range data {
-		keys := []int{}
-		for k, _ := range component {
-			keys = append(keys, k)
-		}
-
-		sort.Ints(keys)
-
-		for _, j := range keys {
-			for k, resource := range component {
-				if k == j {
-					fragments = append(fragments, string(resource))
-				}
-			}
-		}
-	}
-
-	listFormat := `{"apiVersion":"v1","kind":"List","items":[%s]}`
-	return []byte(fmt.Sprintf(listFormat, strings.Join(fragments, ","))), nil
-}
-
-func (i *App) ToList() (*kapi.List, error) {
-	data, err := i.MarshalToCombinedJSON()
-	if err != nil {
-		return nil, err
-	}
-
-	list := &kapi.List{}
-	if err := json.Unmarshal(data, list); err != nil {
-		return nil, err
-	}
-
-	return list, nil
+	return i.EncodeListToJSON()
 }
 
 func (i *App) MarshalIndentToCombinedJSON() ([]byte, error) {
-	list, err := i.ToList()
-	if err != nil {
-		return nil, err
-	}
-
-	return json.MarshalIndent(list, "", "  ")
+	return i.EncodeListToPrettyJSON()
 }
 
 func (i *App) MarshalToJSON() ([]map[int][]byte, error) {

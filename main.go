@@ -43,7 +43,7 @@ func kubegen(cmd *cobra.Command, args []string) error {
 		},
 	}
 
-	data, err := app.Encode()
+	data, err := app.EncodeListToYAML()
 	if err != nil {
 		return err
 	}
