@@ -4,11 +4,11 @@ import (
 	"sort"
 	"strings"
 
-	kmeta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/pkg/api"
-	kapi "k8s.io/client-go/pkg/api/v1"
-	kext "k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
 )
 
@@ -59,17 +59,17 @@ type (
 		*AppComponentResources,
 	)
 	ContainersCustomizer func(
-		[]kapi.Container,
+		[]v1.Container,
 	)
 	PodCustomizer func(
-		*kapi.PodSpec,
+		*v1.PodSpec,
 	)
 	ServiceCustomizer func(
-		*kapi.ServiceSpec,
+		*v1.ServiceSpec,
 	)
 	PortsCustomizer func(
-		servicePorts []kapi.ServicePort,
-		podPorts ...[]kapi.ContainerPort,
+		servicePorts []v1.ServicePort,
+		podPorts ...[]v1.ContainerPort,
 	)
 )
 
@@ -98,8 +98,8 @@ type AppParams struct {
 	Namespace              string
 	DefaultReplicas        int32
 	DefaultPort            int32
-	StandardLivenessProbe  *kapi.Probe
-	StandardReadinessProbe *kapi.Probe
+	StandardLivenessProbe  *v1.Probe
+	StandardReadinessProbe *v1.Probe
 }
 
 type App struct {
@@ -108,8 +108,8 @@ type App struct {
 }
 
 type AppComponentResources struct {
-	deployment *kext.Deployment
-	service    *kapi.Service
+	deployment *v1beta1.Deployment
+	service    *v1.Service
 	manifest   AppComponent
 }
 
@@ -133,9 +133,9 @@ func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
 	return name, labels
 }
 
-func (i *AppComponent) getMeta() kmeta.ObjectMeta {
+func (i *AppComponent) getMeta() metav1.ObjectMeta {
 	name, labels := i.getNameAndLabels()
-	return kmeta.ObjectMeta{
+	return metav1.ObjectMeta{
 		Name:   name,
 		Labels: labels,
 	}
@@ -148,7 +148,7 @@ func (i *AppComponent) getPort(params AppParams) int32 {
 	return params.DefaultPort
 }
 
-func (i *AppComponent) maybeAddEnvVars(params AppParams, container *kapi.Container) {
+func (i *AppComponent) maybeAddEnvVars(params AppParams, container *v1.Container) {
 	keys := []string{}
 	for k, _ := range i.Env {
 		keys = append(keys, k)
@@ -160,38 +160,38 @@ func (i *AppComponent) maybeAddEnvVars(params AppParams, container *kapi.Contain
 
 	sort.Strings(keys)
 
-	env := []kapi.EnvVar{}
+	env := []v1.EnvVar{}
 	for _, j := range keys {
 		for k, v := range i.Env {
 			if k == j {
-				env = append(env, kapi.EnvVar{Name: k, Value: v})
+				env = append(env, v1.EnvVar{Name: k, Value: v})
 			}
 		}
 	}
 	container.Env = env
 }
 
-func (i *AppComponent) maybeAddProbes(params AppParams, container *kapi.Container) {
+func (i *AppComponent) maybeAddProbes(params AppParams, container *v1.Container) {
 	if i.Opts.WithoutStandardProbes {
 		return
 	}
 	port := intstr.FromInt(int(i.getPort(params)))
 
-	container.ReadinessProbe = &kapi.Probe{
+	container.ReadinessProbe = &v1.Probe{
 		PeriodSeconds:       3,
 		InitialDelaySeconds: 180,
-		Handler: kapi.Handler{
-			HTTPGet: &kapi.HTTPGetAction{
+		Handler: v1.Handler{
+			HTTPGet: &v1.HTTPGetAction{
 				Path: "/health",
 				Port: port,
 			},
 		},
 	}
-	container.LivenessProbe = &kapi.Probe{
+	container.LivenessProbe = &v1.Probe{
 		PeriodSeconds:       3,
 		InitialDelaySeconds: 300,
-		Handler: kapi.Handler{
-			HTTPGet: &kapi.HTTPGetAction{
+		Handler: v1.Handler{
+			HTTPGet: &v1.HTTPGetAction{
 				Path: "/health",
 				Port: port,
 			},
@@ -199,13 +199,13 @@ func (i *AppComponent) maybeAddProbes(params AppParams, container *kapi.Containe
 	}
 }
 
-func (i *AppComponent) MakeContainer(params AppParams, name string) kapi.Container {
-	container := kapi.Container{Name: name, Image: i.Image}
+func (i *AppComponent) MakeContainer(params AppParams, name string) v1.Container {
+	container := v1.Container{Name: name, Image: i.Image}
 
 	i.maybeAddEnvVars(params, &container)
 
 	if !i.Opts.WithoutPorts {
-		container.Ports = []kapi.ContainerPort{{
+		container.Ports = []v1.ContainerPort{{
 			Name:          name,
 			ContainerPort: i.getPort(params),
 		}}
@@ -215,23 +215,23 @@ func (i *AppComponent) MakeContainer(params AppParams, name string) kapi.Contain
 	return container
 }
 
-func (i *AppComponent) MakePod(params AppParams) *kapi.PodTemplateSpec {
+func (i *AppComponent) MakePod(params AppParams) *v1.PodTemplateSpec {
 	name, labels := i.getNameAndLabels()
 	container := i.MakeContainer(params, name)
 
-	pod := kapi.PodTemplateSpec{
-		ObjectMeta: kmeta.ObjectMeta{
+	pod := v1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
 			Labels: labels,
 		},
-		Spec: kapi.PodSpec{
-			Containers: []kapi.Container{container},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{container},
 		},
 	}
 
 	return &pod
 }
 
-func (i *AppComponent) MakeDeployment(params AppParams, pod *kapi.PodTemplateSpec) *kext.Deployment {
+func (i *AppComponent) MakeDeployment(params AppParams, pod *v1.PodTemplateSpec) *v1beta1.Deployment {
 	if pod == nil {
 		return nil
 	}
@@ -244,13 +244,17 @@ func (i *AppComponent) MakeDeployment(params AppParams, pod *kapi.PodTemplateSpe
 		replicas = *i.Replicas
 	}
 
-	deploymentSpec := kext.DeploymentSpec{
+	deploymentSpec := v1beta1.DeploymentSpec{
 		Replicas: &replicas,
-		Selector: &kmeta.LabelSelector{MatchLabels: meta.Labels},
+		Selector: &metav1.LabelSelector{MatchLabels: meta.Labels},
 		Template: *pod,
 	}
 
-	deployment := &kext.Deployment{
+	deployment := &v1beta1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: "extensions/v1beta1",
+		},
 		ObjectMeta: meta,
 		Spec:       deploymentSpec,
 	}
@@ -262,18 +266,22 @@ func (i *AppComponent) MakeDeployment(params AppParams, pod *kapi.PodTemplateSpe
 	return deployment
 }
 
-func (i *AppComponent) MakeService(params AppParams) *kapi.Service {
+func (i *AppComponent) MakeService(params AppParams) *v1.Service {
 	meta := i.getMeta()
 
-	port := kapi.ServicePort{Port: i.getPort(params)}
+	port := v1.ServicePort{Port: i.getPort(params)}
 	if i.Port != 0 {
 		port.Port = i.Port
 	}
 
-	service := &kapi.Service{
+	service := &v1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
 		ObjectMeta: meta,
-		Spec: kapi.ServiceSpec{
-			Ports:    []kapi.ServicePort{port},
+		Spec: v1.ServiceSpec{
+			Ports:    []v1.ServicePort{port},
 			Selector: meta.Labels,
 		},
 	}
@@ -304,7 +312,7 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 	}
 
 	if i.CustomizePorts != nil && !i.Opts.WithoutPorts {
-		ports := make([][]kapi.ContainerPort, len(pod.Spec.Containers))
+		ports := make([][]v1.ContainerPort, len(pod.Spec.Containers))
 		for n, container := range pod.Spec.Containers {
 			ports[n] = container.Ports
 		}
@@ -350,7 +358,7 @@ func (i *AppComponent) MakeList(params AppParams) *api.List {
 	return list
 }
 
-func (i *AppComponentResources) AppendContainer(container kapi.Container) AppComponentResources {
+func (i *AppComponentResources) AppendContainer(container v1.Container) AppComponentResources {
 	containers := &i.Deployment().Spec.Template.Spec.Containers
 	*containers = append(*containers, container)
 	return *i
@@ -393,15 +401,15 @@ func (i *AppComponentResources) UseHostPID() AppComponentResources {
 	return *i
 }
 
-func (i *AppComponentResources) Deployment() *kext.Deployment {
+func (i *AppComponentResources) Deployment() *v1beta1.Deployment {
 	return i.deployment
 }
 
-func (i *AppComponentResources) Service() *kapi.Service {
+func (i *AppComponentResources) Service() *v1.Service {
 	return i.service
 }
 
-func (i *AppComponentResources) getPod() *kapi.PodSpec {
+func (i *AppComponentResources) getPod() *v1.PodSpec {
 	switch i.manifest.Kind {
 	case Deployment:
 		return &i.deployment.Spec.Template.Spec
@@ -411,7 +419,7 @@ func (i *AppComponentResources) getPod() *kapi.PodSpec {
 
 }
 
-func (i *AppComponentResources) getContainers() []kapi.Container {
+func (i *AppComponentResources) getContainers() []v1.Container {
 	switch i.manifest.Kind {
 	case Deployment:
 		return i.deployment.Spec.Template.Spec.Containers
@@ -446,7 +454,7 @@ func (i *App) MakeAll() []*AppComponentResources {
 func (i *App) MakeList() *api.List {
 	params := i.makeDefaultParams()
 
-	list := &api.List{} // TODO is metadata used for anything in lists?
+	list := &api.List{}
 	for _, component := range i.Components {
 		list.Items = append(list.Items, component.MakeList(params).Items...)
 	}

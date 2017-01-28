@@ -15,7 +15,7 @@ var codec runtime.Codec
 func init() {
 	serializer, ok := runtime.SerializerInfoForMediaType(
 		api.Codecs.SupportedMediaTypes(),
-		"application/yaml",
+		"application/yaml", // TODO both of JSON and YAML don't give us `kind` & `apiVersion`, why?
 	)
 
 	if !ok {

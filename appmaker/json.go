@@ -1,5 +1,7 @@
 package appmaker
 
+// TODO we do not need most of this, but removing it will require rewriting the unit test
+
 import (
 	"encoding/json"
 	"fmt"
