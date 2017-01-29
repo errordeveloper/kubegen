@@ -14,7 +14,7 @@ import (
 
 type App struct {
 	GroupName  string         `hcl:"group_name"`
-	Components []AppComponent `hcl:"component"`
+	Components []AppComponent `hcl:"component_from_image"`
 }
 
 type AppComponent struct {

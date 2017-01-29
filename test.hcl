@@ -1,9 +1,9 @@
 group_name = "test"
 
-component "errordeveloper/test:latest" {
+component_from_image "errordeveloper/test:latest" {
   flavor = "minimal"
 }
 
-component "errordeveloper/test:latest" {
+component_from_image "errordeveloper/test:latest" {
   name = "boo"
 }
