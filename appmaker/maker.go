@@ -12,6 +12,43 @@ import (
 	"k8s.io/client-go/pkg/util/intstr"
 )
 
+type App struct {
+	GroupName  string         `hcl:"group_name"`
+	Components []AppComponent `hcl:"component"`
+}
+
+type AppComponent struct {
+	Image    string            `hcl:",key"`
+	Name     string            `json:",omitempty" hcl:"name,omitempty"`
+	Port     int32             `json:",omitempty" hcl:"port,omitempty"`
+	Replicas *int32            `json:",omitempty" hcl:"replicas,omitempty"`
+	Flavor   string            `json:",omitempty" hcl:"flavor,omitempty"`
+	Opts     AppComponentOpts  `json:",omitempty" hcl:"opts,omitempty"`
+	Env      map[string]string `json:",omitempty" hcl:"env,omitempty"`
+	// Deployment, DaemonSet, StatefullSet ...etc
+	Kind int `json:",omitempty" hcl:"kind,omitempty"`
+	// It's probably okay for now, but we'd eventually want to
+	// inherit properties defined outside of the AppComponent struct,
+	// that it anything we'd use setters and getters for, so we might
+	// want to figure out intermediate struct or just write more
+	// some tests to see how things would work without that...
+	BasedOn            *AppComponent        `json:",omitempty" hcl:"-"`
+	Customize          GeneralCustomizer    `json:"-" hcl:"-"`
+	CustomizeCotainers ContainersCustomizer `json:"-" hcl:"-"`
+	CustomizePod       PodCustomizer        `json:"-" hcl:"-"`
+	CustomizeService   ServiceCustomizer    `json:"-" hcl:"-"`
+	CustomizePorts     PortsCustomizer      `json:"-" hcl:"-"`
+}
+
+// Everything we want to controll per-app, but it's not exposed to HCL directly
+type AppParams struct {
+	Namespace              string
+	DefaultReplicas        int32
+	DefaultPort            int32
+	StandardLivenessProbe  *v1.Probe
+	StandardReadinessProbe *v1.Probe
+}
+
 // AppComponentOpts hold highlevel fields which map to a non-trivial settings
 // within inside the object, often affecting sub-fields within sub-fields,
 // for more trivial things (like hostNetwork) we have custom setters
@@ -29,29 +66,6 @@ type AppComponentOpts struct {
 	//WithSecurityContext interface{}
 	// WithoutService disables building of the service
 	WithoutService bool `json:",omitempty"`
-}
-
-type AppComponent struct {
-	Image    string
-	Name     string            `json:",omitempty"`
-	Port     int32             `json:",omitempty"`
-	Replicas *int32            `json:",omitempty"`
-	Flavor   string            `json:",omitempty"`
-	Opts     AppComponentOpts  `json:",omitempty"`
-	Env      map[string]string `json:",omitempty"`
-	// Deployment, DaemonSet, StatefullSet ...etc
-	Kind int `json:",omitempty"`
-	// It's probably okay for now, but we'd eventually want to
-	// inherit properties defined outside of the AppComponent struct,
-	// that it anything we'd use setters and getters for, so we might
-	// want to figure out intermediate struct or just write more
-	// some tests to see how things would work without that...
-	BasedOn            *AppComponent        `json:",omitempty"`
-	Customize          GeneralCustomizer    `json:"-"`
-	CustomizeCotainers ContainersCustomizer `json:"-"`
-	CustomizePod       PodCustomizer        `json:"-"`
-	CustomizeService   ServiceCustomizer    `json:"-"`
-	CustomizePorts     PortsCustomizer      `json:"-"`
 }
 
 type (
@@ -93,29 +107,10 @@ const (
 	Secret
 )
 
-// Everything we want to controll per-app
-type AppParams struct {
-	Namespace              string
-	DefaultReplicas        int32
-	DefaultPort            int32
-	StandardLivenessProbe  *v1.Probe
-	StandardReadinessProbe *v1.Probe
-}
-
-type App struct {
-	GroupName  string
-	Components []AppComponent
-}
-
 type AppComponentResources struct {
 	deployment *v1beta1.Deployment
 	service    *v1.Service
 	manifest   AppComponent
-}
-
-type AppMaker interface {
-	MarshalToJSON() ([]map[int][]byte, error)
-	//MakeAll(params AppParams) *AppComponentResources
 }
 
 func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
