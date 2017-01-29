@@ -1,5 +1,5 @@
-hash: bc4c91be2483a5dc478a004ee46159dc70d7bd650e2e19b00038c277480cdc21
-updated: 2017-01-28T12:54:32.641822331Z
+hash: e05b570956fe7d067f56a5b45ef02e1f52875639484eba5fc8d1be991e8eda43
+updated: 2017-01-29T15:10:48.189947016Z
 imports:
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
@@ -34,6 +34,19 @@ imports:
   version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
+- name: github.com/hashicorp/hcl
+  version: db4f0768927a665a06c32855186e1bc762bcc8f5
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token
+- name: github.com/imdario/mergo
+  version: 6633656539c1639d9d78127b7d47c622b5d7b6dc
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/mailru/easyjson

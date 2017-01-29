@@ -15,3 +15,5 @@ import:
   - pkg/runtime
   - pkg/apis/meta/v1
 - package: github.com/spf13/cobra
+- package: github.com/hashicorp/hcl
+- package: github.com/imdario/mergo

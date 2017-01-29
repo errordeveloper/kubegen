@@ -1,6 +1,8 @@
 package appmaker
 
 import (
+	"fmt"
+
 	"sort"
 	"strings"
 
@@ -13,8 +15,10 @@ import (
 )
 
 type App struct {
-	GroupName  string         `hcl:"group_name"`
-	Components []AppComponent `hcl:"component_from_image"`
+	GroupName               string                     `hcl:"group_name"`
+	Components              []AppComponent             `hcl:"component_from_image"`
+	Templates               []AppComponentTemplate     `hcl:"component_template"`
+	ComponentsFromTemplates []AppComponentFromTemplate `hcl:"component_from_template"`
 }
 
 type AppComponent struct {
@@ -32,12 +36,25 @@ type AppComponent struct {
 	// that it anything we'd use setters and getters for, so we might
 	// want to figure out intermediate struct or just write more
 	// some tests to see how things would work without that...
-	BasedOn            *AppComponent        `json:",omitempty" hcl:"-"`
-	Customize          GeneralCustomizer    `json:"-" hcl:"-"`
-	CustomizeCotainers ContainersCustomizer `json:"-" hcl:"-"`
-	CustomizePod       PodCustomizer        `json:"-" hcl:"-"`
-	CustomizeService   ServiceCustomizer    `json:"-" hcl:"-"`
-	CustomizePorts     PortsCustomizer      `json:"-" hcl:"-"`
+	BasedOn              *AppComponent        `json:"-" hcl:"-"`
+	BasedOnNamedTemplate string               `json:",omitempty" hcl:"based_on,omitempty"`
+	Customize            GeneralCustomizer    `json:"-" hcl:"-"`
+	CustomizeCotainers   ContainersCustomizer `json:"-" hcl:"-"`
+	CustomizePod         PodCustomizer        `json:"-" hcl:"-"`
+	CustomizeService     ServiceCustomizer    `json:"-" hcl:"-"`
+	CustomizePorts       PortsCustomizer      `json:"-" hcl:"-"`
+}
+
+type AppComponentTemplate struct {
+	TemplateName string       `json:",omitempty" hcl:",key"`
+	Image        string       `json:",omitempty" hcl:"image"`
+	Component    AppComponent `json:",inline" hcl:",squash"`
+}
+
+type AppComponentFromTemplate struct {
+	TemplateName string       `json:",omitempty" hcl:",key"`
+	Image        string       `json:",omitempty" hcl:"image"`
+	Component    AppComponent `json:",inline" hcl:",squash"`
 }
 
 // Everything we want to controll per-app, but it's not exposed to HCL directly
@@ -47,6 +64,7 @@ type AppParams struct {
 	DefaultPort            int32
 	StandardLivenessProbe  *v1.Probe
 	StandardReadinessProbe *v1.Probe
+	templates              map[string]*AppComponent
 }
 
 // AppComponentOpts hold highlevel fields which map to a non-trivial settings
@@ -285,9 +303,23 @@ func (i *AppComponent) MakeService(params AppParams) *v1.Service {
 }
 
 func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
-	resources := AppComponentResources{manifest: *i}
+	resources := AppComponentResources{}
 
-	// TODO BasedOn
+	if i.BasedOnNamedTemplate != "" {
+		if template, ok := params.templates[i.BasedOnNamedTemplate]; ok {
+			fmt.Printf("template = %+v\n", template)
+			i.BasedOn = template
+		}
+	}
+
+	fmt.Printf("i = %+v\n", *i)
+	if i.BasedOn != nil {
+		*i = *i.BasedOn
+		fmt.Printf("i = %+v\n", *i)
+	}
+	fmt.Printf("i = %+v\n", *i)
+
+	resources.manifest = *i
 
 	pod := i.MakePod(params)
 
@@ -425,13 +457,24 @@ func (i *AppComponentResources) getContainers() []v1.Container {
 }
 
 func (i *App) makeDefaultParams() AppParams {
-	return AppParams{
+	params := AppParams{
 		Namespace:       i.GroupName,
 		DefaultReplicas: DEFAULT_REPLICAS,
 		DefaultPort:     DEFAULT_PORT,
+		templates:       make(map[string]*AppComponent),
 		// standardSecurityContext
 		// standardTmpVolume?
 	}
+
+	for _, template := range i.Templates {
+		params.templates[template.TemplateName] = &template.Component
+		params.templates[template.TemplateName].Image = template.Image
+		fmt.Printf("params.templates[%s] = %+v\n", template.TemplateName, params.templates[template.TemplateName])
+	}
+
+	fmt.Printf("params = %+v\n", params)
+
+	return params
 }
 
 // TODO: params argument
@@ -443,6 +486,13 @@ func (i *App) MakeAll() []*AppComponentResources {
 		list = append(list, component.MakeAll(params))
 	}
 
+	for _, component := range i.ComponentsFromTemplates {
+		// TODO we may want to return an error if template referenced here is not defined
+		componentFromTemplate := component.Component
+		componentFromTemplate.BasedOnNamedTemplate = component.TemplateName
+		list = append(list, componentFromTemplate.MakeAll(params))
+	}
+
 	return list
 }
 
@@ -452,6 +502,13 @@ func (i *App) MakeList() *api.List {
 	list := &api.List{}
 	for _, component := range i.Components {
 		list.Items = append(list.Items, component.MakeList(params).Items...)
+	}
+
+	for _, component := range i.ComponentsFromTemplates {
+		// TODO we may want to return an error if template referenced here is not defined
+		componentFromTemplate := component.Component
+		componentFromTemplate.BasedOnNamedTemplate = component.TemplateName
+		list.Items = append(list.Items, componentFromTemplate.MakeList(params).Items...)
 	}
 
 	return list
