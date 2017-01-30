@@ -321,6 +321,10 @@ func (i *AppComponent) MakeService(params AppParams) *v1.Service {
 		},
 	}
 
+	if params.Namespace != "" {
+		service.ObjectMeta.Namespace = params.Namespace
+	}
+
 	return service
 }
 
