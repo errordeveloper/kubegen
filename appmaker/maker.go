@@ -1,9 +1,8 @@
 package appmaker
 
 import (
-	"fmt"
+	_ "fmt"
 
-	"reflect"
 	"sort"
 	"strings"
 
@@ -60,24 +59,9 @@ type AppComponentTemplate struct {
 	AppComponent `json:",inline" hcl:",squash"`
 }
 
-type AppComponentFromTemplate struct {
-	TemplateName string `json:",omitempty" hcl:",key"`
-	Image        string `json:",omitempty" hcl:"image"`
-	AppComponent `json:",inline" hcl:",squash"`
-}
-
-func reflectComponent(src interface{}, dst *AppComponent) {
-	fmt.Printf("(before)\n\tsrc = { %+v }\n\tdst = { %+v }\n", src, *dst)
-	for i := 0; i < reflect.ValueOf(src).NumField(); i++ {
-		str := reflect.ValueOf(src).Type().Field(i).Name
-		for j := 0; j < reflect.ValueOf(*dst).NumField(); j++ {
-			if reflect.ValueOf(*dst).Type().Field(j).Name == reflect.ValueOf(src).Type().Field(i).Name {
-				reflect.Indirect(reflect.ValueOf(dst).Elem()).FieldByName(str).Set(reflect.ValueOf(src).FieldByName(str))
-			}
-		}
-	}
-	fmt.Printf("(after)\n\tsrc = { %+v }\n\tdst = { %+v }\n", src, *dst)
-}
+// AppComponentFromTemplate is the same as AppComponentTemplate, but it is an alias, because
+// it makes the code easier to read
+type AppComponentFromTemplate AppComponentTemplate
 
 // Everything we want to controll per-app, but it's not exposed to HCL directly
 type AppParams struct {
@@ -524,7 +508,10 @@ func (i *App) MakeAll() []*AppComponentResources {
 
 	for _, component := range i.ComponentsFromTemplates {
 		// TODO we may want to return an error if template referenced here is not defined
-		c := &AppComponent{BasedOnNamedTemplate: component.TemplateName}
+		c := &AppComponent{
+			Image:                component.Image,
+			BasedOnNamedTemplate: component.TemplateName,
+		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
 		}
@@ -544,17 +531,18 @@ func (i *App) MakeList() *api.List {
 
 	for _, component := range i.ComponentsFromImages {
 		c := &AppComponent{Image: component.Image}
-		fmt.Printf("(before)\n\tsrc = { %+v }\n\tdst = { %+v }\n", component.AppComponent, *c)
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
 		}
-		fmt.Printf("(after)\n\tsrc = { %+v }\n\tdst = { %+v }\n", component.AppComponent, *c)
 		list.Items = append(list.Items, c.MakeList(params).Items...)
 	}
 
 	for _, component := range i.ComponentsFromTemplates {
 		// TODO we may want to return an error if template referenced here is not defined
-		c := &AppComponent{BasedOnNamedTemplate: component.TemplateName}
+		c := &AppComponent{
+			Image:                component.Image,
+			BasedOnNamedTemplate: component.TemplateName,
+		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
 		}

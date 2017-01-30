@@ -22,3 +22,7 @@ component_from_template "foo" {
 component_from_template "foo" {
   name = "barbar"
 }
+
+component_from_template "foo" {
+  image = "errordeveloper/foo-plus"
+}
