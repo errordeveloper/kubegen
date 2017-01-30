@@ -3,6 +3,7 @@ package appmaker
 import (
 	"fmt"
 
+	"reflect"
 	"sort"
 	"strings"
 
@@ -12,6 +13,8 @@ import (
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
+
+	"github.com/imdario/mergo"
 )
 
 type App struct {
@@ -22,7 +25,11 @@ type App struct {
 }
 
 type AppComponent struct {
-	Image    string            `hcl:",key"`
+	Image            string `hcl:",key"`
+	AppComponentBase `hcl:",squash"`
+}
+
+type AppComponentBase struct {
 	Name     string            `json:",omitempty" hcl:"name,omitempty"`
 	Port     int32             `json:",omitempty" hcl:"port,omitempty"`
 	Replicas *int32            `json:",omitempty" hcl:"replicas,omitempty"`
@@ -46,15 +53,26 @@ type AppComponent struct {
 }
 
 type AppComponentTemplate struct {
-	TemplateName string       `json:",omitempty" hcl:",key"`
-	Image        string       `json:",omitempty" hcl:"image"`
-	Component    AppComponent `json:",inline" hcl:",squash"`
+	TemplateName     string `json:",omitempty" hcl:",key"`
+	Image            string `json:",omitempty" hcl:"image"`
+	AppComponentBase `json:",inline" hcl:",squash"`
 }
 
 type AppComponentFromTemplate struct {
-	TemplateName string       `json:",omitempty" hcl:",key"`
-	Image        string       `json:",omitempty" hcl:"image"`
-	Component    AppComponent `json:",inline" hcl:",squash"`
+	TemplateName     string `json:",omitempty" hcl:",key"`
+	Image            string `json:",omitempty" hcl:"image"`
+	AppComponentBase `json:",inline" hcl:",squash"`
+}
+
+func reflectComponent(src interface{}, dst *AppComponent) {
+	for i := 0; i < reflect.ValueOf(src).NumField(); i++ {
+		str := reflect.ValueOf(src).Type().Field(i).Name
+		for j := 0; j < reflect.ValueOf(*dst).NumField(); j++ {
+			if reflect.ValueOf(*dst).Type().Field(j).Name == reflect.ValueOf(src).Type().Field(i).Name {
+				reflect.Indirect(reflect.ValueOf(dst).Elem()).FieldByName(str).Set(reflect.ValueOf(src).FieldByName(str))
+			}
+		}
+	}
 }
 
 // Everything we want to controll per-app, but it's not exposed to HCL directly
@@ -64,7 +82,7 @@ type AppParams struct {
 	DefaultPort            int32
 	StandardLivenessProbe  *v1.Probe
 	StandardReadinessProbe *v1.Probe
-	templates              map[string]*AppComponent
+	templates              map[string]AppComponent
 }
 
 // AppComponentOpts hold highlevel fields which map to a non-trivial settings
@@ -307,17 +325,17 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 
 	if i.BasedOnNamedTemplate != "" {
 		if template, ok := params.templates[i.BasedOnNamedTemplate]; ok {
-			fmt.Printf("template = %+v\n", template)
-			i.BasedOn = template
+			i.BasedOn = &template
 		}
 	}
 
-	fmt.Printf("i = %+v\n", *i)
 	if i.BasedOn != nil {
-		*i = *i.BasedOn
-		fmt.Printf("i = %+v\n", *i)
+		fmt.Printf("(before) i = { %+v }\ni.BasedOn = { %+v }\n", *i, *i.BasedOn)
+		if err := mergo.Merge(i, i.BasedOn); err != nil {
+			panic(err)
+		}
+		fmt.Printf("(after) i = { %+v }\n", *i)
 	}
-	fmt.Printf("i = %+v\n", *i)
 
 	resources.manifest = *i
 
@@ -461,18 +479,19 @@ func (i *App) makeDefaultParams() AppParams {
 		Namespace:       i.GroupName,
 		DefaultReplicas: DEFAULT_REPLICAS,
 		DefaultPort:     DEFAULT_PORT,
-		templates:       make(map[string]*AppComponent),
+		templates:       make(map[string]AppComponent),
 		// standardSecurityContext
 		// standardTmpVolume?
 	}
 
 	for _, template := range i.Templates {
-		params.templates[template.TemplateName] = &template.Component
-		params.templates[template.TemplateName].Image = template.Image
-		fmt.Printf("params.templates[%s] = %+v\n", template.TemplateName, params.templates[template.TemplateName])
+		t := &AppComponent{}
+		//if err := mergo.Merge(&t, template); err != nil {
+		//	panic(err)
+		//}
+		reflectComponent(template, t)
+		params.templates[template.TemplateName] = *t
 	}
-
-	fmt.Printf("params = %+v\n", params)
 
 	return params
 }
@@ -488,9 +507,12 @@ func (i *App) MakeAll() []*AppComponentResources {
 
 	for _, component := range i.ComponentsFromTemplates {
 		// TODO we may want to return an error if template referenced here is not defined
-		componentFromTemplate := component.Component
-		componentFromTemplate.BasedOnNamedTemplate = component.TemplateName
-		list = append(list, componentFromTemplate.MakeAll(params))
+		c := &AppComponent{AppComponentBase: AppComponentBase{BasedOnNamedTemplate: component.TemplateName}}
+		//if err := mergo.Merge(&c, component); err != nil {
+		//	panic(err)
+		//}
+		reflectComponent(component, c)
+		list = append(list, c.MakeAll(params))
 	}
 
 	return list
@@ -506,9 +528,12 @@ func (i *App) MakeList() *api.List {
 
 	for _, component := range i.ComponentsFromTemplates {
 		// TODO we may want to return an error if template referenced here is not defined
-		componentFromTemplate := component.Component
-		componentFromTemplate.BasedOnNamedTemplate = component.TemplateName
-		list.Items = append(list.Items, componentFromTemplate.MakeList(params).Items...)
+		c := &AppComponent{AppComponentBase: AppComponentBase{BasedOnNamedTemplate: component.TemplateName}}
+		//if err := mergo.Merge(&c, component); err != nil {
+		//	panic(err)
+		//}
+		reflectComponent(component, c)
+		list.Items = append(list.Items, c.MakeList(params).Items...)
 	}
 
 	return list
