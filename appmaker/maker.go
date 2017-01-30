@@ -67,6 +67,7 @@ type AppComponentFromTemplate struct {
 }
 
 func reflectComponent(src interface{}, dst *AppComponent) {
+	fmt.Printf("(before)\n\tsrc = { %+v }\n\tdst = { %+v }\n", src, *dst)
 	for i := 0; i < reflect.ValueOf(src).NumField(); i++ {
 		str := reflect.ValueOf(src).Type().Field(i).Name
 		for j := 0; j < reflect.ValueOf(*dst).NumField(); j++ {
@@ -75,6 +76,7 @@ func reflectComponent(src interface{}, dst *AppComponent) {
 			}
 		}
 	}
+	fmt.Printf("(after)\n\tsrc = { %+v }\n\tdst = { %+v }\n", src, *dst)
 }
 
 // Everything we want to controll per-app, but it's not exposed to HCL directly
@@ -332,11 +334,13 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 	}
 
 	if i.BasedOn != nil {
-		fmt.Printf("(before) i = { %+v }\ni.BasedOn = { %+v }\n", *i, *i.BasedOn)
-		if err := mergo.Merge(i, i.BasedOn); err != nil {
+		base := *i.BasedOn
+		if err := mergo.Merge(&base, *i); err != nil {
 			panic(err)
 		}
-		fmt.Printf("(after) i = { %+v }\n", *i)
+		if err := mergo.Merge(i, base); err != nil {
+			panic(err)
+		}
 	}
 
 	resources.manifest = *i
@@ -487,11 +491,10 @@ func (i *App) makeDefaultParams() AppParams {
 	}
 
 	for _, template := range i.Templates {
-		t := &AppComponent{}
-		//if err := mergo.Merge(&t, template); err != nil {
-		//	panic(err)
-		//}
-		reflectComponent(template, t)
+		t := &AppComponent{Image: template.Image}
+		if err := mergo.Merge(t, template.AppComponent); err != nil {
+			panic(err)
+		}
 		params.templates[template.TemplateName] = *t
 	}
 
@@ -508,18 +511,19 @@ func (i *App) MakeAll() []*AppComponentResources {
 	}
 
 	for _, component := range i.ComponentsFromImage {
-		c := &AppComponent{}
-		reflectComponent(component, c)
+		c := &AppComponent{Image: component.Image}
+		if err := mergo.Merge(c, component.AppComponent); err != nil {
+			panic(err)
+		}
 		list = append(list, c.MakeAll(params))
 	}
 
 	for _, component := range i.ComponentsFromTemplates {
 		// TODO we may want to return an error if template referenced here is not defined
 		c := &AppComponent{BasedOnNamedTemplate: component.TemplateName}
-		//if err := mergo.Merge(&c, component); err != nil {
-		//	panic(err)
-		//}
-		reflectComponent(component, c)
+		if err := mergo.Merge(c, component.AppComponent); err != nil {
+			panic(err)
+		}
 		list = append(list, c.MakeAll(params))
 	}
 
@@ -536,17 +540,22 @@ func (i *App) MakeList() *api.List {
 
 	for _, component := range i.ComponentsFromImage {
 		c := &AppComponent{}
-		reflectComponent(component, c)
+		fmt.Printf("(before)\n\tsrc = { %+v }\n\tdst = { %+v }\n", component.AppComponent, *c)
+		if err := mergo.Merge(c, component.AppComponent); err != nil {
+			panic(err)
+		}
+		fmt.Printf("(after)\n\tsrc = { %+v }\n\tdst = { %+v }\n", component.AppComponent, *c)
 		list.Items = append(list.Items, c.MakeList(params).Items...)
 	}
 
 	for _, component := range i.ComponentsFromTemplates {
 		// TODO we may want to return an error if template referenced here is not defined
 		c := &AppComponent{BasedOnNamedTemplate: component.TemplateName}
-		//if err := mergo.Merge(&c, component); err != nil {
-		//	panic(err)
-		//}
-		reflectComponent(component, c)
+		fmt.Printf("(before)\n\tsrc = { %+v }\n\tdst = { %+v }\n", component.AppComponent, *c)
+		if err := mergo.Merge(c, component.AppComponent); err != nil {
+			panic(err)
+		}
+		fmt.Printf("(after)\n\tsrc = { %+v }\n\tdst = { %+v }\n", component.AppComponent, *c)
 		list.Items = append(list.Items, c.MakeList(params).Items...)
 	}
 

@@ -10,13 +10,15 @@ component_from_image "errordeveloper/test:latest" {
 }
 
 component_template "foo" {
-  #AppComponent {
-    image = "errordeveloper/foo"
-    name = "foofoo"
-    port = 123
-  #}
+  image = "errordeveloper/foo"
+  name = "foofoo"
+  port = 123
 }
 
 component_from_template "foo" {
-    port = 78
+  port = 78
+}
+
+component_from_template "foo" {
+  name = "barbar"
 }
