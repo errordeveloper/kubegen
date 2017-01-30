@@ -322,6 +322,7 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 	}
 
 	if i.basedOn != nil {
+		// TODO: i.Env = make(map[string]string?
 		base := *i.basedOn
 		if err := mergo.Merge(&base, *i); err != nil {
 			panic(err)
@@ -479,7 +480,10 @@ func (i *App) makeDefaultParams() AppParams {
 	}
 
 	for _, template := range i.Templates {
-		t := &AppComponent{Image: template.Image}
+		t := &AppComponent{
+			Image: template.Image,
+			Env:   make(map[string]string),
+		}
 		if err := mergo.Merge(t, template.AppComponent); err != nil {
 			panic(err)
 		}
