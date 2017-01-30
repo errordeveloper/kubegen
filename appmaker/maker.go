@@ -39,7 +39,7 @@ type AppComponent struct {
 	// that it anything we'd use setters and getters for, so we might
 	// want to figure out intermediate struct or just write more
 	// some tests to see how things would work without that...
-	BasedOn              *AppComponent        `json:"-" hcl:"-"`
+	basedOn              *AppComponent        `json:"-" hcl:"-"`
 	BasedOnNamedTemplate string               `json:",omitempty" hcl:"based_on,omitempty"`
 	Customize            GeneralCustomizer    `json:"-" hcl:"-"`
 	CustomizeCotainers   ContainersCustomizer `json:"-" hcl:"-"`
@@ -317,12 +317,12 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 
 	if i.BasedOnNamedTemplate != "" {
 		if template, ok := params.templates[i.BasedOnNamedTemplate]; ok {
-			i.BasedOn = &template
+			i.basedOn = &template
 		}
 	}
 
-	if i.BasedOn != nil {
-		base := *i.BasedOn
+	if i.basedOn != nil {
+		base := *i.basedOn
 		if err := mergo.Merge(&base, *i); err != nil {
 			panic(err)
 		}
