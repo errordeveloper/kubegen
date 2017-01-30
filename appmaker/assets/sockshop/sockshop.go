@@ -11,24 +11,24 @@ func MakeSockShop() *appmaker.App {
 		"ZIPKIN": "http://zipkin:9411/api/v1/spans",
 	}
 
-	mongo := appmaker.AppComponent{
-		Image:  "mongo",
-		Port:   27017,
-		Flavor: "minimal",
-		//security:
-		//  capabilities:
-		//    drop: [ all ]
-		//    add: [ CHOWN, SETGID, SETUID ]
-		//  readOnlyRootFilesystem: true
-		Env: zipkinEnv,
-	}
+	//mongo := appmaker.AppComponent{
+	//	Image:  "mongo",
+	//	Port:   27017,
+	//	Flavor: "minimal",
+	//	//security:
+	//	//  capabilities:
+	//	//    drop: [ all ]
+	//	//    add: [ CHOWN, SETGID, SETUID ]
+	//	//  readOnlyRootFilesystem: true
+	//	Env: zipkinEnv,
+	//}
 
 	return &appmaker.App{
 		GroupName: "sock-shop",
 		Components: []appmaker.AppComponent{
 			{
-				Name:    "cart-db",
-				BasedOn: &mongo,
+				Name: "cart-db",
+				//BasedOn: &mongo,
 			},
 			{
 				Image: "weaveworksdemos/cart:0.4.0",
@@ -59,8 +59,8 @@ func MakeSockShop() *appmaker.App {
 				//service_session_affinity: ClientIP
 			},
 			{
-				Name:    "orders-db",
-				BasedOn: &mongo,
+				Name: "orders-db",
+				//BasedOn: &mongo,
 			},
 			{
 				Image: "weaveworksdemos/orders:0.4.2",
@@ -95,8 +95,8 @@ func MakeSockShop() *appmaker.App {
 				Opts:  altPromPath,
 			},
 			{
-				Image:   "weaveworksdemos/user-db:0.3.0",
-				BasedOn: &mongo,
+				Image: "weaveworksdemos/user-db:0.3.0",
+				//BasedOn: &mongo,
 			},
 			{
 				Image: "weaveworksdemos/user:0.4.0",
