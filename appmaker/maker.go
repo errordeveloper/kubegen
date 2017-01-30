@@ -20,7 +20,7 @@ import (
 type App struct {
 	GroupName               string                     `hcl:"group_name"`
 	Components              []AppComponent             `hcl:"-"`
-	ComponentsFromImage     []AppComponentFromImage    `hcl:"component_from_image"`
+	ComponentsFromImages    []AppComponentFromImage    `hcl:"component_from_image"`
 	Templates               []AppComponentTemplate     `hcl:"component_template"`
 	ComponentsFromTemplates []AppComponentFromTemplate `hcl:"component_from_template"`
 }
@@ -510,7 +510,7 @@ func (i *App) MakeAll() []*AppComponentResources {
 		list = append(list, component.MakeAll(params))
 	}
 
-	for _, component := range i.ComponentsFromImage {
+	for _, component := range i.ComponentsFromImages {
 		c := &AppComponent{Image: component.Image}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
@@ -538,8 +538,8 @@ func (i *App) MakeList() *api.List {
 		list.Items = append(list.Items, component.MakeList(params).Items...)
 	}
 
-	for _, component := range i.ComponentsFromImage {
-		c := &AppComponent{}
+	for _, component := range i.ComponentsFromImages {
+		c := &AppComponent{Image: component.Image}
 		fmt.Printf("(before)\n\tsrc = { %+v }\n\tdst = { %+v }\n", component.AppComponent, *c)
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
@@ -551,11 +551,9 @@ func (i *App) MakeList() *api.List {
 	for _, component := range i.ComponentsFromTemplates {
 		// TODO we may want to return an error if template referenced here is not defined
 		c := &AppComponent{BasedOnNamedTemplate: component.TemplateName}
-		fmt.Printf("(before)\n\tsrc = { %+v }\n\tdst = { %+v }\n", component.AppComponent, *c)
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
 		}
-		fmt.Printf("(after)\n\tsrc = { %+v }\n\tdst = { %+v }\n", component.AppComponent, *c)
 		list.Items = append(list.Items, c.MakeList(params).Items...)
 	}
 
