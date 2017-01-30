@@ -54,8 +54,8 @@ func kubegen(cmd *cobra.Command, args []string) error {
 		GroupName: "test",
 		Components: []appmaker.AppComponent{
 			{
-				Image:            image,
-				AppComponentBase: appmaker.AppComponentBase{Flavor: flavor},
+				Image:  image,
+				Flavor: flavor,
 			},
 		},
 	}

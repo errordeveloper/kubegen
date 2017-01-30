@@ -19,17 +19,14 @@ import (
 
 type App struct {
 	GroupName               string                     `hcl:"group_name"`
-	Components              []AppComponent             `hcl:"component_from_image"`
+	Components              []AppComponent             `hcl:"-"`
+	ComponentsFromImage     []AppComponentFromImage    `hcl:"component_from_image"`
 	Templates               []AppComponentTemplate     `hcl:"component_template"`
 	ComponentsFromTemplates []AppComponentFromTemplate `hcl:"component_from_template"`
 }
 
 type AppComponent struct {
-	Image            string `hcl:",key"`
-	AppComponentBase `hcl:",squash"`
-}
-
-type AppComponentBase struct {
+	Image    string            `hcl:"-"`
 	Name     string            `json:",omitempty" hcl:"name,omitempty"`
 	Port     int32             `json:",omitempty" hcl:"port,omitempty"`
 	Replicas *int32            `json:",omitempty" hcl:"replicas,omitempty"`
@@ -52,16 +49,21 @@ type AppComponentBase struct {
 	CustomizePorts       PortsCustomizer      `json:"-" hcl:"-"`
 }
 
+type AppComponentFromImage struct {
+	Image        string `hcl:",key"`
+	AppComponent `hcl:",squash"`
+}
+
 type AppComponentTemplate struct {
-	TemplateName     string `json:",omitempty" hcl:",key"`
-	Image            string `json:",omitempty" hcl:"image"`
-	AppComponentBase `json:",inline" hcl:",squash"`
+	TemplateName string `json:",omitempty" hcl:",key"`
+	Image        string `json:",omitempty" hcl:"image"`
+	AppComponent `json:",inline" hcl:",squash"`
 }
 
 type AppComponentFromTemplate struct {
-	TemplateName     string `json:",omitempty" hcl:",key"`
-	Image            string `json:",omitempty" hcl:"image"`
-	AppComponentBase `json:",inline" hcl:",squash"`
+	TemplateName string `json:",omitempty" hcl:",key"`
+	Image        string `json:",omitempty" hcl:"image"`
+	AppComponent `json:",inline" hcl:",squash"`
 }
 
 func reflectComponent(src interface{}, dst *AppComponent) {
@@ -505,9 +507,15 @@ func (i *App) MakeAll() []*AppComponentResources {
 		list = append(list, component.MakeAll(params))
 	}
 
+	for _, component := range i.ComponentsFromImage {
+		c := &AppComponent{}
+		reflectComponent(component, c)
+		list = append(list, c.MakeAll(params))
+	}
+
 	for _, component := range i.ComponentsFromTemplates {
 		// TODO we may want to return an error if template referenced here is not defined
-		c := &AppComponent{AppComponentBase: AppComponentBase{BasedOnNamedTemplate: component.TemplateName}}
+		c := &AppComponent{BasedOnNamedTemplate: component.TemplateName}
 		//if err := mergo.Merge(&c, component); err != nil {
 		//	panic(err)
 		//}
@@ -526,9 +534,15 @@ func (i *App) MakeList() *api.List {
 		list.Items = append(list.Items, component.MakeList(params).Items...)
 	}
 
+	for _, component := range i.ComponentsFromImage {
+		c := &AppComponent{}
+		reflectComponent(component, c)
+		list.Items = append(list.Items, c.MakeList(params).Items...)
+	}
+
 	for _, component := range i.ComponentsFromTemplates {
 		// TODO we may want to return an error if template referenced here is not defined
-		c := &AppComponent{AppComponentBase: AppComponentBase{BasedOnNamedTemplate: component.TemplateName}}
+		c := &AppComponent{BasedOnNamedTemplate: component.TemplateName}
 		//if err := mergo.Merge(&c, component); err != nil {
 		//	panic(err)
 		//}
