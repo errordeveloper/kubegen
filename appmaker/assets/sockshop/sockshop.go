@@ -25,7 +25,7 @@ func MakeSockShop() *appmaker.App {
 					//    drop: [ all ]
 					//    add: [ CHOWN, SETGID, SETUID ]
 					//  readOnlyRootFilesystem: true
-					//Env: zipkinEnv,
+					Env: zipkinEnv,
 				},
 			},
 		},

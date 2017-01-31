@@ -322,7 +322,9 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 	}
 
 	if i.basedOn != nil {
-		// TODO: i.Env = make(map[string]string?
+		if i.Env == nil {
+			i.Env = make(map[string]string)
+		}
 		base := *i.basedOn
 		if err := mergo.Merge(&base, *i); err != nil {
 			panic(err)
@@ -503,7 +505,10 @@ func (i *App) MakeAll() []*AppComponentResources {
 	}
 
 	for _, component := range i.ComponentsFromImages {
-		c := &AppComponent{Image: component.Image}
+		c := &AppComponent{
+			Image: component.Image,
+			Env:   make(map[string]string),
+		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
 		}
@@ -515,6 +520,7 @@ func (i *App) MakeAll() []*AppComponentResources {
 		c := &AppComponent{
 			Image:                component.Image,
 			BasedOnNamedTemplate: component.TemplateName,
+			Env:                  make(map[string]string),
 		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
@@ -534,7 +540,10 @@ func (i *App) MakeList() *api.List {
 	}
 
 	for _, component := range i.ComponentsFromImages {
-		c := &AppComponent{Image: component.Image}
+		c := &AppComponent{
+			Image: component.Image,
+			Env:   make(map[string]string),
+		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
 		}
@@ -546,6 +555,7 @@ func (i *App) MakeList() *api.List {
 		c := &AppComponent{
 			Image:                component.Image,
 			BasedOnNamedTemplate: component.TemplateName,
+			Env:                  make(map[string]string),
 		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
 			panic(err)
