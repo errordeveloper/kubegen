@@ -1,12 +1,4 @@
-all:
-	@$(MAKE) install
-	@$(MAKE) test
-	@$(MAKE) build
-
-install:
-	go install ./appmaker
-
-test:
+test: build
 	@$(MAKE) -C ./appmaker/assets test
 	@go test -v ./appmaker
 	@./kubegen stack --manifest=test.hcl --output-format=json
@@ -15,8 +7,12 @@ test:
 	  || diff test.yml test.yml.new
 	@rm -f test.yml.new
 
-build:
-	go build ./
+build: install
+	@go build ./
+
+install:
+	@go install ./appmaker
 
 assets:
 	@$(MAKE) -C ./appmaker/assets rebuild
+	@./kubegen stack --manifest=test.hcl > test.yml.new \
