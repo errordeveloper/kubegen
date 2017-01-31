@@ -21,4 +21,5 @@ import:
 - package: github.com/docker/docker/pkg/term
   version: "40af569"
 - package: github.com/d4l3k/go-highlight
-  version: "2069b64"
+  repo: github.com/errordeveloper/go-highlight
+  version: "ce3036b16fa0fdcee2a3f3a58d15c377a9b60093"
