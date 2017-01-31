@@ -1,12 +1,13 @@
-hash: f3af40c764f5122c2e39bd5bfb52aa676c18f6b5dc8e09ec0240c2bec56fba58
-updated: 2017-01-31T08:37:02.569623012Z
+hash: e216f6db00e52ee7ab3d472168ea852f88fa73e96b52554286eef9cf6bce331c
+updated: 2017-01-31T11:26:55.167648847Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
   subpackages:
   - winterm
 - name: github.com/d4l3k/go-highlight
-  version: 2069b6422dcadc6be001409dd0a319204390b98e
+  version: ce3036b16fa0fdcee2a3f3a58d15c377a9b60093
+  repo: https://github.com/errordeveloper/go-highlight
   subpackages:
   - languages
   - registry
