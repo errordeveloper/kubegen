@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	flavor   string
-	image    string
-	manifest string
+	flavor       string
+	image        string
+	manifest     string
+	outputFormat string
 )
 
 func main() {
@@ -34,6 +35,7 @@ func main() {
 	}
 
 	appStack.Flags().StringVarP(&manifest, "manifest", "", "Kubefile", "App manifest to use")
+	appStack.Flags().StringVarP(&outputFormat, "output-format", "", "yaml", "App manifest to use")
 	rootCmd.AddCommand(appStack)
 
 	//component.Flags().StringVarP(&image, "image", "", "", "Image to use")
@@ -78,22 +80,34 @@ func generateAppStack(cmd *cobra.Command, args []string) error {
 */
 
 func encodeAndOutput(app *appmaker.App) error {
-	data, err := app.EncodeListToYAML()
-	if err != nil {
-		return err
+	var (
+		data   []byte
+		output string
+		err    error
+	)
+
+	switch outputFormat {
+	case "yaml":
+		if data, err = app.EncodeListToYAML(); err != nil {
+			return err
+		}
+		data = append([]byte("---\n"), data...)
+	case "json":
+		if data, err = app.EncodeListToPrettyJSON(); err != nil {
+			return err
+		}
 	}
 
-	data = append([]byte("---\n"), data...)
-	var output string
 	if term.IsTerminal(0) {
-		pretty, err := highlight.Term("yaml", data)
+		veryPretty, err := highlight.Term(outputFormat, data)
 		if err != nil {
 			panic(err)
 		}
-		output = string(pretty)
+		output = string(veryPretty)
 	} else {
 		output = string(data)
 	}
+
 	fmt.Println(output)
 
 	return nil
