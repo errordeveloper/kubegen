@@ -10,7 +10,7 @@ import:
   - pkg/util/intstr
   - tools/clientcmd
 - package: k8s.io/apimachinery
-  version: "02fccf9"
+  version: "02fccf9462f0fb0287e82cb8a0f1d03b05f8d704"
   subpackages:
   - pkg/runtime
   - pkg/apis/meta/v1
