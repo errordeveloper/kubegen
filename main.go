@@ -83,6 +83,7 @@ func encodeAndOutput(app *appmaker.App) error {
 		return err
 	}
 
+	data = append([]byte("---\n"), data...)
 	var output string
 	if term.IsTerminal(0) {
 		pretty, err := highlight.Term("yaml", data)
