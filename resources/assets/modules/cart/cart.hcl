@@ -1,8 +1,6 @@
 deployment "cart" {
-  metadata {
-    labels {
-      name = "cart"
-    }
+  labels {
+    name = "cart"
   }
 
   # Probable the default, but just added here for clarity
@@ -63,13 +61,11 @@ deployment "cart" {
 }
 
 service "cart" {
-  metadata {
-    labels {
-      name = "cart"
-    }
-    annotations {
-      "prometheus.io/path" = "/prometheus"
-    }
+  labels {
+    name = "cart"
+  }
+  annotations {
+    "prometheus.io/path" = "/prometheus"
   }
 
   # Maybe selector for the same name should be the default?
@@ -83,10 +79,8 @@ service "cart" {
 }
 
 deployment "cart-db" {
-  metadata {
-    labels {
-      name = "cart-db"
-    }
+  labels {
+    name = "cart-db"
   }
 
   replicas = 1
@@ -116,14 +110,12 @@ deployment "cart-db" {
 }
 
 service "cart-db" {
-  metadata {
-    labels {
-      name = "cart-db"
-    }
-    annotations {
-      # is this valid hcl?
-      "prometheus.io/path" = "/prometheus"
-    }
+  labels {
+    name = "cart-db"
+  }
+  annotations {
+    # is this valid hcl?
+    "prometheus.io/path" = "/prometheus"
   }
 
   selector {

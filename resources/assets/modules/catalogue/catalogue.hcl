@@ -1,11 +1,10 @@
 variable "zipkin" { }
 
 deployment "catalogue" {
-  metadata {
-    labels {
-      name = "catalogue"
-    }
+  labels {
+    name = "catalogue"
   }
+
 
   replicas = 1
 
@@ -46,10 +45,8 @@ deployment "catalogue" {
 }
 
 service "catalogue" {
-  metadata {
-    labels {
-      name = "catalogue"
-    }
+  labels {
+    name = "catalogue"
   }
 
   selector {
@@ -62,10 +59,8 @@ service "catalogue" {
 }
 
 deployment "catalogue-db" {
-  metadata {
-    labels {
-      name = "catalogue-db"
-    }
+  labels {
+    name = "catalogue-db"
   }
 
   replicas = 1
@@ -90,10 +85,8 @@ deployment "catalogue-db" {
 }
 
 service "catalogue-db" {
-  metadata {
-    labels {
-      name = "catalogue-db"
-    }
+  labels {
+    name = "catalogue-db"
   }
 
   selector {

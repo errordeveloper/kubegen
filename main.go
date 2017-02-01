@@ -9,7 +9,7 @@ import (
 	"github.com/docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 
-	"github.com/davecgh/go-spew/spew"
+	//"github.com/davecgh/go-spew/spew"
 
 	"github.com/errordeveloper/kubegen/appmaker"
 	"github.com/errordeveloper/kubegen/resources"
@@ -89,12 +89,34 @@ func generateAppStack(cmd *cobra.Command, args []string) error {
 */
 
 func moduleTest(cmd *cobra.Command, args []string) error {
-	module, err := resources.NewModuleFromPath(args[0])
+	var (
+		data   []byte
+		output string
+		err    error
+	)
+
+	module, err := resources.NewResourceGroupFromPath(args[0])
 	if err != nil {
 		panic(err)
 	}
 
-	spew.Dump(module)
+	//spew.Dump(module)
+
+	if data, err = module.EncodeListToPrettyJSON(); err != nil {
+		return err
+	}
+
+	if term.IsTerminal(0) {
+		veryPretty, err := highlight.Term(outputFormat, data)
+		if err != nil {
+			panic(err)
+		}
+		output = string(veryPretty)
+	} else {
+		output = string(data)
+	}
+
+	fmt.Println(output)
 
 	return nil
 }
