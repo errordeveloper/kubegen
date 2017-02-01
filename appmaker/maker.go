@@ -22,16 +22,18 @@ type App struct {
 	ComponentsFromImages    []AppComponentFromImage    `hcl:"component_from_image"`
 	Templates               []AppComponentTemplate     `hcl:"component_template"`
 	ComponentsFromTemplates []AppComponentFromTemplate `hcl:"component_from_template"`
+	CommonEnv               map[string]string          `hcl:"common_env"`
 }
 
 type AppComponent struct {
-	Image    string            `hcl:"-"`
-	Name     string            `json:",omitempty" hcl:"name,omitempty"`
-	Port     int32             `json:",omitempty" hcl:"port,omitempty"`
-	Replicas *int32            `json:",omitempty" hcl:"replicas,omitempty"`
-	Flavor   string            `json:",omitempty" hcl:"flavor,omitempty"`
-	Opts     AppComponentOpts  `json:",omitempty" hcl:"opts,omitempty"`
-	Env      map[string]string `json:",omitempty" hcl:"env,omitempty"`
+	Image     string            `hcl:"-"`
+	Name      string            `json:",omitempty" hcl:"name,omitempty"`
+	Port      int32             `json:",omitempty" hcl:"port,omitempty"`
+	Replicas  *int32            `json:",omitempty" hcl:"replicas,omitempty"`
+	Flavor    string            `json:",omitempty" hcl:"flavor,omitempty"`
+	Opts      AppComponentOpts  `json:",omitempty" hcl:"opts,omitempty"`
+	Env       map[string]string `json:",omitempty" hcl:"env,omitempty"`
+	CommonEnv []string          `json:",omitempty" hcl:"common_env,omitempty"`
 	// Deployment, DaemonSet, StatefullSet ...etc
 	Kind int `json:",omitempty" hcl:"kind,omitempty"`
 	// It's probably okay for now, but we'd eventually want to
@@ -71,6 +73,7 @@ type AppParams struct {
 	StandardLivenessProbe  *v1.Probe
 	StandardReadinessProbe *v1.Probe
 	templates              map[string]AppComponent
+	commonEnv              map[string]string
 }
 
 // AppComponentOpts hold highlevel fields which map to a non-trivial settings
@@ -168,13 +171,13 @@ func (i *AppComponent) getPort(params AppParams) int32 {
 }
 
 func (i *AppComponent) maybeAddEnvVars(params AppParams, container *v1.Container) {
+	if len(i.Env) == 0 {
+		return
+	}
+
 	keys := []string{}
 	for k, _ := range i.Env {
 		keys = append(keys, k)
-	}
-
-	if len(keys) == 0 {
-		return
 	}
 
 	sort.Strings(keys)
@@ -188,6 +191,22 @@ func (i *AppComponent) maybeAddEnvVars(params AppParams, container *v1.Container
 		}
 	}
 	container.Env = env
+}
+
+func (i *AppComponent) maybeUseCommonEnvVars(params AppParams) {
+	if len(i.CommonEnv) == 0 {
+		return
+	}
+
+	if i.Env == nil {
+		i.Env = make(map[string]string)
+	}
+
+	for _, j := range i.CommonEnv {
+		if v, ok := params.commonEnv[j]; ok {
+			i.Env[j] = v
+		}
+	}
 }
 
 func (i *AppComponent) maybeAddProbes(params AppParams, container *v1.Container) {
@@ -221,6 +240,7 @@ func (i *AppComponent) maybeAddProbes(params AppParams, container *v1.Container)
 func (i *AppComponent) MakeContainer(params AppParams, name string) v1.Container {
 	container := v1.Container{Name: name, Image: i.Image}
 
+	i.maybeUseCommonEnvVars(params)
 	i.maybeAddEnvVars(params, &container)
 
 	if !i.Opts.WithoutPorts {
@@ -490,6 +510,10 @@ func (i *App) makeDefaultParams() AppParams {
 			panic(err)
 		}
 		params.templates[template.TemplateName] = *t
+	}
+
+	if len(i.CommonEnv) != 0 {
+		params.commonEnv = i.CommonEnv
 	}
 
 	return params
