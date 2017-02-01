@@ -1,6 +1,9 @@
 language: go
 dist: trusty
 
+go:
+  - 1.8rc3
+
 addons: { apt: { packages: [ "pkg-config", "libpcre++0", "libpcre++-dev" ] } }
 
 install:
