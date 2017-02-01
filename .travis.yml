@@ -1,6 +1,7 @@
 language: go
+dist: trusty
 
-addons: { apt: { packages: [ "libpcre++-dev" ] } }
+addons: { apt: { packages: [ "pkg-config", "libpcre++0", "libpcre++-dev" ] } }
 
 install:
 - go get github.com/Masterminds/glide
