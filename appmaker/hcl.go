@@ -12,7 +12,7 @@ func NewFromHCL(data []byte) (*App, error) {
 		return nil, err
 	}
 
-	if err := hcl.DecodeObject(&app, manifest); err != nil {
+	if err := hcl.DecodeObject(app, manifest); err != nil {
 		return nil, err
 	}
 
