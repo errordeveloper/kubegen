@@ -2,15 +2,15 @@ group_name = "sockshop"
 
 //altPromPath := appmaker.AppComponentOpts{PrometheusPath: "/prometheus"}
 
-//zipkinEnv := map[string]string{
-//	"ZIPKIN": "http://zipkin:9411/api/v1/spans",
-//}
+common_env = {
+  ZIPKIN = "http://zipkin:9411/api/v1/spans"
+}
 
 component_template "mongo" {
   image  = "mongo"
   port   = 27017
   flavor = "minimal"
-  //Env: zipkinEnv,
+  common_env = [ "ZIPKIN" ]
 }
 
 component_from_template "myStandardMongo" {
@@ -35,7 +35,7 @@ component_from_image "weaveworksdemos/catalogue-db:0.3.0" {
 }
 
 component_from_image "weaveworksdemos/catalogue:0.3.0" {
-  //Env:   zipkinEnv,
+  common_env = [ "ZIPKIN" ]
 }
 
 component_from_image "weaveworksdemos/front-end:0.3.0" {
@@ -54,7 +54,7 @@ component_from_image "weaveworksdemos/orders:0.4.2" {
 }
 
 component_from_image "weaveworksdemos/payment:0.4.0" {
-  //Env:   zipkinEnv,
+  common_env = [ "ZIPKIN" ]
 }
 
 component_from_image "weaveworksdemos/queue-master:0.3.0" {
@@ -87,9 +87,9 @@ component_from_template "mongo" {
 
 component_from_image "weaveworksdemos/user:0.4.0" {
   env = {
-    ZIPKIN = "http://zipkin:9411/api/v1/spans"
     MONGO_HOST = "user-db:27017"
   }
+  common_env = [ "ZIPKIN" ]
 }
 
 component_from_image "openzipkin/zipkin" {

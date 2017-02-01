@@ -139,7 +139,10 @@ items:
           name: catalogue
       spec:
         containers:
-        - image: weaveworksdemos/catalogue:0.3.0
+        - env:
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: weaveworksdemos/catalogue:0.3.0
           livenessProbe:
             httpGet:
               path: /health
@@ -307,7 +310,10 @@ items:
           name: payment
       spec:
         containers:
-        - image: weaveworksdemos/payment:0.4.0
+        - env:
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: weaveworksdemos/payment:0.4.0
           livenessProbe:
             httpGet:
               path: /health
@@ -703,7 +709,10 @@ items:
           name: orders-db
       spec:
         containers:
-        - image: mongo
+        - env:
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: mongo
           name: orders-db
           ports:
           - containerPort: 27017
@@ -747,7 +756,10 @@ items:
           name: user-db
       spec:
         containers:
-        - image: weaveworksdemos/user-db:0.3.0
+        - env:
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: weaveworksdemos/user-db:0.3.0
           name: user-db
           ports:
           - containerPort: 27017
