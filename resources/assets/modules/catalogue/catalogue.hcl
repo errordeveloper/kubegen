@@ -11,11 +11,11 @@ deployment "catalogue" {
 
   container "catalogue" {
     image = "weaveworksdemos/catalogue:0.3.0"
-    env = [
-      "ZIPKIN=${var.zipkin}"
-    ]
+    env {
+      ZIPKIN = "${var.zipkin}"
+    }
     port {
-      containerPort = 80
+      container_port = 80
     }
     security_context {
       run_as_non_root = true
@@ -56,8 +56,8 @@ service "catalogue" {
     name = "catalogue"
   }
 
-  port 80 {
-    targetPort = 80
+  port "catalogue" {
+    target_port = 80
   }
 }
 
@@ -74,17 +74,17 @@ deployment "catalogue-db" {
     image = "weaveworksdemos/catalogue-db:0.3.0"
 
     # Was debating if this should be an array or k/v object.
-    env = [
-      "MYSQLROOT_PASSWORD=${var.mysqlpassword}",
-      "MYSQL_DATABASE=${var.mysqldb}",
-    ]
+    env {
+      MYSQLROOT_PASSWORD = "${var.mysqlpassword}"
+      MYSQL_DATABASE = "${var.mysqldb}"
+    }
 
     # This port syntax, with the string name here seems a bit inconsistent with
     # the service `port` syntax (below) with a number. Maybe that is ok? I'm
     # not sure how it fits with other port declarations on containers and
     # services (or what they all are). Needs more investigation.
     port "mysql" {
-      containerPort = 3306
+      container_port = 3306
     }
   }
 }
@@ -100,7 +100,7 @@ service "catalogue-db" {
     name = "catalogue-db"
   }
 
-  port 3306 {
-    targetPort = 3306
+  port "catalogue-db" {
+    target_port = 3306
   }
 }

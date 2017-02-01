@@ -10,7 +10,7 @@ deployment "cart" {
 
   # Define volumes.
   volume "tmp-volume" {
-    emptyDir {
+    empty_dir {
       medium = "Memory"
     }
   }
@@ -22,8 +22,8 @@ deployment "cart" {
     image = "weaveworksdemos/cart:0.4.0"
 
     # expose a port from this container
-    port {
-      containerPort = 80
+    port "cart" {
+      container_port = 80
     }
 
     security_context {
@@ -77,8 +77,8 @@ service "cart" {
     name = "cart"
   }
 
-  port 80 {
-    targetPort = 80
+  port "cart" {
+    target_port = 80
   }
 }
 
@@ -92,15 +92,15 @@ deployment "cart-db" {
   replicas = 1
 
   volume "tmp-volume" {
-    emptyDir {
+    empty_dir {
       medium = "Memory"
     }
   }
 
   container "cart-db" {
     image = "mongo"
-    port {
-      containerPort = 27017
+    port "mongo" {
+      container_port = 27017
     }
     security_context {
       read_only_root_filesystem = true
@@ -130,7 +130,7 @@ service "cart-db" {
     name = "cart-db"
   }
 
-  port 27017 {
-    targetPort = 27017
+  port "mongo" {
+    target_port = 27017
   }
 }

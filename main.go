@@ -9,7 +9,10 @@ import (
 	"github.com/docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/errordeveloper/kubegen/appmaker"
+	"github.com/errordeveloper/kubegen/resources"
 )
 
 var (
@@ -41,6 +44,12 @@ func main() {
 	//component.Flags().StringVarP(&image, "image", "", "", "Image to use")
 	//component.Flags().StringVarP(&flavor, "flavor", "", "default", "Flavor of generator to use")
 	//rootCmd.AddCommand(component)
+
+	var module = &cobra.Command{
+		Use:  "module",
+		RunE: moduleTest,
+	}
+	rootCmd.AddCommand(module)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -78,6 +87,17 @@ func generateAppStack(cmd *cobra.Command, args []string) error {
 
 	return encodeAndOutput(app)
 */
+
+func moduleTest(cmd *cobra.Command, args []string) error {
+	module, err := resources.NewModuleFromPath(args[0])
+	if err != nil {
+		panic(err)
+	}
+
+	spew.Dump(module)
+
+	return nil
+}
 
 func encodeAndOutput(app *appmaker.App) error {
 	var (
