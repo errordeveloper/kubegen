@@ -28,7 +28,7 @@ component_from_image "weaveworksdemos/catalogue-db:0.3.0" {
   //WithoutStandardProbes:          true,
   //WithoutStandardSecurityContext: true,
   //},
-  Env = {
+  env = {
     MYSQL_ROOT_PASSWORD = "fake_password"
     MYSQL_DATABASE      = "socksdb"
   }

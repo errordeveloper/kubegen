@@ -1,0 +1,775 @@
+---
+apiVersion: v1
+items:
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart
+    name: cart
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: cart
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: cart
+      spec:
+        containers:
+        - image: weaveworksdemos/cart:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: cart
+          ports:
+          - containerPort: 80
+            name: cart
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart
+    name: cart
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 80
+      targetPort: 0
+    selector:
+      name: cart
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue-db
+    name: catalogue-db
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: catalogue-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: catalogue-db
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_DATABASE
+            value: socksdb
+          - name: MYSQL_ROOT_PASSWORD
+            value: fake_password
+          image: weaveworksdemos/catalogue-db:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3306
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: catalogue-db
+          ports:
+          - containerPort: 3306
+            name: catalogue-db
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3306
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue-db
+    name: catalogue-db
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 3306
+      targetPort: 0
+    selector:
+      name: catalogue-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue
+    name: catalogue
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: catalogue
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: catalogue
+      spec:
+        containers:
+        - image: weaveworksdemos/catalogue:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: catalogue
+          ports:
+          - containerPort: 80
+            name: catalogue
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue
+    name: catalogue
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 80
+      targetPort: 0
+    selector:
+      name: catalogue
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: front-end
+    name: front-end
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: front-end
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: front-end
+      spec:
+        containers:
+        - image: weaveworksdemos/front-end:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8079
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: front-end
+          ports:
+          - containerPort: 8079
+            name: front-end
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8079
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: front-end
+    name: front-end
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 8079
+      targetPort: 0
+    selector:
+      name: front-end
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders
+    name: orders
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: orders
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: orders
+      spec:
+        containers:
+        - image: weaveworksdemos/orders:0.4.2
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: orders
+          ports:
+          - containerPort: 80
+            name: orders
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders
+    name: orders
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 80
+      targetPort: 0
+    selector:
+      name: orders
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: payment
+    name: payment
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: payment
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: payment
+      spec:
+        containers:
+        - image: weaveworksdemos/payment:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: payment
+          ports:
+          - containerPort: 80
+            name: payment
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: payment
+    name: payment
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 80
+      targetPort: 0
+    selector:
+      name: payment
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: queue-master
+    name: queue-master
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: queue-master
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: queue-master
+      spec:
+        containers:
+        - image: weaveworksdemos/queue-master:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: queue-master
+          ports:
+          - containerPort: 80
+            name: queue-master
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: queue-master
+    name: queue-master
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 80
+      targetPort: 0
+    selector:
+      name: queue-master
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: rabbitmq
+    name: rabbitmq
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: rabbitmq
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: rabbitmq
+      spec:
+        containers:
+        - image: rabbitmq:3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5672
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: rabbitmq
+          ports:
+          - containerPort: 5672
+            name: rabbitmq
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5672
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: rabbitmq
+    name: rabbitmq
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 5672
+      targetPort: 0
+    selector:
+      name: rabbitmq
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: shipping
+    name: shipping
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: shipping
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: shipping
+      spec:
+        containers:
+        - image: weaveworksdemos/shipping:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: shipping
+          ports:
+          - containerPort: 80
+            name: shipping
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: shipping
+    name: shipping
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 80
+      targetPort: 0
+    selector:
+      name: shipping
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user
+    name: user
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: user
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: user
+      spec:
+        containers:
+        - env:
+          - name: MONGO_HOST
+            value: user-db:27017
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: weaveworksdemos/user:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: user
+          ports:
+          - containerPort: 80
+            name: user
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user
+    name: user
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 80
+      targetPort: 0
+    selector:
+      name: user
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin
+    name: zipkin
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: zipkin
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: zipkin
+      spec:
+        containers:
+        - image: openzipkin/zipkin
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9411
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: zipkin
+          ports:
+          - containerPort: 9411
+            name: zipkin
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9411
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin
+    name: zipkin
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 9411
+      targetPort: 0
+    selector:
+      name: zipkin
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart-db
+    name: cart-db
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: cart-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: cart-db
+      spec:
+        containers:
+        - livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: cart-db
+          ports:
+          - containerPort: 80
+            name: cart-db
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart-db
+    name: cart-db
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 80
+      targetPort: 0
+    selector:
+      name: cart-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders-db
+    name: orders-db
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: orders-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: orders-db
+      spec:
+        containers:
+        - image: mongo
+          name: orders-db
+          ports:
+          - containerPort: 27017
+            name: orders-db
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders-db
+    name: orders-db
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 27017
+      targetPort: 0
+    selector:
+      name: orders-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user-db
+    name: user-db
+    namespace: sockshop
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: user-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: user-db
+      spec:
+        containers:
+        - image: weaveworksdemos/user-db:0.3.0
+          name: user-db
+          ports:
+          - containerPort: 27017
+            name: user-db
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user-db
+    name: user-db
+    namespace: sockshop
+  spec:
+    ports:
+    - port: 27017
+      targetPort: 0
+    selector:
+      name: user-db
+  status:
+    loadBalancer: {}
+kind: List
+metadata: {}
+
