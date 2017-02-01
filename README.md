@@ -1,5 +1,7 @@
 # `kubegen` – generate Kubernetes resources from simple app definitions
 
+***WORK IN PROGRESS***
+<!--
 ## CLI Usage
 
 You can generate a simple app with just one flag, the image name:
@@ -14,6 +16,8 @@ By default, a `Deployment`/`Service` pair is generated with a number of known-be
 options included for you, e.g. liveness and readiness probes as well as Prometheus annotations.
 You can change this behaviour by using high-lvel `--flavor` flag or one of more specific flags
 described below.
+
+->
 
 ### Building
 
