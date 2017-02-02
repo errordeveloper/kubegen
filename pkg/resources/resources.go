@@ -8,6 +8,7 @@ import (
 	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	"k8s.io/client-go/pkg/util/intstr"
 
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
@@ -142,7 +143,13 @@ func (i *Service) Convert() *v1.Service {
 	}
 
 	for _, port := range i.Ports {
-		serviceSpec.Ports = append(serviceSpec.Ports, v1.ServicePort(port))
+		p := v1.ServicePort{
+			Name:       port.Name,
+			Port:       port.Port,
+			TargetPort: intstr.FromInt(int(port.TargetPort)),
+			NodePort:   port.NodePort,
+		}
+		serviceSpec.Ports = append(serviceSpec.Ports, p)
 	}
 
 	service := v1.Service{

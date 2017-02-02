@@ -2,7 +2,6 @@ package resources
 
 import (
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/util/intstr"
 )
 
 // This package is designed for direct HCL API for Kubernetes objects,
@@ -96,9 +95,9 @@ type Service struct {
 }
 
 type ServicePort struct {
-	Name       string             `hcl:",key"`
-	Protocol   v1.Protocol        `hcl:"protocol"`
-	Port       int32              `hcl:"port"`
-	TargetPort intstr.IntOrString `hcl:"target_port"`
-	NodePort   int32              `hcl:"node_port"`
+	Name       string      `hcl:",key"`
+	Port       int32       `hcl:"port"`
+	Protocol   v1.Protocol `hcl:"protocol"`
+	TargetPort int32       `hcl:"target_port"`
+	NodePort   int32       `hcl:"node_port"`
 }
