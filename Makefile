@@ -3,7 +3,7 @@ test: build
 	@go test -v ./pkg/apps
 
 build: install
-	@for cmd in kubegen-test-stack kubegen-test-stack ; do go build ./cmd/$${cmd}/ ; done
+	@for cmd in kubegen kubegen-test-module kubegen-test-stack ; do go build ./cmd/$${cmd}/ ; done
 
 install:
 	@for pkg in apps resources util ; do go install ./pkg/$${pkg}/ ; done
