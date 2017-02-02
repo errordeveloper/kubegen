@@ -10,6 +10,9 @@ import (
 	"k8s.io/client-go/pkg/api/v1"
 	_ "k8s.io/client-go/pkg/apis/extensions/install"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
+
+	"github.com/d4l3k/go-highlight"
+	"github.com/docker/docker/pkg/term"
 )
 
 func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
@@ -60,4 +63,31 @@ func EncodeList(list *api.List, contentType string, pretty bool) ([]byte, error)
 	}
 
 	return data, nil
+}
+
+func Dump(outputFormat string, data []byte) error {
+	var (
+		output string
+	)
+
+	switch outputFormat {
+	case "yaml":
+		data = append([]byte("---\n"), data...)
+	case "json":
+
+	}
+
+	if term.IsTerminal(0) {
+		veryPretty, err := highlight.Term(outputFormat, data)
+		if err != nil {
+			return err
+		}
+		output = string(veryPretty)
+	} else {
+		output = string(data)
+	}
+
+	fmt.Println(output)
+
+	return nil
 }
