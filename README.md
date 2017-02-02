@@ -1,4 +1,4 @@
-# `kubegen` – simple way to generate Kubernetes resources
+# `kubegen` – simple way to describe Kubernetes resources
 
 ***WORK IN PROGRESS***
 
