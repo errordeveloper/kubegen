@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/d4l3k/go-highlight"
-	"github.com/docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 
 	//"github.com/davecgh/go-spew/spew"
