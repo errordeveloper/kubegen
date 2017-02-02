@@ -1,4 +1,14 @@
-# `kubegen` – generate Kubernetes resources from simple app definitions
+# `kubegen` – simple way to generate Kubernetes resources
+
+There is no clear answer to re-usability and de-duplication for Kubernetes resource definitions.
+
+The aim of `kubegen` is to offer the community with a few different options, and we will decide later
+which one is level of abstraction is best, or if there is a need for abstractions at different levels.
+
+## Service/Deployment pair based on container image
+
+```
+kg component-from-image
 
 ***WORK IN PROGRESS***
 <!--

@@ -27,14 +27,19 @@ func main() {
 		Use: "kubegen",
 	}
 
-	//var component = &cobra.Command{
-	//	Use:  "kubegen ",
-	//	RunE: generateComponent,
-	//}
+	var component = &cobra.Command{
+		Use:  "basic",
+		RunE: basic,
+	}
+
+	var component = &cobra.Command{
+		Use:  "make-app",
+		RunE: makeApp,
+	}
 
 	var appStack = &cobra.Command{
-		Use:  "stack",
-		RunE: generateAppStack,
+		Use:  "resource-module",
+		RunE: makeResourceModule,
 	}
 
 	appStack.Flags().StringVarP(&manifest, "manifest", "", "Kubefile", "App manifest to use")
@@ -56,7 +61,7 @@ func main() {
 	}
 }
 
-func generateAppStack(cmd *cobra.Command, args []string) error {
+func fromAppStackDefinition(cmd *cobra.Command, args []string) error {
 	data, err := ioutil.ReadFile(manifest)
 	if err != nil {
 		return err

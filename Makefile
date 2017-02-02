@@ -1,13 +1,12 @@
 test: build
-	@$(MAKE) -C ./appmaker/assets test
-	@go test -v ./appmaker
-	@rm -f test.yml.new
+	@$(MAKE) -C ./pkg/appmaker/assets test
+	@go test -v ./pkg/appmaker
 
 build: install
 	@go build ./
 
 install:
-	@go install ./appmaker
+	@go install ./pkg/appmaker
 
 assets:
-	@$(MAKE) -C ./appmaker/assets rebuild
+	@$(MAKE) -C ./pkg/appmaker/assets rebuild

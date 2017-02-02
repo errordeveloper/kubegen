@@ -5,7 +5,6 @@ import (
 
 	"strings"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/v1"
@@ -30,14 +29,6 @@ func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
 	labels := map[string]string{"name": name}
 
 	return name, labels
-}
-
-func (i *AppComponent) getMeta() metav1.ObjectMeta {
-	name, labels := i.getNameAndLabels()
-	return metav1.ObjectMeta{
-		Name:   name,
-		Labels: labels,
-	}
 }
 
 func (i *AppComponent) getPort(params AppParams) int32 {
@@ -142,30 +133,31 @@ func (i *AppComponent) MakeDeployment(params AppParams) *v1beta1.Deployment {
 }
 
 func (i *AppComponent) MakeService(params AppParams) *v1.Service {
-	meta := i.getMeta()
+	name, labels := i.getNameAndLabels()
 
-	port := v1.ServicePort{Port: i.getPort(params)}
+	port := resources.ServicePort{
+		Name: name,
+		Port: i.getPort(params),
+	}
+
 	if i.Port != 0 {
 		port.Port = i.Port
 	}
 
-	service := &v1.Service{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
-		},
-		ObjectMeta: meta,
-		Spec: v1.ServiceSpec{
-			Ports:    []v1.ServicePort{port},
-			Selector: meta.Labels,
-		},
+	service := resources.Service{
+		Name:     name,
+		Metadata: resources.Metadata{Labels: labels},
+		Selector: labels,
+		Ports:    []resources.ServicePort{port},
 	}
+
+	serviceObj := service.Convert()
 
 	if params.Namespace != "" {
-		service.ObjectMeta.Namespace = params.Namespace
+		serviceObj.ObjectMeta.Namespace = params.Namespace
 	}
 
-	return service
+	return serviceObj
 }
 
 func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
