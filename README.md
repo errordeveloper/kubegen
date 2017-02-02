@@ -1,5 +1,8 @@
 # `kubegen` – simple way to generate Kubernetes resources
 
+***WORK IN PROGRESS***
+<!--
+
 There is no clear answer to re-usability and de-duplication for Kubernetes resource definitions.
 
 The aim of `kubegen` is to offer the community with a few different options, and we will decide later
@@ -10,8 +13,6 @@ which one is level of abstraction is best, or if there is a need for abstraction
 ```
 kg component-from-image
 
-***WORK IN PROGRESS***
-<!--
 ## CLI Usage
 
 You can generate a simple app with just one flag, the image name:
