@@ -1,21 +1,16 @@
 package resources
 
 import (
-	"fmt"
 	"io/ioutil"
 	_ "reflect"
 	"sort"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	_ "k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/pkg/api"
-	_ "k8s.io/client-go/pkg/api/install"
 	"k8s.io/client-go/pkg/api/v1"
-	_ "k8s.io/client-go/pkg/apis/extensions/install"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	_ "k8s.io/client-go/pkg/util/intstr"
+	"k8s.io/client-go/pkg/util/intstr"
 
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
@@ -80,7 +75,7 @@ type HostPathVolumeSource struct {
 }
 
 type EmptyDirVolumeSource struct {
-	Medium string `hcl:"medium"`
+	Medium v1.StorageMedium `hcl:"medium"`
 }
 
 type SecretVolumeSource struct {
@@ -93,7 +88,7 @@ type SecretVolumeSource struct {
 type KeyToPath struct {
 	Key  string `hcl:",key"`
 	Path string `hcl:"path"`
-	Mode int32  `hcl:"mode"`
+	Mode *int32 `hcl:"mode"`
 }
 
 type Mount struct {
@@ -111,11 +106,11 @@ type Service struct {
 }
 
 type ServicePort struct {
-	Name       string      `hcl:",key"`
-	Protocol   v1.Protocol `hcl:"protocol"`
-	Port       int32       `hcl:"port"`
-	TargetPort int32       `hcl:"target_port"`
-	NodePort   int32       `hcl:"node_port"`
+	Name       string             `hcl:",key"`
+	Protocol   v1.Protocol        `hcl:"protocol"`
+	Port       int32              `hcl:"port"`
+	TargetPort intstr.IntOrString `hcl:"target_port"`
+	NodePort   int32              `hcl:"node_port"`
 }
 
 func NewResourceGroupFromPath(path string) (*ResourceGroup, error) {
@@ -156,7 +151,7 @@ func (i *Container) maybeAddEnvVars(container *v1.Container) {
 	container.Env = env
 }
 
-func (i *Container) Convert() v1.Container {
+func (i *Container) Convert() *v1.Container {
 	container := v1.Container{Name: i.Name, Image: i.Image}
 
 	i.maybeAddEnvVars(&container)
@@ -169,10 +164,14 @@ func (i *Container) Convert() v1.Container {
 		container.Ports = append(container.Ports, v1.ContainerPort(port))
 	}
 
-	return container
+	for _, volumeMount := range i.Mounts {
+		container.VolumeMounts = append(container.VolumeMounts, v1.VolumeMount(volumeMount))
+	}
+
+	return &container
 }
 
-func MakePod(labels, podAnnotations map[string]string, containers []Container) *v1.PodTemplateSpec {
+func MakePod(labels, podAnnotations map[string]string, containers []Container, volumes []Volume) *v1.PodTemplateSpec {
 	meta := metav1.ObjectMeta{
 		Labels:      labels,
 		Annotations: podAnnotations,
@@ -180,10 +179,35 @@ func MakePod(labels, podAnnotations map[string]string, containers []Container) *
 
 	podSpec := v1.PodSpec{
 		Containers: []v1.Container{},
+		Volumes:    []v1.Volume{},
 	}
 
 	for _, container := range containers {
-		podSpec.Containers = append(podSpec.Containers, container.Convert())
+		podSpec.Containers = append(podSpec.Containers, *container.Convert())
+	}
+
+	for _, volume := range volumes {
+		v := v1.Volume{Name: volume.Name}
+		if volume.HostPath != nil {
+			s := v1.HostPathVolumeSource(*volume.VolumeSource.HostPath)
+			v.VolumeSource.HostPath = &s
+		}
+		if volume.EmptyDir != nil {
+			s := v1.EmptyDirVolumeSource(*volume.VolumeSource.EmptyDir)
+			v.VolumeSource.EmptyDir = &s
+		}
+		if volume.Secret != nil {
+			s := v1.SecretVolumeSource{
+				SecretName:  volume.VolumeSource.Secret.SecretName,
+				DefaultMode: &volume.VolumeSource.Secret.DefaultMode,
+				Optional:    &volume.VolumeSource.Secret.Optional,
+			}
+			for _, item := range volume.VolumeSource.Secret.Items {
+				s.Items = append(s.Items, v1.KeyToPath(item))
+			}
+			v.VolumeSource.Secret = &s
+		}
+		podSpec.Volumes = append(podSpec.Volumes, v)
 	}
 
 	pod := v1.PodTemplateSpec{
@@ -201,7 +225,7 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 		Annotations: i.Metadata.Annotations,
 	}
 
-	pod := MakePod(i.Metadata.Labels, i.PodAnnotations, i.Containers)
+	pod := MakePod(i.Metadata.Labels, i.PodAnnotations, i.Containers, i.Volumes)
 
 	deploymentSpec := v1beta1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{MatchLabels: meta.Labels},
@@ -209,7 +233,7 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 		Replicas: &i.Replicas,
 	}
 
-	deployment := &v1beta1.Deployment{
+	deployment := v1beta1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "extensions/v1beta1",
@@ -218,59 +242,48 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 		Spec:       deploymentSpec,
 	}
 
-	return deployment
+	return &deployment
+}
+
+func (i *Service) Convert() *v1.Service {
+	meta := metav1.ObjectMeta{
+		Name:        i.Name,
+		Labels:      i.Metadata.Labels,
+		Annotations: i.Metadata.Annotations,
+	}
+
+	serviceSpec := v1.ServiceSpec{
+		Selector: i.Selector,
+		Ports:    []v1.ServicePort{},
+	}
+
+	for _, port := range i.Ports {
+		serviceSpec.Ports = append(serviceSpec.Ports, v1.ServicePort(port))
+	}
+
+	service := v1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		ObjectMeta: meta,
+		Spec:       serviceSpec,
+	}
+
+	return &service
 }
 
 func (i *ResourceGroup) EncodeListToPrettyJSON() ([]byte, error) {
-	return i.encodeList("application/json", true)
+	return util.EncodeList(i.MakeList(), "application/json", true)
 }
 
-func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
-	serializerInfo, ok := runtime.SerializerInfoForMediaType(
-		api.Codecs.SupportedMediaTypes(),
-		contentType,
-	)
-
-	if !ok {
-		return nil, fmt.Errorf("Unable to create a serializer")
-	}
-
-	serializer := serializerInfo.Serializer
-
-	if pretty && serializerInfo.PrettySerializer != nil {
-		serializer = serializerInfo.PrettySerializer
-	}
-
-	codec := api.Codecs.CodecForVersions(
-		serializer,
-		serializer,
-		schema.GroupVersions(
-			[]schema.GroupVersion{
-				v1.SchemeGroupVersion,
-				v1beta1.SchemeGroupVersion,
-			},
-		),
-		runtime.InternalGroupVersioner,
-	)
-
-	return codec, nil
-}
-
-func (i *ResourceGroup) encodeList(contentType string, pretty bool) ([]byte, error) {
+func (i *ResourceGroup) MakeList() *api.List {
 	components := &api.List{}
-	for _, deployment := range i.Deployments {
-		components.Items = append(components.Items, runtime.Object(deployment.Convert()))
+	for _, component := range i.Deployments {
+		components.Items = append(components.Items, runtime.Object(component.Convert()))
 	}
-
-	codec, err := makeCodec(contentType, pretty)
-	if err != nil {
-		return nil, err
+	for _, component := range i.Services {
+		components.Items = append(components.Items, runtime.Object(component.Convert()))
 	}
-
-	data, err := runtime.Encode(codec, components)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return components
 }
