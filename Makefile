@@ -1,12 +1,12 @@
 test: build
-	@$(MAKE) -C ./pkg/appmaker/assets test
-	@go test -v ./pkg/appmaker
+	@$(MAKE) -C ./pkg/apps/assets test
+	@go test -v ./pkg/apps
 
 build: install
-	@go build ./
+	@for cmd in kubegen-test-stack kubegen-test-stack ; do go build ./cmd/$${cmd}/ ; done
 
 install:
-	@go install ./pkg/appmaker
+	@for pkg in apps resources util ; do go install ./pkg/$${pkg}/ ; done
 
 assets:
-	@$(MAKE) -C ./pkg/appmaker/assets rebuild
+	@$(MAKE) -C ./pkg/apps/assets rebuild
