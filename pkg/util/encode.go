@@ -1,4 +1,4 @@
-package appmaker
+package util
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
 	)
 
 	if !ok {
-		return nil, fmt.Errorf("Unable to create a serializer")
+		return nil, fmt.Errorf("unable to create a serializer")
 	}
 
 	serializer := serializerInfo.Serializer
@@ -43,35 +43,21 @@ func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
 	return codec, nil
 }
 
-func (i *App) encodeList(contentType string, pretty bool) ([]byte, error) {
-	components := i.MakeList()
-
+func EncodeList(list *api.List, contentType string, pretty bool) ([]byte, error) {
 	codec, err := makeCodec(contentType, pretty)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("kubegen/util: error creating codec for %q – %v", contentType, err)
 	}
 	// XXX: uncommenting this results in the following error:
 	// json: error calling MarshalJSON for type runtime.RawExtension: invalid character 'a' looking for beginning of value
-	//if err := runtime.EncodeList(codec, components.Items); err != nil {
+	//if err := runtime.EncodeList(codec, list.Items); err != nil {
 	//	return nil, err
 	//}
 
-	data, err := runtime.Encode(codec, components)
+	data, err := runtime.Encode(codec, list)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("kubegen/util: error encoding list to %q – %v", contentType, err)
 	}
 
 	return data, nil
-}
-
-func (i *App) EncodeListToYAML() ([]byte, error) {
-	return i.encodeList("application/yaml", false)
-}
-
-func (i *App) EncodeListToJSON() ([]byte, error) {
-	return i.encodeList("application/json", false)
-}
-
-func (i *App) EncodeListToPrettyJSON() ([]byte, error) {
-	return i.encodeList("application/json", true)
 }

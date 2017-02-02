@@ -17,7 +17,7 @@ import (
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	_ "k8s.io/client-go/pkg/util/intstr"
 
-	"github.com/hashicorp/hcl"
+	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
 // This package is designed for direct HCL API for Kubernetes objects,
@@ -126,12 +126,7 @@ func NewResourceGroupFromPath(path string) (*ResourceGroup, error) {
 
 	group := &ResourceGroup{}
 
-	manifest, err := hcl.Parse(string(data))
-	if err != nil {
-		return nil, err
-	}
-
-	if err := hcl.DecodeObject(group, manifest); err != nil {
+	if err := util.NewFromHCL(group, data); err != nil {
 		return nil, err
 	}
 

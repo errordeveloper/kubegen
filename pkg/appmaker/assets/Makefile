@@ -1,5 +1,5 @@
 test:
-	@../../kubegen stack --manifest=sockshop.hcl > sockshop.yml.new \
+	@../../../kubegen makeapp --api=AppStack --manifest=sockshop.hcl > sockshop.yml.new \
 	  && diff -q sockshop.yml sockshop.yml.new \
 	  || diff sockshop.yml sockshop.yml.new
 	@for i in basic combined ; do \
@@ -11,4 +11,4 @@ test:
 
 rebuild:
 	@for i in basic combined ; do go run generate-$$i.go > sockshop-$$i.json ; done
-	@../../kubegen stack --manifest=sockshop.hcl > sockshop.yml
+	@../../../kubegen makeapp --api-AppStack --manifest=sockshop.hcl > sockshop.yml
