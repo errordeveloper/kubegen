@@ -1,7 +1,7 @@
 package sockshop
 
 import (
-	"github.com/errordeveloper/kubegen/pkg/appmaker"
+	appmaker "github.com/errordeveloper/kubegen/pkg/apps"
 )
 
 func MakeSockShop() *appmaker.App {

@@ -1,4 +1,4 @@
-package appmaker
+package apps
 
 import "github.com/errordeveloper/kubegen/pkg/util"
 

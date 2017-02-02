@@ -1,9 +1,8 @@
-package appmaker
+package apps
 
 import (
 	_ "fmt"
 
-	"sort"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +13,8 @@ import (
 	"k8s.io/client-go/pkg/util/intstr"
 
 	"github.com/imdario/mergo"
+
+	"github.com/errordeveloper/kubegen/pkg/resources"
 )
 
 func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
@@ -46,27 +47,14 @@ func (i *AppComponent) getPort(params AppParams) int32 {
 	return params.DefaultPort
 }
 
-func (i *AppComponent) maybeAddEnvVars(params AppParams, container *v1.Container) {
+func (i *AppComponent) maybeAddEnvVars(container *resources.Container) {
 	if len(i.Env) == 0 {
 		return
 	}
 
-	keys := []string{}
-	for k, _ := range i.Env {
-		keys = append(keys, k)
+	for k, v := range i.Env {
+		container.Env[k] = v
 	}
-
-	sort.Strings(keys)
-
-	env := []v1.EnvVar{}
-	for _, j := range keys {
-		for k, v := range i.Env {
-			if k == j {
-				env = append(env, v1.EnvVar{Name: k, Value: v})
-			}
-		}
-	}
-	container.Env = env
 }
 
 func (i *AppComponent) maybeUseCommonEnvVars(params AppParams) {
@@ -113,72 +101,44 @@ func (i *AppComponent) maybeAddProbes(params AppParams, container *v1.Container)
 	}
 }
 
-func (i *AppComponent) MakeContainer(params AppParams, name string) v1.Container {
-	container := v1.Container{Name: name, Image: i.Image}
+func (i *AppComponent) MakeContainer(params AppParams, name string) *resources.Container {
+	container := resources.Container{Name: name, Image: i.Image}
 
 	i.maybeUseCommonEnvVars(params)
-	i.maybeAddEnvVars(params, &container)
+	i.maybeAddEnvVars(&container)
 
 	if !i.Opts.WithoutPorts {
-		container.Ports = []v1.ContainerPort{{
+		container.Ports = []resources.ContainerPort{{
 			Name:          name,
 			ContainerPort: i.getPort(params),
 		}}
-		i.maybeAddProbes(params, &container)
+		//i.maybeAddProbes(params, &container)
 	}
 
-	return container
+	return &container
 }
 
-func (i *AppComponent) MakePod(params AppParams) *v1.PodTemplateSpec {
+func (i *AppComponent) MakeDeployment(params AppParams) *v1beta1.Deployment {
 	name, labels := i.getNameAndLabels()
-	container := i.MakeContainer(params, name)
 
-	pod := v1.PodTemplateSpec{
-		ObjectMeta: metav1.ObjectMeta{
-			Labels: labels,
-		},
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{container},
-		},
+	deployment := resources.Deployment{
+		Name:       name,
+		Metadata:   resources.Metadata{Labels: labels},
+		Replicas:   params.DefaultReplicas,
+		Containers: []resources.Container{*i.MakeContainer(params, name)},
 	}
-
-	return &pod
-}
-
-func (i *AppComponent) MakeDeployment(params AppParams, pod *v1.PodTemplateSpec) *v1beta1.Deployment {
-	if pod == nil {
-		return nil
-	}
-
-	meta := i.getMeta()
-
-	replicas := params.DefaultReplicas
 
 	if i.Replicas != nil {
-		replicas = *i.Replicas
+		deployment.Replicas = *i.Replicas
 	}
 
-	deploymentSpec := v1beta1.DeploymentSpec{
-		Replicas: &replicas,
-		Selector: &metav1.LabelSelector{MatchLabels: meta.Labels},
-		Template: *pod,
-	}
-
-	deployment := &v1beta1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "extensions/v1beta1",
-		},
-		ObjectMeta: meta,
-		Spec:       deploymentSpec,
-	}
+	deploymentObj := deployment.Convert()
 
 	if params.Namespace != "" {
-		deployment.ObjectMeta.Namespace = params.Namespace
+		deploymentObj.ObjectMeta.Namespace = params.Namespace
 	}
 
-	return deployment
+	return deploymentObj
 }
 
 func (i *AppComponent) MakeService(params AppParams) *v1.Service {
@@ -232,12 +192,12 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 
 	resources.manifest = *i
 
-	pod := i.MakePod(params)
-
 	switch i.Kind {
 	case Deployment:
-		resources.deployment = i.MakeDeployment(params, pod)
+		resources.deployment = i.MakeDeployment(params)
 	}
+
+	pod := resources.getPod()
 
 	if !i.Opts.WithoutService {
 		resources.service = i.MakeService(params)
@@ -250,8 +210,8 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 	}
 
 	if i.CustomizePorts != nil && !i.Opts.WithoutPorts {
-		ports := make([][]v1.ContainerPort, len(pod.Spec.Containers))
-		for n, container := range pod.Spec.Containers {
+		ports := make([][]v1.ContainerPort, len(pod.Containers))
+		for n, container := range pod.Containers {
 			ports[n] = container.Ports
 		}
 		i.CustomizePorts(
@@ -261,11 +221,11 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 	}
 
 	if i.CustomizeCotainers != nil {
-		i.CustomizeCotainers(pod.Spec.Containers)
+		i.CustomizeCotainers(pod.Containers)
 	}
 
 	if i.CustomizePod != nil {
-		i.CustomizePod(&pod.Spec)
+		i.CustomizePod(pod)
 	}
 
 	if i.CustomizeService != nil {

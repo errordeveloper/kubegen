@@ -1,4 +1,4 @@
-package appmaker
+package apps
 
 const (
 	DefaultFlavor         = "default"

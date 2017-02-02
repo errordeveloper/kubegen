@@ -1,4 +1,4 @@
-package appmaker
+package apps
 
 // TODO we do not need most of this, but removing it will require rewriting the unit test
 
