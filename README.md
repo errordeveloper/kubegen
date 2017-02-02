@@ -1,6 +1,7 @@
 # `kubegen` – simple way to generate Kubernetes resources
 
 ***WORK IN PROGRESS***
+
 <!--
 
 There is no clear answer to re-usability and de-duplication for Kubernetes resource definitions.
@@ -28,7 +29,7 @@ options included for you, e.g. liveness and readiness probes as well as Promethe
 You can change this behaviour by using high-lvel `--flavor` flag or one of more specific flags
 described below.
 
-->
+-->
 
 ### Building
 
