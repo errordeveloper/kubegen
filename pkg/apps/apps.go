@@ -19,6 +19,8 @@ import (
 func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
 	var name string
 
+	// TODO use Docker library
+	// see https://github.com/rancher/go-machine-service/pull/121/files for usage
 	imageParts := strings.Split(strings.Split(i.Image, ":")[0], "/")
 	name = imageParts[len(imageParts)-1]
 
