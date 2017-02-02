@@ -23,22 +23,10 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/cart:0.4.0
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: cart
           ports:
           - containerPort: 80
             name: cart
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -51,7 +39,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 80
+    - name: cart
+      port: 80
       targetPort: 0
     selector:
       name: cart
@@ -84,22 +73,10 @@ items:
           - name: MYSQL_ROOT_PASSWORD
             value: fake_password
           image: weaveworksdemos/catalogue-db:0.3.0
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 3306
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: catalogue-db
           ports:
           - containerPort: 3306
             name: catalogue-db
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 3306
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -112,7 +89,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 3306
+    - name: catalogue-db
+      port: 3306
       targetPort: 0
     selector:
       name: catalogue-db
@@ -143,22 +121,10 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: weaveworksdemos/catalogue:0.3.0
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: catalogue
           ports:
           - containerPort: 80
             name: catalogue
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -171,7 +137,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 80
+    - name: catalogue
+      port: 80
       targetPort: 0
     selector:
       name: catalogue
@@ -199,22 +166,10 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/front-end:0.3.0
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8079
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: front-end
           ports:
           - containerPort: 8079
             name: front-end
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8079
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -227,7 +182,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 8079
+    - name: front-end
+      port: 8079
       targetPort: 0
     selector:
       name: front-end
@@ -255,22 +211,10 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/orders:0.4.2
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: orders
           ports:
           - containerPort: 80
             name: orders
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -283,7 +227,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 80
+    - name: orders
+      port: 80
       targetPort: 0
     selector:
       name: orders
@@ -314,22 +259,10 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: weaveworksdemos/payment:0.4.0
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: payment
           ports:
           - containerPort: 80
             name: payment
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -342,7 +275,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 80
+    - name: payment
+      port: 80
       targetPort: 0
     selector:
       name: payment
@@ -370,22 +304,10 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/queue-master:0.3.0
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: queue-master
           ports:
           - containerPort: 80
             name: queue-master
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -398,7 +320,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 80
+    - name: queue-master
+      port: 80
       targetPort: 0
     selector:
       name: queue-master
@@ -426,22 +349,10 @@ items:
       spec:
         containers:
         - image: rabbitmq:3
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 5672
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: rabbitmq
           ports:
           - containerPort: 5672
             name: rabbitmq
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 5672
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -454,7 +365,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 5672
+    - name: rabbitmq
+      port: 5672
       targetPort: 0
     selector:
       name: rabbitmq
@@ -482,22 +394,10 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/shipping:0.4.0
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: shipping
           ports:
           - containerPort: 80
             name: shipping
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -510,7 +410,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 80
+    - name: shipping
+      port: 80
       targetPort: 0
     selector:
       name: shipping
@@ -543,22 +444,10 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: weaveworksdemos/user:0.4.0
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: user
           ports:
           - containerPort: 80
             name: user
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -571,7 +460,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 80
+    - name: user
+      port: 80
       targetPort: 0
     selector:
       name: user
@@ -599,22 +489,10 @@ items:
       spec:
         containers:
         - image: openzipkin/zipkin
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 9411
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: zipkin
           ports:
           - containerPort: 9411
             name: zipkin
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 9411
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -627,7 +505,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 9411
+    - name: zipkin
+      port: 9411
       targetPort: 0
     selector:
       name: zipkin
@@ -654,22 +533,10 @@ items:
           name: cart-db
       spec:
         containers:
-        - livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 300
-            periodSeconds: 3
-          name: cart-db
+        - name: cart-db
           ports:
           - containerPort: 80
             name: cart-db
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -682,7 +549,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 80
+    - name: cart-db
+      port: 80
       targetPort: 0
     selector:
       name: cart-db
@@ -729,7 +597,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 27017
+    - name: orders-db
+      port: 27017
       targetPort: 0
     selector:
       name: orders-db
@@ -776,7 +645,8 @@ items:
     namespace: sockshop
   spec:
     ports:
-    - port: 27017
+    - name: user-db
+      port: 27017
       targetPort: 0
     selector:
       name: user-db

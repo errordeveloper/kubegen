@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/errordeveloper/kubegen/pkg/appmaker/assets/sockshop"
+	"github.com/errordeveloper/kubegen/pkg/apps/assets/sockshop"
 )
 
 func main() {

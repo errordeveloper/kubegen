@@ -43,6 +43,10 @@ func (i *AppComponent) maybeAddEnvVars(container *resources.Container) {
 		return
 	}
 
+	if container.Env == nil {
+		container.Env = make(map[string]string)
+	}
+
 	for k, v := range i.Env {
 		container.Env[k] = v
 	}
