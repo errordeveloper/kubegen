@@ -107,7 +107,6 @@ func (i *AppComponent) MakeContainer(params AppParams, name string) *resources.C
 			Name:          name,
 			ContainerPort: i.getPort(params),
 		}}
-		//i.maybeAddProbes(params, &container)
 	}
 
 	return &container
@@ -205,15 +204,21 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 		}
 	}
 
-	if i.CustomizePorts != nil && !i.Opts.WithoutPorts {
-		ports := make([][]v1.ContainerPort, len(pod.Containers))
-		for n, container := range pod.Containers {
-			ports[n] = container.Ports
+	if !i.Opts.WithoutPorts {
+		if len(pod.Containers) >= 1 {
+			i.maybeAddProbes(params, &pod.Containers[0])
 		}
-		i.CustomizePorts(
-			resources.service.Spec.Ports,
-			ports...,
-		)
+
+		if i.CustomizePorts != nil {
+			ports := make([][]v1.ContainerPort, len(pod.Containers))
+			for n, container := range pod.Containers {
+				ports[n] = container.Ports
+			}
+			i.CustomizePorts(
+				resources.service.Spec.Ports,
+				ports...,
+			)
+		}
 	}
 
 	if i.CustomizeCotainers != nil {

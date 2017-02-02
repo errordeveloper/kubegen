@@ -23,10 +23,22 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/cart:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: cart
           ports:
           - containerPort: 80
             name: cart
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -73,10 +85,22 @@ items:
           - name: MYSQL_ROOT_PASSWORD
             value: fake_password
           image: weaveworksdemos/catalogue-db:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3306
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: catalogue-db
           ports:
           - containerPort: 3306
             name: catalogue-db
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3306
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -121,10 +145,22 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: weaveworksdemos/catalogue:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: catalogue
           ports:
           - containerPort: 80
             name: catalogue
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -166,10 +202,22 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/front-end:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8079
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: front-end
           ports:
           - containerPort: 8079
             name: front-end
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8079
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -211,10 +259,22 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/orders:0.4.2
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: orders
           ports:
           - containerPort: 80
             name: orders
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -259,10 +319,22 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: weaveworksdemos/payment:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: payment
           ports:
           - containerPort: 80
             name: payment
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -304,10 +376,22 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/queue-master:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: queue-master
           ports:
           - containerPort: 80
             name: queue-master
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -349,10 +433,22 @@ items:
       spec:
         containers:
         - image: rabbitmq:3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5672
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: rabbitmq
           ports:
           - containerPort: 5672
             name: rabbitmq
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5672
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -394,10 +490,22 @@ items:
       spec:
         containers:
         - image: weaveworksdemos/shipping:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: shipping
           ports:
           - containerPort: 80
             name: shipping
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -444,10 +552,22 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: weaveworksdemos/user:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: user
           ports:
           - containerPort: 80
             name: user
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -489,10 +609,22 @@ items:
       spec:
         containers:
         - image: openzipkin/zipkin
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9411
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: zipkin
           ports:
           - containerPort: 9411
             name: zipkin
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9411
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -533,10 +665,22 @@ items:
           name: cart-db
       spec:
         containers:
-        - name: cart-db
+        - livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: cart-db
           ports:
           - containerPort: 80
             name: cart-db
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -581,10 +725,22 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: mongo
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 27017
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: orders-db
           ports:
           - containerPort: 27017
             name: orders-db
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 27017
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -629,10 +785,22 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: weaveworksdemos/user-db:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 27017
+            initialDelaySeconds: 300
+            periodSeconds: 3
           name: user-db
           ports:
           - containerPort: 27017
             name: user-db
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 27017
+            initialDelaySeconds: 180
+            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
