@@ -2,85 +2,43 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	//"github.com/davecgh/go-spew/spew"
-
-	"github.com/errordeveloper/kubegen/appmaker"
-	"github.com/errordeveloper/kubegen/resources"
+	"github.com/errordeveloper/kubegen/pkg/apps"
+	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
 var (
 	flavor       string
 	image        string
-	manifest     string
 	outputFormat string
 )
 
 func main() {
 	var rootCmd = &cobra.Command{
-		Use: "kubegen",
+		Use:  "kubegen",
+		RunE: command,
 	}
 
-	var component = &cobra.Command{
-		Use:  "basic",
-		RunE: basic,
-	}
-
-	var component = &cobra.Command{
-		Use:  "make-app",
-		RunE: makeApp,
-	}
-
-	var appStack = &cobra.Command{
-		Use:  "resource-module",
-		RunE: makeResourceModule,
-	}
-
-	appStack.Flags().StringVarP(&manifest, "manifest", "", "Kubefile", "App manifest to use")
-	appStack.Flags().StringVarP(&outputFormat, "output-format", "", "yaml", "App manifest to use")
-	rootCmd.AddCommand(appStack)
-
-	//component.Flags().StringVarP(&image, "image", "", "", "Image to use")
-	//component.Flags().StringVarP(&flavor, "flavor", "", "default", "Flavor of generator to use")
-	//rootCmd.AddCommand(component)
-
-	var module = &cobra.Command{
-		Use:  "module",
-		RunE: moduleTest,
-	}
-	rootCmd.AddCommand(module)
+	rootCmd.Flags().StringVarP(&image, "image", "", "", "Image to use")
+	rootCmd.Flags().StringVarP(&flavor, "flavor", "", "default", "Flavor of generator to use")
+	rootCmd.Flags().StringVarP(&outputFormat, "output-format", "", "yaml", "App manifest to use")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
 
-func fromAppStackDefinition(cmd *cobra.Command, args []string) error {
-	data, err := ioutil.ReadFile(manifest)
-	if err != nil {
-		return err
-	}
-
-	app, err := appmaker.NewFromHCL(data)
-	if err != nil {
-		return err
-	}
-
-	return encodeAndOutput(app)
-}
-
-/*
+func command(cmd *cobra.Command, args []string) error {
 	if image == "" {
 		return fmt.Errorf("Image must be specified")
 	}
 
-	app := &appmaker.App{
+	app := &apps.App{
 		GroupName: "test",
-		Components: []appmaker.AppComponent{
+		Components: []apps.AppComponent{
 			{
 				Image:  image,
 				Flavor: flavor,
@@ -88,72 +46,24 @@ func fromAppStackDefinition(cmd *cobra.Command, args []string) error {
 		},
 	}
 
-	return encodeAndOutput(app)
-*/
-
-func moduleTest(cmd *cobra.Command, args []string) error {
 	var (
-		data   []byte
-		output string
-		err    error
+		data []byte
+		err  error
 	)
-
-	module, err := resources.NewResourceGroupFromPath(args[0])
-	if err != nil {
-		panic(err)
-	}
-
-	//spew.Dump(module)
-
-	if data, err = module.EncodeListToPrettyJSON(); err != nil {
-		return err
-	}
-
-	if term.IsTerminal(0) {
-		veryPretty, err := highlight.Term(outputFormat, data)
-		if err != nil {
-			panic(err)
-		}
-		output = string(veryPretty)
-	} else {
-		output = string(data)
-	}
-
-	fmt.Println(output)
-
-	return nil
-}
-
-func encodeAndOutput(app *appmaker.App) error {
-	var (
-		data   []byte
-		output string
-		err    error
-	)
-
 	switch outputFormat {
 	case "yaml":
 		if data, err = app.EncodeListToYAML(); err != nil {
 			return err
 		}
-		data = append([]byte("---\n"), data...)
 	case "json":
 		if data, err = app.EncodeListToPrettyJSON(); err != nil {
 			return err
 		}
 	}
 
-	if term.IsTerminal(0) {
-		veryPretty, err := highlight.Term(outputFormat, data)
-		if err != nil {
-			panic(err)
-		}
-		output = string(veryPretty)
-	} else {
-		output = string(data)
+	if err := util.Dump(outputFormat, data); err != nil {
+		return err
 	}
-
-	fmt.Println(output)
 
 	return nil
 }
