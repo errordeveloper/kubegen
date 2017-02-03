@@ -50,8 +50,6 @@ func command(cmd *cobra.Command, args []string) error {
 		Flavor:   flavor,
 	}
 
-	app := &apps.App{Components: []apps.AppComponent{component}}
-
 	if len(env) > 0 {
 		component.Env = make(map[string]string)
 		for _, e := range env {
@@ -62,6 +60,8 @@ func command(cmd *cobra.Command, args []string) error {
 			component.Env[parts[0]] = parts[1]
 		}
 	}
+
+	app := &apps.App{Components: []apps.AppComponent{component}}
 
 	var (
 		data        []byte
