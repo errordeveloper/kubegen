@@ -13,3 +13,7 @@ func (i *App) EncodeListToJSON() ([]byte, error) {
 func (i *App) EncodeListToPrettyJSON() ([]byte, error) {
 	return util.EncodeList(i.MakeList(), "application/json", true)
 }
+
+func (i *App) DumpListToFilesAsYAML() ([]string, error) {
+	return util.DumpListToFiles(i.MakeList(), "application/yaml")
+}
