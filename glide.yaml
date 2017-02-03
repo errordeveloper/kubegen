@@ -24,3 +24,5 @@ import:
   repo: https://github.com/errordeveloper/go-highlight
   version: "ce3036b16fa0fdcee2a3f3a58d15c377a9b60093"
 - package: github.com/davecgh/go-spew
+- package: github.com/rendon/testcli
+  version: "0718678"

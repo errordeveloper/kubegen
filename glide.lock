@@ -1,5 +1,5 @@
-hash: 345fdd236b8e5344f8cb99fbfb683bffb00c94d22a0bdc5d55a7f7a7009601e0
-updated: 2017-02-01T18:17:58.894708582Z
+hash: 991698077e502ebfb6cbe012a56411a9b4235f8ed56b7a36be49c4989b061af9
+updated: 2017-02-03T13:08:31.983336791Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -54,7 +54,7 @@ imports:
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/hashicorp/hcl
-  version: 88e9565e9965f4054f86c72ff1ad1bb50e560d6f
+  version: 372e8ddaa16fd67e371e9323807d056b799360af
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -84,6 +84,8 @@ imports:
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
+- name: github.com/rendon/testcli
+  version: 071867858434895c9c5b88cfe02dc3dbf533f43d
 - name: github.com/Sirupsen/logrus
   version: 61e43dc76f7ee59a82bdf3d71033dc12bea4c77d
 - name: github.com/spf13/cobra
