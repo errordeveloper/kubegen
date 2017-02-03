@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/rendon/testcli"
+	"github.com/errordeveloper/testcli"
 
 	"github.com/errordeveloper/kubegen/cmd/kubegen/assets/commands"
 )

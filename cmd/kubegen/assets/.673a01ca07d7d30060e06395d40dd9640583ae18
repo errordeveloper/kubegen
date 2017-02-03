@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+items:
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: test
+    name: test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: test
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: test
+      spec:
+        containers:
+        - env:
+          - name: BAR
+            value: foo
+          - name: FOO
+            value: bar
+          image: errordeveloper/test:latest
+          name: test
+          ports:
+          - containerPort: 4040
+            name: test
+          resources: {}
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: test
+    name: test
+  spec:
+    ports:
+    - name: test
+      port: 4040
+      targetPort: 0
+    selector:
+      name: test
+  status:
+    loadBalancer: {}
+kind: List
+metadata: {}
+

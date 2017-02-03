@@ -725,22 +725,10 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: mongo
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 27017
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: orders-db
           ports:
           - containerPort: 27017
             name: orders-db
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 27017
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1
@@ -785,22 +773,10 @@ items:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
           image: weaveworksdemos/user-db:0.3.0
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 27017
-            initialDelaySeconds: 300
-            periodSeconds: 3
           name: user-db
           ports:
           - containerPort: 27017
             name: user-db
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 27017
-            initialDelaySeconds: 180
-            periodSeconds: 3
           resources: {}
   status: {}
 - apiVersion: v1

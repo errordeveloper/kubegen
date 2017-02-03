@@ -31,7 +31,7 @@ func main() {
 	rootCmd.Flags().Int32VarP(&port, "port", "p", apps.DEFAULT_PORT, "Container and service port to use")
 	rootCmd.Flags().StringSliceVar(&env, "env", []string{}, "Environment variables to set")
 	rootCmd.Flags().StringVarP(&flavor, "flavor", "F", apps.DefaultFlavor, "Flavor of generator to use")
-	rootCmd.Flags().StringVarP(&outputFormat, "output-format", "o", "yaml-stdout", "Output format [\"yaml-stdout\", \"json-stdout\", \"yaml-files\"]")
+	rootCmd.Flags().StringVarP(&outputFormat, "output", "o", "yaml-stdout", "Output format [\"yaml-stdout\", \"json-stdout\", \"yaml-files\"]")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
