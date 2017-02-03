@@ -200,27 +200,27 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 		resources.service = i.MakeService(params)
 	}
 
+	if !i.Opts.WithoutPorts {
+		if len(pod.Containers) >= 1 {
+			i.maybeAddProbes(params, &pod.Containers[0])
+		}
+	}
+
 	if i.Flavor != "" {
 		if fn, ok := Flavors[i.Flavor]; ok {
 			fn(&resources)
 		}
 	}
 
-	if !i.Opts.WithoutPorts {
-		if len(pod.Containers) >= 1 {
-			i.maybeAddProbes(params, &pod.Containers[0])
+	if !i.Opts.WithoutPorts && i.CustomizePorts != nil {
+		ports := make([][]v1.ContainerPort, len(pod.Containers))
+		for n, container := range pod.Containers {
+			ports[n] = container.Ports
 		}
-
-		if i.CustomizePorts != nil {
-			ports := make([][]v1.ContainerPort, len(pod.Containers))
-			for n, container := range pod.Containers {
-				ports[n] = container.Ports
-			}
-			i.CustomizePorts(
-				resources.service.Spec.Ports,
-				ports...,
-			)
-		}
+		i.CustomizePorts(
+			resources.service.Spec.Ports,
+			ports...,
+		)
 	}
 
 	if i.CustomizeCotainers != nil {
