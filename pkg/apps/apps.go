@@ -16,7 +16,7 @@ import (
 	"github.com/errordeveloper/kubegen/pkg/resources"
 )
 
-func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
+func (i *AppComponent) getName() string {
 	var name string
 
 	// TODO use Docker library
@@ -28,9 +28,7 @@ func (i *AppComponent) getNameAndLabels() (string, map[string]string) {
 		name = i.Name
 	}
 
-	labels := map[string]string{"name": name}
-
-	return name, labels
+	return name
 }
 
 func (i *AppComponent) getPort(params AppParams) int32 {
@@ -115,11 +113,10 @@ func (i *AppComponent) MakeContainer(params AppParams, name string) *resources.C
 }
 
 func (i *AppComponent) MakeDeployment(params AppParams) *v1beta1.Deployment {
-	name, labels := i.getNameAndLabels()
+	name := i.getName()
 
 	deployment := resources.Deployment{
 		Name:     name,
-		Metadata: resources.Metadata{Labels: labels},
 		Replicas: params.DefaultReplicas,
 		Pod: resources.Pod{
 			Containers: []resources.Container{*i.MakeContainer(params, name)},
@@ -140,7 +137,7 @@ func (i *AppComponent) MakeDeployment(params AppParams) *v1beta1.Deployment {
 }
 
 func (i *AppComponent) MakeService(params AppParams) *v1.Service {
-	name, labels := i.getNameAndLabels()
+	name := i.getName()
 
 	port := resources.ServicePort{
 		Name: name,
@@ -152,10 +149,8 @@ func (i *AppComponent) MakeService(params AppParams) *v1.Service {
 	}
 
 	service := resources.Service{
-		Name:     name,
-		Metadata: resources.Metadata{Labels: labels},
-		Selector: labels,
-		Ports:    []resources.ServicePort{port},
+		Name:  name,
+		Ports: []resources.ServicePort{port},
 	}
 
 	serviceObj := service.Convert()

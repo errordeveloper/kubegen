@@ -23,8 +23,9 @@ type Metadata struct {
 }
 
 type Deployment struct {
-	Name     string `hcl:",key"`
-	Replicas int32  `hcl:"replicas"`
+	Name     string            `hcl:",key"`
+	Replicas int32             `hcl:"replicas"`
+	Selector map[string]string `hcl:"selector"`
 	Metadata `hcl:",squash"`
 	Pod      `hcl:",squash"`
 }

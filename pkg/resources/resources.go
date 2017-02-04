@@ -220,9 +220,9 @@ func (i *Volume) Convert() v1.Volume {
 	return volume
 }
 
-func MakePod(labels map[string]string, spec Pod) *v1.PodTemplateSpec {
+func MakePod(parentMeta metav1.ObjectMeta, spec Pod) *v1.PodTemplateSpec {
 	meta := metav1.ObjectMeta{
-		Labels:      labels,
+		Labels:      parentMeta.Labels,
 		Annotations: spec.Annotations,
 	}
 
@@ -247,19 +247,34 @@ func MakePod(labels map[string]string, spec Pod) *v1.PodTemplateSpec {
 	return &pod
 }
 
-func (i *Deployment) Convert() *v1beta1.Deployment {
+func (i *Metadata) Convert(name string) metav1.ObjectMeta {
 	meta := metav1.ObjectMeta{
-		Name:        i.Name,
-		Labels:      i.Metadata.Labels,
-		Annotations: i.Metadata.Annotations,
+		Name:        name,
+		Labels:      i.Labels,
+		Annotations: i.Annotations,
 	}
 
-	pod := MakePod(i.Metadata.Labels, i.Pod)
+	if len(meta.Labels) == 0 {
+		meta.Labels = map[string]string{"name": name}
+	}
+
+	return meta
+}
+
+func (i *Deployment) Convert() *v1beta1.Deployment {
+	meta := i.Metadata.Convert(i.Name)
+
+	pod := MakePod(meta, i.Pod)
 
 	deploymentSpec := v1beta1.DeploymentSpec{
-		Selector: &metav1.LabelSelector{MatchLabels: meta.Labels},
 		Template: *pod,
 		Replicas: &i.Replicas,
+	}
+
+	if len(i.Selector) == 0 {
+		deploymentSpec.Selector = &metav1.LabelSelector{MatchLabels: meta.Labels}
+	} else {
+		deploymentSpec.Selector = &metav1.LabelSelector{MatchLabels: i.Selector}
 	}
 
 	deployment := v1beta1.Deployment{
@@ -275,15 +290,15 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 }
 
 func (i *Service) Convert() *v1.Service {
-	meta := metav1.ObjectMeta{
-		Name:        i.Name,
-		Labels:      i.Metadata.Labels,
-		Annotations: i.Metadata.Annotations,
-	}
+	meta := i.Metadata.Convert(i.Name)
 
 	serviceSpec := v1.ServiceSpec{
-		Selector: i.Selector,
-		Ports:    []v1.ServicePort{},
+		Ports: []v1.ServicePort{},
+	}
+	if len(i.Selector) == 0 {
+		serviceSpec.Selector = meta.Labels
+	} else {
+		serviceSpec.Selector = i.Selector
 	}
 
 	for _, port := range i.Ports {

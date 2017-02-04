@@ -1,8 +1,4 @@
 deployment "cart" {
-  labels {
-    name = "cart"
-  }
-
   # Probable the default, but just added here for clarity
   replicas = 1
 
@@ -51,6 +47,8 @@ deployment "cart" {
     }
     readiness_probe {
       http_get {
+        // you can use `port` or `port_name`
+        port_name = "cart"
         path = "/health"
       }
       initial_delay_seconds = 180
@@ -60,6 +58,7 @@ deployment "cart" {
 }
 
 service "cart" {
+  # Labels can be set, when needed
   labels {
     name = "cart"
   }
@@ -67,24 +66,20 @@ service "cart" {
     "prometheus.io/path" = "/prometheus"
   }
 
-  # Maybe selector for the same name should be the default?
+  # Selector can also be set, when needed
   selector {
     name = "cart"
   }
 
   port "cart" {
-    // default value for port is the same as port
-    // if only `port` is set, then `target_port` is set
-    // to the name of this port
+    # default value for port is the same as port
+    # if only `port` is set, then `target_port` is set
+    # to the name of this port
     target_port = 80
   }
 }
 
 deployment "cart-db" {
-  labels {
-    name = "cart-db"
-  }
-
   replicas = 1
 
   volume "tmp-volume" {
@@ -112,16 +107,9 @@ deployment "cart-db" {
 }
 
 service "cart-db" {
-  labels {
-    name = "cart-db"
-  }
   annotations {
     # is this valid hcl?
     "prometheus.io/path" = "/prometheus"
-  }
-
-  selector {
-    name = "cart-db"
   }
 
   port "mongo" {
