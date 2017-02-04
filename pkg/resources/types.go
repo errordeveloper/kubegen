@@ -17,26 +17,62 @@ type ResourceGroup struct {
 	Namespace   string       `hcl:"namespace"`
 }
 
-type Deployment struct {
-	Name           string      `hcl:",key"`
-	Containers     []Container `hcl:"container"`
-	Replicas       int32       `hcl:"replicas"`
-	Volumes        []Volume    `hcl:"volume"`
-	Metadata       `hcl:",squash"`
-	PodAnnotations map[string]string `hcl:"pod_annotations"`
-}
-
 type Metadata struct {
 	Labels      map[string]string `hcl:"labels"`
 	Annotations map[string]string `hcl:"annotations"`
 }
 
+type Deployment struct {
+	Name     string `hcl:",key"`
+	Replicas int32  `hcl:"replicas"`
+	Metadata `hcl:",squash"`
+	Pod      `hcl:",squash"`
+}
+
+type Pod struct {
+	Annotations                   map[string]string      `hcl:"pod_annotations"`
+	Volumes                       []Volume               `hcl:"volume"`
+	InitContainers                []Container            `hcl:"init_container"`
+	Containers                    []Container            `hcl:"container"`
+	RestartPolicy                 v1.RestartPolicy       `hcl:"restart_policy"`
+	TerminationGracePeriodSeconds *int64                 `hcl:"termination_grace_period_seconds"`
+	ActiveDeadlineSeconds         *int64                 `hcl:"active_deadline_seconds"`
+	DNSPolicy                     v1.DNSPolicy           `hcl:"dns_policy"`
+	NodeSelector                  map[string]string      `hcl:"node_selector"`
+	ServiceAccountName            string                 `hcl:"service_account_name"`
+	NodeName                      string                 `hcl:"node_name"`
+	HostNetwork                   bool                   `hcl:"host_network"`
+	HostPID                       bool                   `hcl:"host_pid"`
+	HostIPC                       bool                   `hcl:"host_ipc"`
+	SecurityContext               *v1.PodSecurityContext `hcl:"security_context"`
+	ImagePullSecrets              []string               `hcl:"image_pull_secrets"`
+	Hostname                      string                 `hcl:"hostname"`
+	Subdomain                     string                 `hcl:"subdomain"`
+	Affinity                      *v1.Affinity           `hcl:"affinity"`
+	SchedulerName                 string                 `json:"scheduler_name"`
+}
+
 type Container struct {
-	Name   string            `hcl:",key"`
-	Image  string            `hcl:"image"`
-	Ports  []ContainerPort   `hcl:"port"`
-	Mounts []Mount           `hcl:"mount"`
-	Env    map[string]string `hcl:"env"`
+	Name       string          `hcl:",key"`
+	Image      string          `hcl:"image"`
+	Command    []string        `hcl:"command"`
+	Args       []string        `hcl:"args"`
+	WorkingDir string          `hcl:"work_dir"`
+	Ports      []ContainerPort `hcl:"port"`
+	// EnvFrom []EnvFromSource
+	Env                      map[string]string       `hcl:"env"`
+	Resources                v1.ResourceRequirements `hcl:"resources"`
+	Mounts                   []Mount                 `hcl:"mount"`
+	LivenessProbe            *Probe                  `hcl:"livenes_probe"`
+	ReadinessProbe           *Probe                  `hcl:"readiness_probe"`
+	Lifecycle                `hcl:",squash"`
+	TerminationMessagePath   string
+	TerminationMessagePolicy v1.TerminationMessagePolicy
+	ImagePullPolicy          v1.PullPolicy
+	SecurityContext          *v1.SecurityContext
+	Stdin                    bool
+	StdinOnce                bool
+	TTY                      bool
 }
 
 type ContainerPort struct {
@@ -87,6 +123,44 @@ type Mount struct {
 	SubPath   string `hcl:sub_path"`
 }
 
+type Probe struct {
+	Handler             `hcl:",squash"`
+	InitialDelaySeconds int32 `hcl:"initial_delay_seconds"`
+	TimeoutSeconds      int32 `hcl:"timeout_seconds"`
+	PeriodSeconds       int32 `hcl:"period_seconds"`
+	SuccessThreshold    int32 `hcl:"success_threshold"`
+	FailureThreshold    int32 `hcl:"failure_threshold"`
+}
+
+type Lifecycle struct {
+	PostStart *Handler `json:"post_start"`
+	PreStop   *Handler `json:"pre_stop"`
+}
+
+type Handler struct {
+	Exec      *v1.ExecAction      `hcl:"exec"`
+	HTTPGet   *v1.HTTPGetAction   `hcl:"http_get"`
+	TCPSocket *v1.TCPSocketAction `hcl:"tcp_socket"`
+}
+
+type ExecAction struct {
+	Command []string `hcl:"command"`
+}
+
+type HTTPGetAction struct {
+	Path        string            `hcl:"path"`
+	Port        int32             `hcl:"port"`
+	PortName    string            `hcl:"port_name"`
+	Host        string            `hcl:"host"`
+	Scheme      v1.URIScheme      `hcl:"scheme"`
+	HTTPHeaders map[string]string `hcl:"headers"`
+}
+
+type TCPSocketAction struct {
+	Port     int32  `hcl:"port"`
+	PortName string `hcl:"port_name"`
+}
+
 type Service struct {
 	Name     string `hcl:",key"`
 	Metadata `hcl:",squash"`
@@ -95,9 +169,10 @@ type Service struct {
 }
 
 type ServicePort struct {
-	Name       string      `hcl:",key"`
-	Port       int32       `hcl:"port"`
-	Protocol   v1.Protocol `hcl:"protocol"`
-	TargetPort int32       `hcl:"target_port"`
-	NodePort   int32       `hcl:"node_port"`
+	Name           string      `hcl:",key"`
+	Port           int32       `hcl:"port"`
+	Protocol       v1.Protocol `hcl:"protocol"`
+	TargetPort     int32       `hcl:"target_port"`
+	TargetPortName string      `hcl:"target_port_name"`
+	NodePort       int32       `hcl:"node_port"`
 }

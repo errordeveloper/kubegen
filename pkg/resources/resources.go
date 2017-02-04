@@ -36,7 +36,7 @@ func (i *Container) maybeAddEnvVars(container *v1.Container) {
 	container.Env = env
 }
 
-func (i *Container) Convert() *v1.Container {
+func (i *Container) Convert() v1.Container {
 	container := v1.Container{Name: i.Name, Image: i.Image}
 
 	i.maybeAddEnvVars(&container)
@@ -53,13 +53,44 @@ func (i *Container) Convert() *v1.Container {
 		container.VolumeMounts = append(container.VolumeMounts, v1.VolumeMount(volumeMount))
 	}
 
-	return &container
+	return container
 }
 
-func MakePod(labels, podAnnotations map[string]string, containers []Container, volumes []Volume) *v1.PodTemplateSpec {
+//func (i *Probe) Convert() v1.Probe {
+//}
+
+func (i *Volume) Convert() v1.Volume {
+	volume := v1.Volume{Name: i.Name}
+
+	// TODO error if more then one thing is set
+
+	if i.HostPath != nil {
+		s := v1.HostPathVolumeSource(*i.VolumeSource.HostPath)
+		volume.VolumeSource.HostPath = &s
+	}
+	if i.EmptyDir != nil {
+		s := v1.EmptyDirVolumeSource(*i.VolumeSource.EmptyDir)
+		volume.VolumeSource.EmptyDir = &s
+	}
+	if i.Secret != nil {
+		s := v1.SecretVolumeSource{
+			SecretName:  i.VolumeSource.Secret.SecretName,
+			DefaultMode: &i.VolumeSource.Secret.DefaultMode,
+			Optional:    &i.VolumeSource.Secret.Optional,
+		}
+		for _, item := range i.VolumeSource.Secret.Items {
+			s.Items = append(s.Items, v1.KeyToPath(item))
+		}
+		volume.VolumeSource.Secret = &s
+	}
+
+	return volume
+}
+
+func MakePod(labels map[string]string, spec Pod) *v1.PodTemplateSpec {
 	meta := metav1.ObjectMeta{
 		Labels:      labels,
-		Annotations: podAnnotations,
+		Annotations: spec.Annotations,
 	}
 
 	podSpec := v1.PodSpec{
@@ -67,32 +98,12 @@ func MakePod(labels, podAnnotations map[string]string, containers []Container, v
 		Volumes:    []v1.Volume{},
 	}
 
-	for _, container := range containers {
-		podSpec.Containers = append(podSpec.Containers, *container.Convert())
+	for _, container := range spec.Containers {
+		podSpec.Containers = append(podSpec.Containers, container.Convert())
 	}
 
-	for _, volume := range volumes {
-		v := v1.Volume{Name: volume.Name}
-		if volume.HostPath != nil {
-			s := v1.HostPathVolumeSource(*volume.VolumeSource.HostPath)
-			v.VolumeSource.HostPath = &s
-		}
-		if volume.EmptyDir != nil {
-			s := v1.EmptyDirVolumeSource(*volume.VolumeSource.EmptyDir)
-			v.VolumeSource.EmptyDir = &s
-		}
-		if volume.Secret != nil {
-			s := v1.SecretVolumeSource{
-				SecretName:  volume.VolumeSource.Secret.SecretName,
-				DefaultMode: &volume.VolumeSource.Secret.DefaultMode,
-				Optional:    &volume.VolumeSource.Secret.Optional,
-			}
-			for _, item := range volume.VolumeSource.Secret.Items {
-				s.Items = append(s.Items, v1.KeyToPath(item))
-			}
-			v.VolumeSource.Secret = &s
-		}
-		podSpec.Volumes = append(podSpec.Volumes, v)
+	for _, volume := range spec.Volumes {
+		podSpec.Volumes = append(podSpec.Volumes, volume.Convert())
 	}
 
 	pod := v1.PodTemplateSpec{
@@ -110,7 +121,7 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 		Annotations: i.Metadata.Annotations,
 	}
 
-	pod := MakePod(i.Metadata.Labels, i.PodAnnotations, i.Containers, i.Volumes)
+	pod := MakePod(i.Metadata.Labels, i.Pod)
 
 	deploymentSpec := v1beta1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{MatchLabels: meta.Labels},
@@ -144,11 +155,21 @@ func (i *Service) Convert() *v1.Service {
 
 	for _, port := range i.Ports {
 		p := v1.ServicePort{
-			Name:       port.Name,
-			Port:       port.Port,
-			TargetPort: intstr.FromInt(int(port.TargetPort)),
-			NodePort:   port.NodePort,
+			Name:     port.Name,
+			Port:     port.Port,
+			NodePort: port.NodePort,
+			// default to taget port with the same name
+			TargetPort: intstr.FromString(port.Name),
 		}
+		if !(port.TargetPort != 0 && port.TargetPortName != "") {
+			// overide the default target port
+			if port.TargetPort != 0 {
+				p.TargetPort = intstr.FromInt(int(port.TargetPort))
+			}
+			if port.TargetPortName != "" {
+				p.TargetPort = intstr.FromString(port.TargetPortName)
+			}
+		} // TODO: should error if both are set
 		serviceSpec.Ports = append(serviceSpec.Ports, p)
 	}
 
