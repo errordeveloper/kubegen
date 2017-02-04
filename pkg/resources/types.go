@@ -138,9 +138,9 @@ type Lifecycle struct {
 }
 
 type Handler struct {
-	Exec      *v1.ExecAction      `hcl:"exec"`
-	HTTPGet   *v1.HTTPGetAction   `hcl:"http_get"`
-	TCPSocket *v1.TCPSocketAction `hcl:"tcp_socket"`
+	Exec      *ExecAction      `hcl:"exec"`
+	HTTPGet   *HTTPGetAction   `hcl:"http_get"`
+	TCPSocket *TCPSocketAction `hcl:"tcp_socket"`
 }
 
 type ExecAction struct {

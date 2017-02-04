@@ -53,11 +53,132 @@ func (i *Container) Convert() v1.Container {
 		container.VolumeMounts = append(container.VolumeMounts, v1.VolumeMount(volumeMount))
 	}
 
+	if i.LivenessProbe != nil {
+		container.LivenessProbe = i.LivenessProbe.Convert()
+	}
+
+	if i.ReadinessProbe != nil {
+		container.ReadinessProbe = i.ReadinessProbe.Convert()
+	}
+
 	return container
 }
 
-//func (i *Probe) Convert() v1.Probe {
+//func onlyOneIsNotNil(args ...interface{}) *bool {
+//	count := 0
+//	result := false
+//	for _, i := range args {
+//		if i != nil {
+//			count = count + 1
+//		}
+//	}
+//
+//	result = count > 1
+//
+//	if count == 0 {
+//		return nil
+//	} else {
+//		return &result
+//	}
 //}
+
+func exclusiveNonNil(args ...interface{}) *int {
+	count := 0
+	index := 0
+	for k, v := range args {
+		if v != nil {
+			count = count + 1
+			index = k
+		}
+	}
+
+	if count == 0 || count > 1 {
+		return nil
+	} else {
+		return &index
+	}
+}
+
+func (i *Probe) Convert() *v1.Probe {
+	probe := v1.Probe{Handler: v1.Handler{}}
+
+	whichHandler := exclusiveNonNil(i.Handler.Exec, i.Handler.HTTPGet, i.Handler.TCPSocket)
+	if whichHandler != nil {
+		switch *whichHandler {
+		case 0:
+			a := v1.ExecAction(*i.Handler.Exec)
+			probe.Handler.Exec = &a
+		case 1:
+			a := v1.HTTPGetAction{}
+			h := i.Handler.HTTPGet
+
+			if h.Path != "" {
+				a.Path = h.Path
+			}
+
+			if !(h.Port != 0 && h.PortName != "") {
+				if h.Port != 0 {
+					a.Port = intstr.FromInt(int(h.Port))
+				}
+				if h.PortName != "" {
+					a.Port = intstr.FromString(h.PortName)
+				}
+			} // TODO: should error if both are set
+
+			if h.Host != "" {
+				a.Host = h.Host
+			}
+
+			if h.Scheme != "" {
+				a.Scheme = h.Scheme
+			}
+
+			if len(h.HTTPHeaders) > 0 {
+				for k, v := range h.HTTPHeaders {
+					a.HTTPHeaders = append(a.HTTPHeaders, v1.HTTPHeader{Name: k, Value: v})
+				}
+			}
+
+			probe.Handler.HTTPGet = &a
+		case 2:
+			a := v1.TCPSocketAction{}
+			h := i.Handler.TCPSocket
+
+			if !(h.Port != 0 && h.PortName != "") {
+				if h.Port != 0 {
+					a.Port = intstr.FromInt(int(h.Port))
+				}
+				if h.PortName != "" {
+					a.Port = intstr.FromString(h.PortName)
+				}
+			} // TODO: should error if both are set
+
+			probe.Handler.TCPSocket = &a
+		}
+	} // TODO error here
+
+	if i.InitialDelaySeconds > 0 {
+		probe.InitialDelaySeconds = i.InitialDelaySeconds
+	}
+
+	if i.TimeoutSeconds > 0 {
+		probe.TimeoutSeconds = i.TimeoutSeconds
+	}
+
+	if i.PeriodSeconds > 0 {
+		probe.PeriodSeconds = i.PeriodSeconds
+	}
+
+	if i.SuccessThreshold > 0 {
+		probe.SuccessThreshold = i.SuccessThreshold
+	}
+
+	if i.FailureThreshold > 0 {
+		probe.FailureThreshold = i.FailureThreshold
+	}
+
+	return &probe
+}
 
 func (i *Volume) Convert() v1.Volume {
 	volume := v1.Volume{Name: i.Name}
