@@ -118,10 +118,12 @@ func (i *AppComponent) MakeDeployment(params AppParams) *v1beta1.Deployment {
 	name, labels := i.getNameAndLabels()
 
 	deployment := resources.Deployment{
-		Name:       name,
-		Metadata:   resources.Metadata{Labels: labels},
-		Replicas:   params.DefaultReplicas,
-		Containers: []resources.Container{*i.MakeContainer(params, name)},
+		Name:     name,
+		Metadata: resources.Metadata{Labels: labels},
+		Replicas: params.DefaultReplicas,
+		Pod: resources.Pod{
+			Containers: []resources.Container{*i.MakeContainer(params, name)},
+		},
 	}
 
 	if i.Replicas != nil {
