@@ -51,7 +51,7 @@ items:
     ports:
     - name: foo
       port: 8080
-      targetPort: 0
+      targetPort: foo
     selector:
       name: foo
   status:

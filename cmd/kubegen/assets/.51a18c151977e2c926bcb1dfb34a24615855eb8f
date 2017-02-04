@@ -44,7 +44,7 @@ items:
     ports:
     - name: test
       port: 80
-      targetPort: 0
+      targetPort: test
     selector:
       name: test
   status:

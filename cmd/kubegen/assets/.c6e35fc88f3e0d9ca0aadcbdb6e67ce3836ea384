@@ -39,7 +39,7 @@ items:
     ports:
     - name: foo
       port: 80
-      targetPort: 0
+      targetPort: foo
     selector:
       name: foo
   status:

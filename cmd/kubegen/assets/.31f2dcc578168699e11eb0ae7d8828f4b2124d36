@@ -78,7 +78,7 @@
           {
             "name": "nginx",
             "port": 80,
-            "targetPort": 0
+            "targetPort": "nginx"
           }
         ],
         "selector": {

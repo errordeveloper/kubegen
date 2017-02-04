@@ -53,7 +53,7 @@ items:
     ports:
     - name: cart
       port: 80
-      targetPort: 0
+      targetPort: cart
     selector:
       name: cart
   status:
@@ -115,7 +115,7 @@ items:
     ports:
     - name: catalogue-db
       port: 3306
-      targetPort: 0
+      targetPort: catalogue-db
     selector:
       name: catalogue-db
   status:
@@ -175,7 +175,7 @@ items:
     ports:
     - name: catalogue
       port: 80
-      targetPort: 0
+      targetPort: catalogue
     selector:
       name: catalogue
   status:
@@ -232,7 +232,7 @@ items:
     ports:
     - name: front-end
       port: 8079
-      targetPort: 0
+      targetPort: front-end
     selector:
       name: front-end
   status:
@@ -289,7 +289,7 @@ items:
     ports:
     - name: orders
       port: 80
-      targetPort: 0
+      targetPort: orders
     selector:
       name: orders
   status:
@@ -349,7 +349,7 @@ items:
     ports:
     - name: payment
       port: 80
-      targetPort: 0
+      targetPort: payment
     selector:
       name: payment
   status:
@@ -406,7 +406,7 @@ items:
     ports:
     - name: queue-master
       port: 80
-      targetPort: 0
+      targetPort: queue-master
     selector:
       name: queue-master
   status:
@@ -463,7 +463,7 @@ items:
     ports:
     - name: rabbitmq
       port: 5672
-      targetPort: 0
+      targetPort: rabbitmq
     selector:
       name: rabbitmq
   status:
@@ -520,7 +520,7 @@ items:
     ports:
     - name: shipping
       port: 80
-      targetPort: 0
+      targetPort: shipping
     selector:
       name: shipping
   status:
@@ -582,7 +582,7 @@ items:
     ports:
     - name: user
       port: 80
-      targetPort: 0
+      targetPort: user
     selector:
       name: user
   status:
@@ -639,7 +639,7 @@ items:
     ports:
     - name: zipkin
       port: 9411
-      targetPort: 0
+      targetPort: zipkin
     selector:
       name: zipkin
   status:
@@ -695,7 +695,7 @@ items:
     ports:
     - name: cart-db
       port: 80
-      targetPort: 0
+      targetPort: cart-db
     selector:
       name: cart-db
   status:
@@ -743,7 +743,7 @@ items:
     ports:
     - name: orders-db
       port: 27017
-      targetPort: 0
+      targetPort: orders-db
     selector:
       name: orders-db
   status:
@@ -791,7 +791,7 @@ items:
     ports:
     - name: user-db
       port: 27017
-      targetPort: 0
+      targetPort: user-db
     selector:
       name: user-db
   status:
