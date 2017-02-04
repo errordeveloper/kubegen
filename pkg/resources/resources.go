@@ -1,6 +1,9 @@
 package resources
 
 import (
+	_ "fmt"
+
+	"reflect"
 	"sort"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,11 +57,11 @@ func (i *Container) Convert() v1.Container {
 	}
 
 	if i.LivenessProbe != nil {
-		container.LivenessProbe = i.LivenessProbe.Convert()
+		container.LivenessProbe = i.LivenessProbe.Convert(i.Ports)
 	}
 
 	if i.ReadinessProbe != nil {
-		container.ReadinessProbe = i.ReadinessProbe.Convert()
+		container.ReadinessProbe = i.ReadinessProbe.Convert(i.Ports)
 	}
 
 	return container
@@ -86,7 +89,7 @@ func exclusiveNonNil(args ...interface{}) *int {
 	count := 0
 	index := 0
 	for k, v := range args {
-		if v != nil {
+		if !reflect.ValueOf(v).IsNil() {
 			count = count + 1
 			index = k
 		}
@@ -99,8 +102,15 @@ func exclusiveNonNil(args ...interface{}) *int {
 	}
 }
 
-func (i *Probe) Convert() *v1.Probe {
+func (i *Probe) Convert(ports []ContainerPort) *v1.Probe {
 	probe := v1.Probe{Handler: v1.Handler{}}
+
+	defaultPort := intstr.IntOrString{}
+
+	// pick the first port by default
+	if len(ports) > 0 {
+		defaultPort = intstr.FromString(ports[0].Name)
+	}
 
 	whichHandler := exclusiveNonNil(i.Handler.Exec, i.Handler.HTTPGet, i.Handler.TCPSocket)
 	if whichHandler != nil {
@@ -109,13 +119,14 @@ func (i *Probe) Convert() *v1.Probe {
 			a := v1.ExecAction(*i.Handler.Exec)
 			probe.Handler.Exec = &a
 		case 1:
-			a := v1.HTTPGetAction{}
+			a := v1.HTTPGetAction{Port: defaultPort}
 			h := i.Handler.HTTPGet
 
 			if h.Path != "" {
 				a.Path = h.Path
 			}
 
+			// TODO: should error if `len(ports) == 0` and none of these are set
 			if !(h.Port != 0 && h.PortName != "") {
 				if h.Port != 0 {
 					a.Port = intstr.FromInt(int(h.Port))
@@ -123,7 +134,7 @@ func (i *Probe) Convert() *v1.Probe {
 				if h.PortName != "" {
 					a.Port = intstr.FromString(h.PortName)
 				}
-			} // TODO: should error if both are set
+			}
 
 			if h.Host != "" {
 				a.Host = h.Host
@@ -141,9 +152,10 @@ func (i *Probe) Convert() *v1.Probe {
 
 			probe.Handler.HTTPGet = &a
 		case 2:
-			a := v1.TCPSocketAction{}
+			a := v1.TCPSocketAction{Port: defaultPort}
 			h := i.Handler.TCPSocket
 
+			// TODO: should error if `len(ports) == 0` and none of these are set
 			if !(h.Port != 0 && h.PortName != "") {
 				if h.Port != 0 {
 					a.Port = intstr.FromInt(int(h.Port))
@@ -151,7 +163,7 @@ func (i *Probe) Convert() *v1.Probe {
 				if h.PortName != "" {
 					a.Port = intstr.FromString(h.PortName)
 				}
-			} // TODO: should error if both are set
+			}
 
 			probe.Handler.TCPSocket = &a
 		}
@@ -286,6 +298,9 @@ func (i *Service) Convert() *v1.Service {
 			// overide the default target port
 			if port.TargetPort != 0 {
 				p.TargetPort = intstr.FromInt(int(port.TargetPort))
+				if port.Port == 0 {
+					p.Port = port.TargetPort
+				}
 			}
 			if port.TargetPortName != "" {
 				p.TargetPort = intstr.FromString(port.TargetPortName)

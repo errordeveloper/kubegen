@@ -63,7 +63,7 @@ type Container struct {
 	Env                      map[string]string       `hcl:"env"`
 	Resources                v1.ResourceRequirements `hcl:"resources"`
 	Mounts                   []Mount                 `hcl:"mount"`
-	LivenessProbe            *Probe                  `hcl:"livenes_probe"`
+	LivenessProbe            *Probe                  `hcl:"liveness_probe"`
 	ReadinessProbe           *Probe                  `hcl:"readiness_probe"`
 	Lifecycle                `hcl:",squash"`
 	TerminationMessagePath   string

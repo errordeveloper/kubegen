@@ -43,8 +43,8 @@ deployment "cart" {
     # them, and define them in one place.
     liveness_probe {
       http_get {
+        // if `port` is not set, first port of the container is use
         path = "/health"
-        port = 80
       }
       initial_delay_seconds = 300
       period_seconds = 3
@@ -52,7 +52,6 @@ deployment "cart" {
     readiness_probe {
       http_get {
         path = "/health"
-        port = 80
       }
       initial_delay_seconds = 180
       period_seconds = 3
@@ -74,6 +73,9 @@ service "cart" {
   }
 
   port "cart" {
+    // default value for port is the same as port
+    // if only `port` is set, then `target_port` is set
+    // to the name of this port
     target_port = 80
   }
 }
@@ -123,6 +125,6 @@ service "cart-db" {
   }
 
   port "mongo" {
-    target_port = 27017
+    port = 27017
   }
 }
