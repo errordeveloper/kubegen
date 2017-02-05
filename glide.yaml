@@ -29,3 +29,6 @@ import:
   version: "04cdfd42973bb9c8589fd6a731800cf222fde1a9"
   subpackages:
   - spew
+- package: github.com/jinzhu/copier
+  repo: https://github.com/kchugalinskiy/copier
+  version: "e7f5be3"

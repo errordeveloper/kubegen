@@ -13,6 +13,8 @@ import (
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
 
+	"github.com/jinzhu/copier"
+
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
@@ -62,6 +64,11 @@ func (i *Container) Convert() v1.Container {
 
 	if i.ReadinessProbe != nil {
 		container.ReadinessProbe = i.ReadinessProbe.Convert(i.Ports)
+	}
+
+	if i.SecurityContext != nil {
+		container.SecurityContext = &v1.SecurityContext{}
+		copier.Copy(container.SecurityContext, i.SecurityContext)
 	}
 
 	return container
@@ -188,14 +195,8 @@ func (i *Volume) Convert() v1.Volume {
 			s := v1.EmptyDirVolumeSource(*i.VolumeSource.EmptyDir)
 			volume.VolumeSource.EmptyDir = &s
 		case 2:
-			s := v1.SecretVolumeSource{
-				SecretName:  i.VolumeSource.Secret.SecretName,
-				DefaultMode: &i.VolumeSource.Secret.DefaultMode,
-				Optional:    &i.VolumeSource.Secret.Optional,
-			}
-			for _, item := range i.VolumeSource.Secret.Items {
-				s.Items = append(s.Items, v1.KeyToPath(item))
-			}
+			s := v1.SecretVolumeSource{}
+			copier.Copy(&s, i.VolumeSource.Secret)
 			volume.VolumeSource.Secret = &s
 		}
 	}
@@ -220,6 +221,11 @@ func MakePod(parentMeta metav1.ObjectMeta, spec Pod) *v1.PodTemplateSpec {
 
 	for _, volume := range spec.Volumes {
 		podSpec.Volumes = append(podSpec.Volumes, volume.Convert())
+	}
+
+	if spec.SecurityContext != nil {
+		s := v1.PodSecurityContext(*spec.SecurityContext)
+		podSpec.SecurityContext = &s
 	}
 
 	pod := v1.PodTemplateSpec{
