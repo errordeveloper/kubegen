@@ -31,26 +31,26 @@ type Deployment struct {
 }
 
 type Pod struct {
-	Annotations                   map[string]string      `hcl:"pod_annotations"`
-	Volumes                       []Volume               `hcl:"volume"`
-	InitContainers                []Container            `hcl:"init_container"`
-	Containers                    []Container            `hcl:"container"`
-	RestartPolicy                 v1.RestartPolicy       `hcl:"restart_policy"`
-	TerminationGracePeriodSeconds *int64                 `hcl:"termination_grace_period_seconds"`
-	ActiveDeadlineSeconds         *int64                 `hcl:"active_deadline_seconds"`
-	DNSPolicy                     v1.DNSPolicy           `hcl:"dns_policy"`
-	NodeSelector                  map[string]string      `hcl:"node_selector"`
-	ServiceAccountName            string                 `hcl:"service_account_name"`
-	NodeName                      string                 `hcl:"node_name"`
-	HostNetwork                   bool                   `hcl:"host_network"`
-	HostPID                       bool                   `hcl:"host_pid"`
-	HostIPC                       bool                   `hcl:"host_ipc"`
-	SecurityContext               *v1.PodSecurityContext `hcl:"security_context"`
-	ImagePullSecrets              []string               `hcl:"image_pull_secrets"`
-	Hostname                      string                 `hcl:"hostname"`
-	Subdomain                     string                 `hcl:"subdomain"`
-	Affinity                      *v1.Affinity           `hcl:"affinity"`
-	SchedulerName                 string                 `json:"scheduler_name"`
+	Annotations                   map[string]string   `hcl:"pod_annotations"`
+	Volumes                       []Volume            `hcl:"volume"`
+	InitContainers                []Container         `hcl:"init_container"`
+	Containers                    []Container         `hcl:"container"`
+	RestartPolicy                 v1.RestartPolicy    `hcl:"restart_policy"`
+	TerminationGracePeriodSeconds *int64              `hcl:"termination_grace_period_seconds"`
+	ActiveDeadlineSeconds         *int64              `hcl:"active_deadline_seconds"`
+	DNSPolicy                     v1.DNSPolicy        `hcl:"dns_policy"`
+	NodeSelector                  map[string]string   `hcl:"node_selector"`
+	ServiceAccountName            string              `hcl:"service_account_name"`
+	NodeName                      string              `hcl:"node_name"`
+	HostNetwork                   bool                `hcl:"host_network"`
+	HostPID                       bool                `hcl:"host_pid"`
+	HostIPC                       bool                `hcl:"host_ipc"`
+	SecurityContext               *PodSecurityContext `hcl:"security_context"`
+	ImagePullSecrets              []string            `hcl:"image_pull_secrets"`
+	Hostname                      string              `hcl:"hostname"`
+	Subdomain                     string              `hcl:"subdomain"`
+	Affinity                      *v1.Affinity        `hcl:"affinity"`
+	SchedulerName                 string              `json:"scheduler_name"`
 }
 
 type Container struct {
@@ -61,19 +61,19 @@ type Container struct {
 	WorkingDir string          `hcl:"work_dir"`
 	Ports      []ContainerPort `hcl:"port"`
 	// EnvFrom []EnvFromSource
-	Env                      map[string]string       `hcl:"env"`
-	Resources                v1.ResourceRequirements `hcl:"resources"`
-	Mounts                   []Mount                 `hcl:"mount"`
-	LivenessProbe            *Probe                  `hcl:"liveness_probe"`
-	ReadinessProbe           *Probe                  `hcl:"readiness_probe"`
-	Lifecycle                `hcl:",squash"`
-	TerminationMessagePath   string
-	TerminationMessagePolicy v1.TerminationMessagePolicy
-	ImagePullPolicy          v1.PullPolicy
-	SecurityContext          *v1.SecurityContext
-	Stdin                    bool
-	StdinOnce                bool
-	TTY                      bool
+	Env                      map[string]string           `hcl:"env"`
+	Resources                ResourceRequirements        `hcl:"resources"`
+	Mounts                   []Mount                     `hcl:"mount"`
+	LivenessProbe            *Probe                      `hcl:"liveness_probe"`
+	ReadinessProbe           *Probe                      `hcl:"readiness_probe"`
+	Lifecycle                *Lifecycle                  `hcl:"lifecycle"`
+	TerminationMessagePath   string                      `hcl:"termination_message_path"`
+	TerminationMessagePolicy v1.TerminationMessagePolicy `hcl:"termination_message_policy"`
+	ImagePullPolicy          v1.PullPolicy               `hcl:"image_pull_policy"`
+	SecurityContext          *SecurityContext            `hcl:"security_context"`
+	Stdin                    bool                        `hcl:"stdin"`
+	StdinOnce                bool                        `hcl:"stdin_once"`
+	TTY                      bool                        `hcl:"tty"`
 }
 
 type ContainerPort struct {
@@ -162,11 +162,47 @@ type TCPSocketAction struct {
 	PortName string `hcl:"port_name"`
 }
 
+type SecurityContext struct {
+	Capabilities           *Capabilities      `hcl:"capabilities"`
+	Privileged             *bool              `hcl:"privileged"`
+	SELinuxOptions         *v1.SELinuxOptions `hcl:"selinux_options"`
+	RunAsUser              *int64             `hcl:"run_as_user"`
+	RunAsNonRoot           *bool              `hcl:"run_as_non_root"`
+	ReadOnlyRootFilesystem *bool              `hcl:"read_only_root_filesystem"`
+}
+
+type PodSecurityContext struct {
+	SELinuxOptions     *v1.SELinuxOptions `hcl:"selinux_options"`
+	RunAsUser          *int64             `hcl:"run_as_user"`
+	RunAsNonRoot       *bool              `hcl:"run_as_non_root"`
+	SupplementalGroups []int64            `hcl:"supplemental_groups"`
+	FSGroup            *int64             `hcl:"fs_group"`
+}
+
+type SELinuxOptions struct {
+	User  string `hcl:"user"`
+	Role  string `hcl:"role"`
+	Type  string `hcl:"type"`
+	Level string `hcl:"level"`
+}
+
+type Capabilities struct {
+	Add  []v1.Capability `json:"add"`
+	Drop []v1.Capability `json:"drop"`
+}
+
 type Service struct {
-	Name     string `hcl:",key"`
-	Metadata `hcl:",squash"`
-	Ports    []ServicePort     `hcl:"port"`
-	Selector map[string]string `hcl:"selector"`
+	Name                     string `hcl:",key"`
+	Metadata                 `hcl:",squash"`
+	Ports                    []ServicePort      `hcl:"port"`
+	Selector                 map[string]string  `hcl:"selector"`
+	ClusterIP                string             `hcl:"cluster_ip"`
+	Type                     v1.ServiceType     `hcl:"type"`
+	ExternalIPs              []string           `hcl:"external_ips"`
+	SessionAffinity          v1.ServiceAffinity `hcl:"session_affinity"`
+	LoadBalancerIP           string             `hcl:"load_balancer_ip"`
+	LoadBalancerSourceRanges []string           `hcl:"load_balancer_source_ranges"`
+	ExternalName             string             `hcl:"external_name"`
 }
 
 type ServicePort struct {
@@ -176,4 +212,9 @@ type ServicePort struct {
 	TargetPort     int32       `hcl:"target_port"`
 	TargetPortName string      `hcl:"target_port_name"`
 	NodePort       int32       `hcl:"node_port"`
+}
+
+type ResourceRequirements struct {
+	Limits   v1.ResourceList `json:"limits"`
+	Requests v1.ResourceList `json:"requests"`
 }
