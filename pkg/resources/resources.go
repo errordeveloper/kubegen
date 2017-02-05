@@ -67,24 +67,6 @@ func (i *Container) Convert() v1.Container {
 	return container
 }
 
-//func onlyOneIsNotNil(args ...interface{}) *bool {
-//	count := 0
-//	result := false
-//	for _, i := range args {
-//		if i != nil {
-//			count = count + 1
-//		}
-//	}
-//
-//	result = count > 1
-//
-//	if count == 0 {
-//		return nil
-//	} else {
-//		return &result
-//	}
-//}
-
 func exclusiveNonNil(args ...interface{}) *int {
 	count := 0
 	index := 0
@@ -196,25 +178,26 @@ func (i *Volume) Convert() v1.Volume {
 	volume := v1.Volume{Name: i.Name}
 
 	// TODO error if more then one thing is set
-
-	if i.HostPath != nil {
-		s := v1.HostPathVolumeSource(*i.VolumeSource.HostPath)
-		volume.VolumeSource.HostPath = &s
-	}
-	if i.EmptyDir != nil {
-		s := v1.EmptyDirVolumeSource(*i.VolumeSource.EmptyDir)
-		volume.VolumeSource.EmptyDir = &s
-	}
-	if i.Secret != nil {
-		s := v1.SecretVolumeSource{
-			SecretName:  i.VolumeSource.Secret.SecretName,
-			DefaultMode: &i.VolumeSource.Secret.DefaultMode,
-			Optional:    &i.VolumeSource.Secret.Optional,
+	whichVolumeSource := exclusiveNonNil(i.HostPath, i.EmptyDir, i.Secret)
+	if whichVolumeSource != nil {
+		switch *whichVolumeSource {
+		case 0:
+			s := v1.HostPathVolumeSource(*i.VolumeSource.HostPath)
+			volume.VolumeSource.HostPath = &s
+		case 1:
+			s := v1.EmptyDirVolumeSource(*i.VolumeSource.EmptyDir)
+			volume.VolumeSource.EmptyDir = &s
+		case 2:
+			s := v1.SecretVolumeSource{
+				SecretName:  i.VolumeSource.Secret.SecretName,
+				DefaultMode: &i.VolumeSource.Secret.DefaultMode,
+				Optional:    &i.VolumeSource.Secret.Optional,
+			}
+			for _, item := range i.VolumeSource.Secret.Items {
+				s.Items = append(s.Items, v1.KeyToPath(item))
+			}
+			volume.VolumeSource.Secret = &s
 		}
-		for _, item := range i.VolumeSource.Secret.Items {
-			s.Items = append(s.Items, v1.KeyToPath(item))
-		}
-		volume.VolumeSource.Secret = &s
 	}
 
 	return volume
