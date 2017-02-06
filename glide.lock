@@ -1,5 +1,5 @@
-hash: ee0660887151cdbc1ef31f17223a6d6bfe8512ef0f61c3c4f2c95ac6f1955d8d
-updated: 2017-02-06T08:57:23.751184747Z
+hash: e028f4c3f48f6e66b5e04b61803b81078ce0c9baa1d4e38bad3c14592725f3bc
+updated: 2017-02-06T10:49:51.055844822Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -55,6 +55,8 @@ imports:
   version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
+- name: github.com/guregu/null
+  version: 41961cea0328defc5f95c1c473f89ebf0d1813f6
 - name: github.com/hashicorp/hcl
   version: 372e8ddaa16fd67e371e9323807d056b799360af
   subpackages:
@@ -70,8 +72,10 @@ imports:
   version: 6633656539c1639d9d78127b7d47c622b5d7b6dc
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
-- name: github.com/jinzhu/copier
-  version: 8bfca8a02a0ce12119cdc4974143c834ca589257
+- name: github.com/lib/pq
+  version: a6657b2386e9b8be76484c08711b02c7cf867ead
+  subpackages:
+  - oid
 - name: github.com/mailru/easyjson
   version: d5b7844b561a7bc640052f1b935f7b800330d7e0
   subpackages:
@@ -82,6 +86,8 @@ imports:
   version: 6c903ff4aa50920ca86087a280590b36b3152b9c
 - name: github.com/mattn/go-isatty
   version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+- name: github.com/oleiade/reflections
+  version: 0e86b3c98b2ff33e30c85cfe97d9a63d439fe7eb
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/PuerkitoBio/purell
@@ -102,6 +108,8 @@ imports:
   version: ded73eae5db7e7a0ef6f55aace87a2873c5d2b74
   subpackages:
   - codec
+- name: github.com/ulule/deepcopier
+  version: 4a5401c69d001e4ca11bed2a53816ca580ea5f4a
 - name: golang.org/x/net
   version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
   subpackages:

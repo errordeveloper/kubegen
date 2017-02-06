@@ -30,5 +30,8 @@ import:
   version: "04cdfd42973bb9c8589fd6a731800cf222fde1a9"
   subpackages:
   - spew
-- package: github.com/jinzhu/copier
-  version: "8bfca8a"
+- package: github.com/ulule/deepcopier
+  version: "4a5401c"
+- package: "github.com/guregu/null"
+- package: "github.com/lib/pq"
+- package: "github.com/oleiade/reflections"

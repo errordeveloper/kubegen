@@ -130,7 +130,7 @@ type Mount struct {
 }
 
 type Probe struct {
-	Handler             `hcl:",squash"`
+	Handler             `hcl:",squash" deepcopier:"skip"`
 	InitialDelaySeconds int32 `hcl:"initial_delay_seconds"`
 	TimeoutSeconds      int32 `hcl:"timeout_seconds"`
 	PeriodSeconds       int32 `hcl:"period_seconds"`

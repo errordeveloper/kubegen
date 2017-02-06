@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
-	"github.com/jinzhu/copier"
+	"github.com/ulule/deepcopier"
 
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
@@ -69,7 +69,7 @@ func (i *Container) Convert() v1.Container {
 
 	if i.SecurityContext != nil {
 		container.SecurityContext = &v1.SecurityContext{}
-		copier.Copy(container.SecurityContext, i.SecurityContext)
+		deepcopier.Copy(i.SecurityContext).To(container.SecurityContext)
 	}
 
 	container.Resources = i.Resources.Convert()
@@ -178,25 +178,7 @@ func (i *Probe) Convert(ports []ContainerPort) *v1.Probe {
 		}
 	} // TODO error here
 
-	if i.InitialDelaySeconds > 0 {
-		probe.InitialDelaySeconds = i.InitialDelaySeconds
-	}
-
-	if i.TimeoutSeconds > 0 {
-		probe.TimeoutSeconds = i.TimeoutSeconds
-	}
-
-	if i.PeriodSeconds > 0 {
-		probe.PeriodSeconds = i.PeriodSeconds
-	}
-
-	if i.SuccessThreshold > 0 {
-		probe.SuccessThreshold = i.SuccessThreshold
-	}
-
-	if i.FailureThreshold > 0 {
-		probe.FailureThreshold = i.FailureThreshold
-	}
+	deepcopier.Copy(i).To(&probe)
 
 	return &probe
 }
@@ -216,7 +198,7 @@ func (i *Volume) Convert() v1.Volume {
 			volume.VolumeSource.EmptyDir = &s
 		case 2:
 			s := v1.SecretVolumeSource{}
-			copier.Copy(&s, i.VolumeSource.Secret)
+			deepcopier.Copy(i.VolumeSource.Secret).To(&s)
 			volume.VolumeSource.Secret = &s
 		}
 	}
