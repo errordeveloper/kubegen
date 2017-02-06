@@ -15,6 +15,8 @@ deployment "cart" {
     max_unavailable = "50%"
   }
 
+  restart_policy = "Always"
+
   # Add container specs, this could be done multiple times.
   # It is unclear from the k8s manifest yaml whether you need the template
   # metadata, or what...

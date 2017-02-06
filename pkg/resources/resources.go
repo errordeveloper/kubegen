@@ -235,12 +235,44 @@ func MakePod(parentMeta metav1.ObjectMeta, spec Pod) *v1.PodTemplateSpec {
 		Volumes:    []v1.Volume{},
 	}
 
+	for _, volume := range spec.Volumes {
+		podSpec.Volumes = append(podSpec.Volumes, volume.Convert())
+	}
+
+	for _, initContainer := range spec.InitContainers {
+		podSpec.InitContainers = append(podSpec.InitContainers, initContainer.Convert())
+	}
+
 	for _, container := range spec.Containers {
 		podSpec.Containers = append(podSpec.Containers, container.Convert())
 	}
 
-	for _, volume := range spec.Volumes {
-		podSpec.Volumes = append(podSpec.Volumes, volume.Convert())
+	if spec.RestartPolicy != "" {
+		podSpec.RestartPolicy = spec.RestartPolicy
+	}
+
+	if spec.TerminationGracePeriodSeconds != nil {
+		podSpec.TerminationGracePeriodSeconds = spec.TerminationGracePeriodSeconds
+	}
+
+	if spec.ActiveDeadlineSeconds != nil {
+		podSpec.ActiveDeadlineSeconds = spec.ActiveDeadlineSeconds
+	}
+
+	if spec.DNSPolicy != "" {
+		podSpec.DNSPolicy = spec.DNSPolicy
+	}
+
+	if len(spec.NodeSelector) > 0 {
+		podSpec.NodeSelector = spec.NodeSelector
+	}
+
+	if spec.ServiceAccountName != "" {
+		podSpec.ServiceAccountName = spec.ServiceAccountName
+	}
+
+	if spec.NodeName != "" {
+		podSpec.NodeName = spec.NodeName
 	}
 
 	if spec.SecurityContext != nil {
