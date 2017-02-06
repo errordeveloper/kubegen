@@ -12,6 +12,10 @@ import (
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
+type Convertable interface {
+	ToObject() runtime.Object
+}
+
 func exclusiveNonNil(args ...interface{}) *int {
 	count := 0
 	index := 0
@@ -47,13 +51,26 @@ func (i *ResourceGroup) EncodeListToPrettyJSON() ([]byte, error) {
 	return util.EncodeList(i.MakeList(), "application/json", true)
 }
 
+func appendToList(components *api.List, component Convertable) {
+	components.Items = append(components.Items, component.ToObject())
+}
+
 func (i *ResourceGroup) MakeList() *api.List {
 	components := &api.List{}
-	for _, component := range i.Deployments {
-		components.Items = append(components.Items, runtime.Object(component.Convert()))
-	}
 	for _, component := range i.Services {
-		components.Items = append(components.Items, runtime.Object(component.Convert()))
+		appendToList(components, component)
+	}
+	for _, component := range i.Deployments {
+		appendToList(components, component)
+	}
+	for _, component := range i.ReplicaSets {
+		appendToList(components, component)
+	}
+	for _, component := range i.DaemonSets {
+		appendToList(components, component)
+	}
+	for _, component := range i.StatefulSets {
+		appendToList(components, component)
 	}
 	return components
 }

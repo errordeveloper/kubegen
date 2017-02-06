@@ -2,11 +2,16 @@ package resources
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/pkg/api/v1"
 
 	"github.com/ulule/deepcopier"
 )
+
+func (i Service) ToObject() runtime.Object {
+	return runtime.Object(i.Convert())
+}
 
 func (i *Service) Convert() *v1.Service {
 	meta := i.Metadata.Convert(i.Name)

@@ -10,8 +10,10 @@ import (
 	"k8s.io/client-go/pkg/api"
 	_ "k8s.io/client-go/pkg/api/install"
 	"k8s.io/client-go/pkg/api/v1"
+	_ "k8s.io/client-go/pkg/apis/apps/install"
+	appsv1beta1 "k8s.io/client-go/pkg/apis/apps/v1beta1"
 	_ "k8s.io/client-go/pkg/apis/extensions/install"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	extensionsv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
 	"github.com/d4l3k/go-highlight"
 	"github.com/docker/docker/pkg/term"
@@ -39,7 +41,8 @@ func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
 		schema.GroupVersions(
 			[]schema.GroupVersion{
 				v1.SchemeGroupVersion,
-				v1beta1.SchemeGroupVersion,
+				extensionsv1beta1.SchemeGroupVersion,
+				appsv1beta1.SchemeGroupVersion,
 			},
 		),
 		runtime.InternalGroupVersioner,
@@ -89,12 +92,21 @@ func DumpListToFiles(list *api.List, contentType string) ([]string, error) {
 		)
 
 		switch item.GetObjectKind().GroupVersionKind().Kind {
-		case "Deployment":
-			filenamefmt = "%s-dpl.%s"
-			name = item.(*v1beta1.Deployment).ObjectMeta.Name
 		case "Service":
 			filenamefmt = "%s-svc.%s"
 			name = item.(*v1.Service).ObjectMeta.Name
+		case "Deployment":
+			filenamefmt = "%s-dpl.%s"
+			name = item.(*extensionsv1beta1.Deployment).ObjectMeta.Name
+		case "ReplicaSet":
+			filenamefmt = "%s-rs.%s"
+			name = item.(*extensionsv1beta1.ReplicaSet).ObjectMeta.Name
+		case "DaemonSet":
+			filenamefmt = "%s-ds.%s"
+			name = item.(*extensionsv1beta1.DaemonSet).ObjectMeta.Name
+		case "StatefulSet":
+			filenamefmt = "%s-ss.%s"
+			name = item.(*appsv1beta1.StatefulSet).ObjectMeta.Name
 		}
 
 		data, err := Encode(item, contentType, true)
