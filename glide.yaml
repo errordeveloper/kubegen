@@ -31,5 +31,4 @@ import:
   subpackages:
   - spew
 - package: github.com/jinzhu/copier
-  repo: https://github.com/kchugalinskiy/copier
-  version: "e7f5be3"
+  version: "8bfca8a"

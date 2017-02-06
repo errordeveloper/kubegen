@@ -1,5 +1,5 @@
-hash: 4b87a811379faabb7121e6f9768ee0d88791eb735097778f772cd5f236d33d55
-updated: 2017-02-06T06:14:11.656488992Z
+hash: ee0660887151cdbc1ef31f17223a6d6bfe8512ef0f61c3c4f2c95ac6f1955d8d
+updated: 2017-02-06T08:57:23.751184747Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -71,8 +71,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jinzhu/copier
-  version: e7f5be3641e1a9f22df7820a2dad6527c5cfb53d
-  repo: https://github.com/kchugalinskiy/copier
+  version: 8bfca8a02a0ce12119cdc4974143c834ca589257
 - name: github.com/mailru/easyjson
   version: d5b7844b561a7bc640052f1b935f7b800330d7e0
   subpackages:
