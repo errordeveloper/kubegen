@@ -19,6 +19,23 @@ import (
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
+func exclusiveNonNil(args ...interface{}) *int {
+	count := 0
+	index := 0
+	for k, v := range args {
+		if !reflect.ValueOf(v).IsNil() {
+			count = count + 1
+			index = k
+		}
+	}
+
+	if count == 0 || count > 1 {
+		return nil
+	} else {
+		return &index
+	}
+}
+
 func (i *Container) maybeAddEnvVars(container *v1.Container) {
 	if len(i.Env) == 0 {
 		return
@@ -94,23 +111,6 @@ func (i *ResourceRequirements) Convert() v1.ResourceRequirements {
 		}
 	}
 	return resourceRequirements
-}
-
-func exclusiveNonNil(args ...interface{}) *int {
-	count := 0
-	index := 0
-	for k, v := range args {
-		if !reflect.ValueOf(v).IsNil() {
-			count = count + 1
-			index = k
-		}
-	}
-
-	if count == 0 || count > 1 {
-		return nil
-	} else {
-		return &index
-	}
 }
 
 func (i *Probe) Convert(ports []ContainerPort) *v1.Probe {
