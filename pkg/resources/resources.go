@@ -74,6 +74,8 @@ func (i *Container) Convert() v1.Container {
 
 	container.Resources = i.Resources.Convert()
 
+	deepcopier.Copy(i).To(&container)
+
 	return container
 }
 
@@ -229,33 +231,7 @@ func MakePod(parentMeta metav1.ObjectMeta, spec Pod) *v1.PodTemplateSpec {
 		podSpec.Containers = append(podSpec.Containers, container.Convert())
 	}
 
-	if spec.RestartPolicy != "" {
-		podSpec.RestartPolicy = spec.RestartPolicy
-	}
-
-	if spec.TerminationGracePeriodSeconds != nil {
-		podSpec.TerminationGracePeriodSeconds = spec.TerminationGracePeriodSeconds
-	}
-
-	if spec.ActiveDeadlineSeconds != nil {
-		podSpec.ActiveDeadlineSeconds = spec.ActiveDeadlineSeconds
-	}
-
-	if spec.DNSPolicy != "" {
-		podSpec.DNSPolicy = spec.DNSPolicy
-	}
-
-	if len(spec.NodeSelector) > 0 {
-		podSpec.NodeSelector = spec.NodeSelector
-	}
-
-	if spec.ServiceAccountName != "" {
-		podSpec.ServiceAccountName = spec.ServiceAccountName
-	}
-
-	if spec.NodeName != "" {
-		podSpec.NodeName = spec.NodeName
-	}
+	deepcopier.Copy(spec).To(&podSpec)
 
 	if spec.SecurityContext != nil {
 		s := v1.PodSecurityContext(*spec.SecurityContext)
@@ -302,21 +278,7 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 
 	deploymentSpec.Strategy = i.Strategy.Convert()
 
-	if i.MinReadySeconds > 0 {
-		deploymentSpec.MinReadySeconds = i.MinReadySeconds
-	}
-
-	if i.RevisionHistoryLimit != nil {
-		deploymentSpec.RevisionHistoryLimit = i.RevisionHistoryLimit
-	}
-
-	if i.Paused {
-		deploymentSpec.Paused = i.Paused
-	}
-
-	if i.ProgressDeadlineSeconds != nil {
-		deploymentSpec.ProgressDeadlineSeconds = i.ProgressDeadlineSeconds
-	}
+	deepcopier.Copy(i).To(&deploymentSpec)
 
 	deployment := v1beta1.Deployment{
 		TypeMeta: metav1.TypeMeta{

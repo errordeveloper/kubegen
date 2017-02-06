@@ -23,12 +23,12 @@ type Metadata struct {
 }
 
 type Deployment struct {
-	Name                    string            `hcl:",key"`
-	Replicas                int32             `hcl:"replicas"`
-	Selector                map[string]string `hcl:"selector"`
-	Metadata                `hcl:",squash"`
-	Pod                     `hcl:",squash"`
-	Strategy                DeploymentStrategy `hcl:"strategy"`
+	Name                    string            `hcl:",key" deepcopier:"skip"`
+	Replicas                int32             `hcl:"replicas" deepcopier:"skip"`
+	Selector                map[string]string `hcl:"selector" deepcopier:"skip"`
+	Metadata                `hcl:",squash" deepcopier:"skip"`
+	Pod                     `hcl:",squash" deepcopier:"skip"`
+	Strategy                DeploymentStrategy `hcl:"strategy" deepcopier:"skip"`
 	MinReadySeconds         int32              `hcl:"min_ready_seconds"`
 	RevisionHistoryLimit    *int32             `hcl:"revision_history_limit"`
 	Paused                  bool               `hcl:"paused"`
@@ -36,10 +36,10 @@ type Deployment struct {
 }
 
 type Pod struct {
-	Annotations                   map[string]string   `hcl:"pod_annotations"`
-	Volumes                       []Volume            `hcl:"volume"`
-	InitContainers                []Container         `hcl:"init_container"`
-	Containers                    []Container         `hcl:"container"`
+	Annotations                   map[string]string   `hcl:"pod_annotations" deepcopier:"skip"`
+	Volumes                       []Volume            `hcl:"volume" deepcopier:"skip"`
+	InitContainers                []Container         `hcl:"init_container" deepcopier:"skip"`
+	Containers                    []Container         `hcl:"container" deepcopier:"skip"`
 	RestartPolicy                 v1.RestartPolicy    `hcl:"restart_policy"`
 	TerminationGracePeriodSeconds *int64              `hcl:"termination_grace_period_seconds"`
 	ActiveDeadlineSeconds         *int64              `hcl:"active_deadline_seconds"`
@@ -50,7 +50,7 @@ type Pod struct {
 	HostNetwork                   bool                `hcl:"host_network"`
 	HostPID                       bool                `hcl:"host_pid"`
 	HostIPC                       bool                `hcl:"host_ipc"`
-	SecurityContext               *PodSecurityContext `hcl:"security_context"`
+	SecurityContext               *PodSecurityContext `hcl:"security_context" deepcopier:"skip"`
 	ImagePullSecrets              []string            `hcl:"image_pull_secrets"`
 	Hostname                      string              `hcl:"hostname"`
 	Subdomain                     string              `hcl:"subdomain"`
@@ -59,23 +59,23 @@ type Pod struct {
 }
 
 type Container struct {
-	Name       string          `hcl:",key"`
-	Image      string          `hcl:"image"`
+	Name       string          `hcl:",key" deepcopier:"skip"`
+	Image      string          `hcl:"image" deepcopier:"skip"`
 	Command    []string        `hcl:"command"`
 	Args       []string        `hcl:"args"`
 	WorkingDir string          `hcl:"work_dir"`
-	Ports      []ContainerPort `hcl:"port"`
+	Ports      []ContainerPort `hcl:"port" deepcopier:"skip"`
 	// EnvFrom []EnvFromSource
-	Env                      map[string]string           `hcl:"env"`
-	Resources                ResourceRequirements        `hcl:"resources"`
-	Mounts                   []Mount                     `hcl:"mount"`
-	LivenessProbe            *Probe                      `hcl:"liveness_probe"`
-	ReadinessProbe           *Probe                      `hcl:"readiness_probe"`
-	Lifecycle                *Lifecycle                  `hcl:"lifecycle"`
+	Env                      map[string]string           `hcl:"env" deepcopier:"skip"`
+	Resources                ResourceRequirements        `hcl:"resources" deepcopier:"skip"`
+	Mounts                   []Mount                     `hcl:"mount" deepcopier:"skip"`
+	LivenessProbe            *Probe                      `hcl:"liveness_probe" deepcopier:"skip"`
+	ReadinessProbe           *Probe                      `hcl:"readiness_probe" deepcopier:"skip"`
+	Lifecycle                *Lifecycle                  `hcl:"lifecycle" deepcopier:"skip"`
 	TerminationMessagePath   string                      `hcl:"termination_message_path"`
 	TerminationMessagePolicy v1.TerminationMessagePolicy `hcl:"termination_message_policy"`
 	ImagePullPolicy          v1.PullPolicy               `hcl:"image_pull_policy"`
-	SecurityContext          *SecurityContext            `hcl:"security_context"`
+	SecurityContext          *SecurityContext            `hcl:"security_context" deepcopier:"skip"`
 	Stdin                    bool                        `hcl:"stdin"`
 	StdinOnce                bool                        `hcl:"stdin_once"`
 	TTY                      bool                        `hcl:"tty"`
