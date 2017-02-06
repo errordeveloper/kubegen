@@ -229,6 +229,15 @@ configmap "weave-cortex-agent-config" {
                 target_label: job
 EOF
   }
+
+  data_to_json {
+    foo {
+      bar = 1
+      baz {
+        foo = [1, 2, 3]
+      }
+    }
+  }
 }
 
 service "weave-cortex-agent" {

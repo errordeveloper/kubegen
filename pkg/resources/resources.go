@@ -72,5 +72,8 @@ func (i *ResourceGroup) MakeList() *api.List {
 	for _, component := range i.StatefulSets {
 		appendToList(components, component)
 	}
+	for _, component := range i.ConfigMaps {
+		appendToList(components, component)
+	}
 	return components
 }

@@ -18,6 +18,7 @@ type ResourceGroup struct {
 	ReplicaSets  []ReplicaSet  `hcl:"replicaset"`
 	DaemonSets   []DaemonSet   `hcl:"daemonset"`
 	StatefulSets []StatefulSet `hcl:"statefulset"`
+	ConfigMaps   []ConfigMap   `hcl:"configmap"`
 }
 
 type Metadata struct {
@@ -62,6 +63,14 @@ type StatefulSet struct {
 	Pod                  `hcl:",squash" deepcopier:"skip"`
 	VolumeClaimTemplates []v1.PersistentVolumeClaim `hcl:"volume_claim" deepcopier:"skip"`
 	ServiceName          string                     `hcl:"service_name"`
+}
+
+type ConfigMap struct {
+	Name          string `hcl:",key" deepcopier:"skip"`
+	Metadata      `hcl:",squash" deepcopier:"skip"`
+	Data          map[string]string      `hcl:"data"`
+	DataFromFiles []string               `hcl:"data_from_files" deepcopier:"skip"`
+	DataToJSON    map[string]interface{} `hcl:"data_to_json" deepcopier:"skip"`
 }
 
 type Pod struct {
