@@ -8,16 +8,6 @@ items:
         weave-cloud-component: flux
         weave-flux-component: agent
       name: weave-flux-agent
-      annotations:
-        cloud.weave.works/launcher-info: |-
-          {
-            "server-version": "master-1072121",
-            "original-request": {
-              "url": "/k8s.yaml?t=REDACTED&weave-scope-version=1.1.0",
-              "date": "Fri Feb 03 2017 16:38:55 GMT+0000 (UTC)"
-            },
-            "email-address": "support@weave.works"
-          }
     spec:
       template:
         metadata:
@@ -43,16 +33,6 @@ items:
         weave-cloud-component: scope
         weave-scope-component: agent
       name: weave-scope-agent
-      annotations:
-        cloud.weave.works/launcher-info: |-
-          {
-            "server-version": "master-1072121",
-            "original-request": {
-              "url": "/k8s.yaml?t=REDACTED&weave-scope-version=1.1.0",
-              "date": "Fri Feb 03 2017 16:38:55 GMT+0000 (UTC)"
-            },
-            "email-address": "support@weave.works"
-          }
     spec:
       template:
         metadata:
@@ -97,16 +77,6 @@ items:
         weave-cloud-component: cortex
         weave-cortex-component: agent
       name: weave-cortex-agent
-      annotations:
-        cloud.weave.works/launcher-info: |-
-          {
-            "server-version": "master-1072121",
-            "original-request": {
-              "url": "/k8s.yaml?t=REDACTED&weave-scope-version=1.1.0",
-              "date": "Fri Feb 03 2017 16:38:55 GMT+0000 (UTC)"
-            },
-            "email-address": "support@weave.works"
-          }
     spec:
       template:
         metadata:
@@ -143,16 +113,6 @@ items:
         weave-cloud-component: cortex
         weave-cortex-component: agent-config
       name: weave-cortex-agent-config
-      annotations:
-        cloud.weave.works/launcher-info: |-
-          {
-            "server-version": "master-1072121",
-            "original-request": {
-              "url": "/k8s.yaml?t=REDACTED&weave-scope-version=1.1.0",
-              "date": "Fri Feb 03 2017 16:38:55 GMT+0000 (UTC)"
-            },
-            "email-address": "support@weave.works"
-          }
     data:
       prometheus.yml: |
         global:
@@ -278,16 +238,6 @@ items:
         weave-cloud-component: cortex
         weave-cortex-component: agent
       name: weave-cortex-agent
-      annotations:
-        cloud.weave.works/launcher-info: |-
-          {
-            "server-version": "master-1072121",
-            "original-request": {
-              "url": "/k8s.yaml?t=REDACTED&weave-scope-version=1.1.0",
-              "date": "Fri Feb 03 2017 16:38:55 GMT+0000 (UTC)"
-            },
-            "email-address": "support@weave.works"
-          }
     spec:
       ports:
         - name: agent
@@ -330,15 +280,5 @@ items:
         weave-cloud-component: cortex
         weave-cortex-component: node-exporter
       name: weave-cortex-node-exporter
-      annotations:
-        cloud.weave.works/launcher-info: |-
-          {
-            "server-version": "master-1072121",
-            "original-request": {
-              "url": "/k8s.yaml?t=REDACTED&weave-scope-version=1.1.0",
-              "date": "Fri Feb 03 2017 16:38:55 GMT+0000 (UTC)"
-            },
-            "email-address": "support@weave.works"
-          }
     apiVersion: extensions/v1beta1
     kind: DaemonSet
