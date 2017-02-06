@@ -23,11 +23,16 @@ type Metadata struct {
 }
 
 type Deployment struct {
-	Name     string            `hcl:",key"`
-	Replicas int32             `hcl:"replicas"`
-	Selector map[string]string `hcl:"selector"`
-	Metadata `hcl:",squash"`
-	Pod      `hcl:",squash"`
+	Name                    string            `hcl:",key"`
+	Replicas                int32             `hcl:"replicas"`
+	Selector                map[string]string `hcl:"selector"`
+	Metadata                `hcl:",squash"`
+	Pod                     `hcl:",squash"`
+	Strategy                DeploymentStrategy `hcl:"strategy"`
+	MinReadySeconds         int32              `hcl:"min_ready_seconds"`
+	RevisionHistoryLimit    *int32             `hcl:"revision_history_limit"`
+	Paused                  bool               `hcl:"paused"`
+	ProgressDeadlineSeconds *int32             `hcl:"progress_deadline_seconds"`
 }
 
 type Pod struct {
@@ -217,4 +222,16 @@ type ServicePort struct {
 type ResourceRequirements struct {
 	Limits   map[string]string `json:"limits"`
 	Requests map[string]string `json:"requests"`
+}
+
+type DeploymentStrategy struct {
+	Type                    string `hcl:"type"`
+	RollingUpdateDeployment `hcl:",squash"`
+}
+
+type RollingUpdateDeployment struct {
+	MaxUnavailable      string `hcl:"max_unavailable"`
+	MaxUnavailableCount *int   `hcl:"max_unavailable_count"`
+	MaxSurge            string `hcl:"max_surge"`
+	MaxSurgeCount       *int   `hcl:"max_surge_count"`
 }

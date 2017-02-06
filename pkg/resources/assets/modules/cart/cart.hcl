@@ -9,6 +9,12 @@ deployment "cart" {
     }
   }
 
+  strategy {
+    type = "RollingUpdate"
+    max_surge_count = 1
+    max_unavailable = "50%"
+  }
+
   # Add container specs, this could be done multiple times.
   # It is unclear from the k8s manifest yaml whether you need the template
   # metadata, or what...

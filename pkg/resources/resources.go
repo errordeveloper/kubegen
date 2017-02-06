@@ -286,6 +286,24 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 		deploymentSpec.Selector = &metav1.LabelSelector{MatchLabels: i.Selector}
 	}
 
+	deploymentSpec.Strategy = i.Strategy.Convert()
+
+	if i.MinReadySeconds > 0 {
+		deploymentSpec.MinReadySeconds = i.MinReadySeconds
+	}
+
+	if i.RevisionHistoryLimit != nil {
+		deploymentSpec.RevisionHistoryLimit = i.RevisionHistoryLimit
+	}
+
+	if i.Paused {
+		deploymentSpec.Paused = i.Paused
+	}
+
+	if i.ProgressDeadlineSeconds != nil {
+		deploymentSpec.ProgressDeadlineSeconds = i.ProgressDeadlineSeconds
+	}
+
 	deployment := v1beta1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -296,6 +314,35 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 	}
 
 	return &deployment
+}
+
+func (i *DeploymentStrategy) Convert() v1beta1.DeploymentStrategy {
+	deploymentStrategy := v1beta1.DeploymentStrategy{}
+
+	if i.Type != "" {
+		deploymentStrategy.Type = v1beta1.DeploymentStrategyType(i.Type)
+		if i.Type == "RollingUpdate" {
+			deploymentStrategy.RollingUpdate = &v1beta1.RollingUpdateDeployment{}
+
+			if i.RollingUpdateDeployment.MaxUnavailable != "" {
+				v := intstr.FromString(i.RollingUpdateDeployment.MaxUnavailable)
+				deploymentStrategy.RollingUpdate.MaxUnavailable = &v
+			} else if i.RollingUpdateDeployment.MaxUnavailableCount != nil {
+				v := intstr.FromInt(*i.RollingUpdateDeployment.MaxUnavailableCount)
+				deploymentStrategy.RollingUpdate.MaxUnavailable = &v
+			}
+
+			if i.RollingUpdateDeployment.MaxSurge != "" {
+				v := intstr.FromString(i.RollingUpdateDeployment.MaxSurge)
+				deploymentStrategy.RollingUpdate.MaxSurge = &v
+			} else if i.RollingUpdateDeployment.MaxSurgeCount != nil {
+				v := intstr.FromInt(*i.RollingUpdateDeployment.MaxSurgeCount)
+				deploymentStrategy.RollingUpdate.MaxSurge = &v
+			}
+		} // TODO should probably erorr here
+	}
+
+	return deploymentStrategy
 }
 
 func (i *Service) Convert() *v1.Service {
