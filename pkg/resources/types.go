@@ -155,11 +155,11 @@ type ExecAction struct {
 
 type HTTPGetAction struct {
 	Path        string            `hcl:"path"`
-	Port        int32             `hcl:"port"`
-	PortName    string            `hcl:"port_name"`
+	Port        int32             `hcl:"port" deepcopier:"skip"`
+	PortName    string            `hcl:"port_name" deepcopier:"skip"`
 	Host        string            `hcl:"host"`
 	Scheme      v1.URIScheme      `hcl:"scheme"`
-	HTTPHeaders map[string]string `hcl:"headers"`
+	HTTPHeaders map[string]string `hcl:"headers" deepcopier:"skip"`
 }
 
 type TCPSocketAction struct {
@@ -197,10 +197,10 @@ type Capabilities struct {
 }
 
 type Service struct {
-	Name                     string `hcl:",key"`
-	Metadata                 `hcl:",squash"`
-	Ports                    []ServicePort      `hcl:"port"`
-	Selector                 map[string]string  `hcl:"selector"`
+	Name                     string `hcl:",key" deepcopier:"skip"`
+	Metadata                 `hcl:",squash" deepcopier:"skip"`
+	Ports                    []ServicePort      `hcl:"port" deepcopier:"skip"`
+	Selector                 map[string]string  `hcl:"selector" deepcopier:"skip"`
 	ClusterIP                string             `hcl:"cluster_ip"`
 	Type                     v1.ServiceType     `hcl:"type"`
 	ExternalIPs              []string           `hcl:"external_ips"`

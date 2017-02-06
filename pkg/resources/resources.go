@@ -45,6 +45,8 @@ func (i *Container) maybeAddEnvVars(container *v1.Container) {
 func (i *Container) Convert() v1.Container {
 	container := v1.Container{Name: i.Name, Image: i.Image}
 
+	deepcopier.Copy(i).To(&container)
+
 	i.maybeAddEnvVars(&container)
 
 	// you'd think the types could be simply converted,
@@ -73,8 +75,6 @@ func (i *Container) Convert() v1.Container {
 	}
 
 	container.Resources = i.Resources.Convert()
-
-	deepcopier.Copy(i).To(&container)
 
 	return container
 }
@@ -116,6 +116,8 @@ func exclusiveNonNil(args ...interface{}) *int {
 func (i *Probe) Convert(ports []ContainerPort) *v1.Probe {
 	probe := v1.Probe{Handler: v1.Handler{}}
 
+	deepcopier.Copy(i).To(&probe)
+
 	defaultPort := intstr.IntOrString{}
 
 	// pick the first port by default
@@ -133,10 +135,6 @@ func (i *Probe) Convert(ports []ContainerPort) *v1.Probe {
 			a := v1.HTTPGetAction{Port: defaultPort}
 			h := i.Handler.HTTPGet
 
-			if h.Path != "" {
-				a.Path = h.Path
-			}
-
 			// TODO: should error if `len(ports) == 0` and none of these are set
 			if !(h.Port != 0 && h.PortName != "") {
 				if h.Port != 0 {
@@ -147,19 +145,13 @@ func (i *Probe) Convert(ports []ContainerPort) *v1.Probe {
 				}
 			}
 
-			if h.Host != "" {
-				a.Host = h.Host
-			}
-
-			if h.Scheme != "" {
-				a.Scheme = h.Scheme
-			}
-
 			if len(h.HTTPHeaders) > 0 {
 				for k, v := range h.HTTPHeaders {
 					a.HTTPHeaders = append(a.HTTPHeaders, v1.HTTPHeader{Name: k, Value: v})
 				}
 			}
+
+			deepcopier.Copy(h).To(&a)
 
 			probe.Handler.HTTPGet = &a
 		case 2:
@@ -179,8 +171,6 @@ func (i *Probe) Convert(ports []ContainerPort) *v1.Probe {
 			probe.Handler.TCPSocket = &a
 		}
 	} // TODO error here
-
-	deepcopier.Copy(i).To(&probe)
 
 	return &probe
 }
@@ -219,6 +209,8 @@ func MakePod(parentMeta metav1.ObjectMeta, spec Pod) *v1.PodTemplateSpec {
 		Volumes:    []v1.Volume{},
 	}
 
+	deepcopier.Copy(spec).To(&podSpec)
+
 	for _, volume := range spec.Volumes {
 		podSpec.Volumes = append(podSpec.Volumes, volume.Convert())
 	}
@@ -230,8 +222,6 @@ func MakePod(parentMeta metav1.ObjectMeta, spec Pod) *v1.PodTemplateSpec {
 	for _, container := range spec.Containers {
 		podSpec.Containers = append(podSpec.Containers, container.Convert())
 	}
-
-	deepcopier.Copy(spec).To(&podSpec)
 
 	if spec.SecurityContext != nil {
 		s := v1.PodSecurityContext(*spec.SecurityContext)
@@ -270,6 +260,8 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 		Replicas: &i.Replicas,
 	}
 
+	deepcopier.Copy(i).To(&deploymentSpec)
+
 	if len(i.Selector) == 0 {
 		deploymentSpec.Selector = &metav1.LabelSelector{MatchLabels: meta.Labels}
 	} else {
@@ -277,8 +269,6 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 	}
 
 	deploymentSpec.Strategy = i.Strategy.Convert()
-
-	deepcopier.Copy(i).To(&deploymentSpec)
 
 	deployment := v1beta1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -327,6 +317,9 @@ func (i *Service) Convert() *v1.Service {
 	serviceSpec := v1.ServiceSpec{
 		Ports: []v1.ServicePort{},
 	}
+
+	deepcopier.Copy(i).To(&serviceSpec)
+
 	if len(i.Selector) == 0 {
 		serviceSpec.Selector = meta.Labels
 	} else {
