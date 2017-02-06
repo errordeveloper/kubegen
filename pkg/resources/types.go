@@ -12,9 +12,12 @@ import (
 // abstraction, such as the appmaker package.
 
 type ResourceGroup struct {
-	Deployments []Deployment `hcl:"deployment"`
-	Services    []Service    `hcl:"service"`
-	Namespace   string       `hcl:"namespace"`
+	Namespace    string        `hcl:"namespace"`
+	Services     []Service     `hcl:"service"`
+	Deployments  []Deployment  `hcl:"deployment"`
+	ReplicaSets  []ReplicaSet  `hcl:"replicaset"`
+	DaemonSets   []DaemonSet   `hcl:"daemonset"`
+	StatefulSets []StatefulSet `hcl:"statefulset"`
 }
 
 type Metadata struct {
@@ -33,6 +36,32 @@ type Deployment struct {
 	RevisionHistoryLimit    *int32             `hcl:"revision_history_limit"`
 	Paused                  bool               `hcl:"paused"`
 	ProgressDeadlineSeconds *int32             `hcl:"progress_deadline_seconds"`
+}
+
+type ReplicaSet struct {
+	Name            string            `hcl:",key" deepcopier:"skip"`
+	Replicas        int32             `hcl:"replicas" deepcopier:"skip"`
+	Selector        map[string]string `hcl:"selector" deepcopier:"skip"`
+	Metadata        `hcl:",squash" deepcopier:"skip"`
+	Pod             `hcl:",squash" deepcopier:"skip"`
+	MinReadySeconds int32 `hcl:"min_ready_seconds"`
+}
+
+type DaemonSet struct {
+	Name     string            `hcl:",key" deepcopier:"skip"`
+	Selector map[string]string `hcl:"selector" deepcopier:"skip"`
+	Metadata `hcl:",squash" deepcopier:"skip"`
+	Pod      `hcl:",squash" deepcopier:"skip"`
+}
+
+type StatefulSet struct {
+	Name                 string            `hcl:",key" deepcopier:"skip"`
+	Replicas             int32             `hcl:"replicas" deepcopier:"skip"`
+	Selector             map[string]string `hcl:"selector" deepcopier:"skip"`
+	Metadata             `hcl:",squash" deepcopier:"skip"`
+	Pod                  `hcl:",squash" deepcopier:"skip"`
+	VolumeClaimTemplates []v1.PersistentVolumeClaim
+	ServiceName          string
 }
 
 type Pod struct {
