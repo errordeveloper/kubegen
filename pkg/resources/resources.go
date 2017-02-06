@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sort"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -71,7 +72,26 @@ func (i *Container) Convert() v1.Container {
 		copier.Copy(container.SecurityContext, i.SecurityContext)
 	}
 
+	container.Resources = i.Resources.Convert()
+
 	return container
+}
+
+func (i *ResourceRequirements) Convert() v1.ResourceRequirements {
+	resourceRequirements := v1.ResourceRequirements{}
+	if len(i.Limits) > 0 {
+		resourceRequirements.Limits = make(v1.ResourceList)
+		for k, v := range i.Limits {
+			resourceRequirements.Limits[v1.ResourceName(k)] = resource.MustParse(v)
+		}
+	}
+	if len(i.Requests) > 0 {
+		resourceRequirements.Requests = make(v1.ResourceList)
+		for k, v := range i.Requests {
+			resourceRequirements.Requests[v1.ResourceName(k)] = resource.MustParse(v)
+		}
+	}
+	return resourceRequirements
 }
 
 func exclusiveNonNil(args ...interface{}) *int {
