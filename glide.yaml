@@ -1,19 +1,20 @@
 package: github.com/errordeveloper/kubegen
 import:
 - package: k8s.io/client-go
-  version: "fb6075f"
+  version: "1679e38db83a0dbe1ef86deab577eead47ce75e2"
   subpackages:
   - kubernetes
   - pkg/api/unversioned
   - pkg/api/v1
   - pkg/apis/extensions/v1beta1
-  - pkg/util/intstr
   - tools/clientcmd
 - package: k8s.io/apimachinery
-  version: "02fccf9462f0fb0287e82cb8a0f1d03b05f8d704"
+  version: "21807b270ec15d19215659a5caa08b17f66d6f44"
   subpackages:
-  - pkg/runtime
+  - pkg/api/resource
   - pkg/apis/meta/v1
+  - pkg/runtime
+  - pkg/util/intstr
 - package: github.com/spf13/cobra
 - package: github.com/hashicorp/hcl
 - package: github.com/imdario/mergo

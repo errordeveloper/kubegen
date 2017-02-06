@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/client-go/pkg/api/v1"
 )
 
@@ -215,6 +216,6 @@ type ServicePort struct {
 }
 
 type ResourceRequirements struct {
-	Limits   v1.ResourceList `json:"limits"`
-	Requests v1.ResourceList `json:"requests"`
+	Limits   map[string]resource.Quantity `json:"limits"`
+	Requests map[string]resource.Quantity `json:"requests"`
 }

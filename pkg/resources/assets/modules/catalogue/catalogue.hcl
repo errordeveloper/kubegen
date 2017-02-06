@@ -16,6 +16,11 @@ deployment "catalogue" {
     port {
       container_port = 80
     }
+    resources {
+      requests = {
+        cpu = "100"
+      }
+    }
     security_context {
       run_as_non_root = true
       run_as_user = 10001

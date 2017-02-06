@@ -1,5 +1,5 @@
-hash: 80a0a73a92ffe3288e90ab3ffe37734c4699ac6a7541752785fdd0c08b98417c
-updated: 2017-02-05T09:23:28.152511285Z
+hash: 4b87a811379faabb7121e6f9768ee0d88791eb735097778f772cd5f236d33d55
+updated: 2017-02-06T06:14:11.656488992Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -134,9 +134,10 @@ imports:
 - name: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
 - name: k8s.io/apimachinery
-  version: 02fccf9462f0fb0287e82cb8a0f1d03b05f8d704
+  version: 21807b270ec15d19215659a5caa08b17f66d6f44
   subpackages:
   - pkg/api/meta
+  - pkg/api/resource
   - pkg/apimachinery
   - pkg/apimachinery/announced
   - pkg/apimachinery/registered
@@ -158,6 +159,7 @@ imports:
   - pkg/types
   - pkg/util/errors
   - pkg/util/framer
+  - pkg/util/intstr
   - pkg/util/json
   - pkg/util/net
   - pkg/util/rand
@@ -170,12 +172,11 @@ imports:
   - pkg/watch
   - third_party/forked/golang/reflect
 - name: k8s.io/client-go
-  version: fb6075f2e0b094320f3d2c3e99add90a4661fcff
+  version: 1679e38db83a0dbe1ef86deab577eead47ce75e2
   subpackages:
   - kubernetes
   - pkg/api
   - pkg/api/install
-  - pkg/api/resource
   - pkg/api/unversioned
   - pkg/api/v1
   - pkg/apis/autoscaling
@@ -183,7 +184,6 @@ imports:
   - pkg/apis/extensions/install
   - pkg/apis/extensions/v1beta1
   - pkg/util
-  - pkg/util/intstr
   - pkg/util/labels
   - pkg/util/parsers
   - tools/clientcmd
