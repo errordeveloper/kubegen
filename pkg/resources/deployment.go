@@ -1,8 +1,6 @@
 package resources
 
 import (
-	_ "fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"

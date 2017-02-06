@@ -60,8 +60,8 @@ type StatefulSet struct {
 	Selector             map[string]string `hcl:"selector" deepcopier:"skip"`
 	Metadata             `hcl:",squash" deepcopier:"skip"`
 	Pod                  `hcl:",squash" deepcopier:"skip"`
-	VolumeClaimTemplates []v1.PersistentVolumeClaim
-	ServiceName          string
+	VolumeClaimTemplates []v1.PersistentVolumeClaim `hcl:"volume_claim" deepcopier:"skip"`
+	ServiceName          string                     `hcl:"service_name"`
 }
 
 type Pod struct {
