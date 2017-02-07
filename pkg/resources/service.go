@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -9,11 +11,15 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
-func (i Service) ToObject() runtime.Object {
-	return runtime.Object(i.Convert())
+func (i Service) ToObject() (runtime.Object, error) {
+	obj, err := i.Convert()
+	if err != nil {
+		return runtime.Object(nil), err
+	}
+	return runtime.Object(obj), nil
 }
 
-func (i *Service) Convert() *v1.Service {
+func (i *Service) Convert() (*v1.Service, error) {
 	meta := i.Metadata.Convert(i.Name)
 
 	serviceSpec := v1.ServiceSpec{
@@ -28,6 +34,7 @@ func (i *Service) Convert() *v1.Service {
 		serviceSpec.Selector = i.Selector
 	}
 
+	// TODO validate ports are defined withing the group?
 	for _, port := range i.Ports {
 		p := v1.ServicePort{
 			Name:     port.Name,
@@ -47,7 +54,9 @@ func (i *Service) Convert() *v1.Service {
 			if port.TargetPortName != "" {
 				p.TargetPort = intstr.FromString(port.TargetPortName)
 			}
-		} // TODO: should error if both are set
+		} else {
+			return nil, fmt.Errorf("unable to define ports for service %q – either port or port name must be set", i.Name)
+		}
 		serviceSpec.Ports = append(serviceSpec.Ports, p)
 	}
 
@@ -60,5 +69,5 @@ func (i *Service) Convert() *v1.Service {
 		Spec:       serviceSpec,
 	}
 
-	return &service
+	return &service, nil
 }

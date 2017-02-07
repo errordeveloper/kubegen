@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"fmt"
+
 	"encoding/json"
 	"io/ioutil"
 
@@ -8,20 +10,25 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/pkg/api/v1"
 
+	"github.com/ghodss/yaml"
 	"github.com/ulule/deepcopier"
 )
 
-func (i ConfigMap) ToObject() runtime.Object {
-	return runtime.Object(i.Convert())
+func (i ConfigMap) ToObject() (runtime.Object, error) {
+	obj, err := i.Convert()
+	if err != nil {
+		return runtime.Object(nil), err
+	}
+	return runtime.Object(obj), nil
 }
 
-func (i *ConfigMap) Convert() *v1.ConfigMap {
+func (i *ConfigMap) Convert() (*v1.ConfigMap, error) {
 	meta := i.Metadata.Convert(i.Name)
 
 	configMap := v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "StatefulSet",
-			APIVersion: "extensions/v1beta1",
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
 		},
 		ObjectMeta: meta,
 	}
@@ -31,7 +38,7 @@ func (i *ConfigMap) Convert() *v1.ConfigMap {
 	for _, v := range i.DataFromFiles {
 		data, err := ioutil.ReadFile(v)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("cannot read ConfigMap %q data from file %q – %v", v, err)
 		}
 		configMap.Data[v] = string(data)
 	}
@@ -39,10 +46,18 @@ func (i *ConfigMap) Convert() *v1.ConfigMap {
 	for k, v := range i.DataToJSON {
 		data, err := json.Marshal(v)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("cannot convert ConfigMap %q data to JSON – %v", v, err)
 		}
 		configMap.Data[k] = string(data)
 	}
 
-	return &configMap
+	for k, v := range i.DataToYAML {
+		data, err := yaml.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("cannot convert ConfigMap %q data to YAML – %v", v, err)
+		}
+		configMap.Data[k] = string(data)
+	}
+
+	return &configMap, nil
 }

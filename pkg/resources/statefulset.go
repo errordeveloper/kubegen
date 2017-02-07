@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/pkg/apis/apps/v1beta1"
@@ -8,14 +10,21 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
-func (i StatefulSet) ToObject() runtime.Object {
-	return runtime.Object(i.Convert())
+func (i StatefulSet) ToObject() (runtime.Object, error) {
+	obj, err := i.Convert()
+	if err != nil {
+		return runtime.Object(nil), err
+	}
+	return runtime.Object(obj), nil
 }
 
-func (i *StatefulSet) Convert() *v1beta1.StatefulSet {
+func (i *StatefulSet) Convert() (*v1beta1.StatefulSet, error) {
 	meta := i.Metadata.Convert(i.Name)
 
-	pod := MakePod(meta, i.Pod)
+	pod, err := MakePod(meta, i.Pod)
+	if err != nil {
+		return nil, fmt.Errorf("unable to define pod for StatefulSet %q – %v", i.Name, err)
+	}
 
 	statefulSetSpec := v1beta1.StatefulSetSpec{
 		Template: *pod,
@@ -43,5 +52,5 @@ func (i *StatefulSet) Convert() *v1beta1.StatefulSet {
 		Spec:       statefulSetSpec,
 	}
 
-	return &statefulSet
+	return &statefulSet, nil
 }

@@ -29,7 +29,10 @@ func NewFromJSON(manifest []byte) (*App, error) {
 func (i *App) MarshalToJSON() ([]map[int][]byte, error) {
 	var err error
 
-	components := i.MakeAll()
+	components, err := i.MakeAll()
+	if err != nil {
+		return nil, err
+	}
 
 	data := make([]map[int][]byte, len(components))
 	for k, v := range components {

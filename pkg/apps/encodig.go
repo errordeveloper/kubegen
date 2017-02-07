@@ -3,17 +3,33 @@ package apps
 import "github.com/errordeveloper/kubegen/pkg/util"
 
 func (i *App) EncodeListToYAML() ([]byte, error) {
-	return util.EncodeList(i.MakeList(), "application/yaml", false)
+	list, err := i.MakeList()
+	if err != nil {
+		return []byte{}, err
+	}
+	return util.EncodeList(list, "application/yaml", false)
 }
 
 func (i *App) EncodeListToJSON() ([]byte, error) {
-	return util.EncodeList(i.MakeList(), "application/json", false)
+	list, err := i.MakeList()
+	if err != nil {
+		return []byte{}, err
+	}
+	return util.EncodeList(list, "application/json", false)
 }
 
 func (i *App) EncodeListToPrettyJSON() ([]byte, error) {
-	return util.EncodeList(i.MakeList(), "application/json", true)
+	list, err := i.MakeList()
+	if err != nil {
+		return []byte{}, err
+	}
+	return util.EncodeList(list, "application/json", true)
 }
 
 func (i *App) DumpListToFilesAsYAML() ([]string, error) {
-	return util.DumpListToFiles(i.MakeList(), "application/yaml")
+	list, err := i.MakeList()
+	if err != nil {
+		return []string{}, err
+	}
+	return util.DumpListToFiles(list, "application/yaml")
 }

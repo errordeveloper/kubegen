@@ -13,7 +13,7 @@ import (
 )
 
 type Convertable interface {
-	ToObject() runtime.Object
+	ToObject() (runtime.Object, error)
 }
 
 func exclusiveNonNil(args ...interface{}) *int {
@@ -48,32 +48,53 @@ func (i *Metadata) Convert(name string) metav1.ObjectMeta {
 }
 
 func (i *ResourceGroup) EncodeListToPrettyJSON() ([]byte, error) {
-	return util.EncodeList(i.MakeList(), "application/json", true)
+	list, err := i.MakeList()
+	if err != nil {
+		return []byte{}, err
+	}
+	return util.EncodeList(list, "application/json", true)
 }
 
-func appendToList(components *api.List, component Convertable) {
-	components.Items = append(components.Items, component.ToObject())
+func appendToList(components *api.List, component Convertable) error {
+	obj, err := component.ToObject()
+	if err != nil {
+		return err
+	}
+	components.Items = append(components.Items, obj)
+	return nil
 }
 
-func (i *ResourceGroup) MakeList() *api.List {
+func (i *ResourceGroup) MakeList() (*api.List, error) {
 	components := &api.List{}
 	for _, component := range i.Services {
-		appendToList(components, component)
+		if err := appendToList(components, component); err != nil {
+			return nil, err
+		}
 	}
 	for _, component := range i.Deployments {
-		appendToList(components, component)
+		if err := appendToList(components, component); err != nil {
+			return nil, err
+		}
 	}
 	for _, component := range i.ReplicaSets {
-		appendToList(components, component)
+		if err := appendToList(components, component); err != nil {
+			return nil, err
+		}
 	}
 	for _, component := range i.DaemonSets {
-		appendToList(components, component)
+		if err := appendToList(components, component); err != nil {
+			return nil, err
+		}
 	}
 	for _, component := range i.StatefulSets {
-		appendToList(components, component)
+		if err := appendToList(components, component); err != nil {
+			return nil, err
+		}
 	}
 	for _, component := range i.ConfigMaps {
-		appendToList(components, component)
+		if err := appendToList(components, component); err != nil {
+			return nil, err
+		}
 	}
-	return components
+	return components, nil
 }

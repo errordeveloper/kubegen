@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
@@ -8,14 +10,21 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
-func (i ReplicaSet) ToObject() runtime.Object {
-	return runtime.Object(i.Convert())
+func (i ReplicaSet) ToObject() (runtime.Object, error) {
+	obj, err := i.Convert()
+	if err != nil {
+		return runtime.Object(nil), err
+	}
+	return runtime.Object(obj), nil
 }
 
-func (i *ReplicaSet) Convert() *v1beta1.ReplicaSet {
+func (i *ReplicaSet) Convert() (*v1beta1.ReplicaSet, error) {
 	meta := i.Metadata.Convert(i.Name)
 
-	pod := MakePod(meta, i.Pod)
+	pod, err := MakePod(meta, i.Pod)
+	if err != nil {
+		return nil, fmt.Errorf("unable to define pod for ReplicaSet %q – %v", i.Name, err)
+	}
 
 	replicaSetSpec := v1beta1.ReplicaSetSpec{
 		Template: *pod,
@@ -39,5 +48,5 @@ func (i *ReplicaSet) Convert() *v1beta1.ReplicaSet {
 		Spec:       replicaSetSpec,
 	}
 
-	return &replicaSet
+	return &replicaSet, nil
 }

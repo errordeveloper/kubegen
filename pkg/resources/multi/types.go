@@ -64,6 +64,7 @@ type ConfigMap struct {
 	Data          map[string]string      `hcl:"data"`
 	DataFromFiles []string               `hcl:"dataFromFiles"`
 	DataToJSON    map[string]interface{} `hcl:"dataToJSON"`
+	DataToYAML    map[string]interface{} `hcl:"dataToYAML"`
 }
 
 type Pod struct {

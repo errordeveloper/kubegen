@@ -71,6 +71,7 @@ type ConfigMap struct {
 	Data          map[string]string      `hcl:"data"`
 	DataFromFiles []string               `hcl:"data_from_files" deepcopier:"skip"`
 	DataToJSON    map[string]interface{} `hcl:"data_to_json" deepcopier:"skip"`
+	DataToYAML    map[string]interface{} `hcl:"data_to_yaml" deepcopier:"skip"`
 }
 
 type Pod struct {

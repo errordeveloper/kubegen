@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -9,14 +11,21 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
-func (i Deployment) ToObject() runtime.Object {
-	return runtime.Object(i.Convert())
+func (i Deployment) ToObject() (runtime.Object, error) {
+	obj, err := i.Convert()
+	if err != nil {
+		return runtime.Object(nil), err
+	}
+	return runtime.Object(obj), nil
 }
 
-func (i *Deployment) Convert() *v1beta1.Deployment {
+func (i *Deployment) Convert() (*v1beta1.Deployment, error) {
 	meta := i.Metadata.Convert(i.Name)
 
-	pod := MakePod(meta, i.Pod)
+	pod, err := MakePod(meta, i.Pod)
+	if err != nil {
+		return nil, fmt.Errorf("unable to define pod for Deployment %q – %v", i.Name, err)
+	}
 
 	deploymentSpec := v1beta1.DeploymentSpec{
 		Template: *pod,
@@ -42,7 +51,7 @@ func (i *Deployment) Convert() *v1beta1.Deployment {
 		Spec:       deploymentSpec,
 	}
 
-	return &deployment
+	return &deployment, nil
 }
 
 func (i *DeploymentStrategy) Convert() v1beta1.DeploymentStrategy {
@@ -68,7 +77,7 @@ func (i *DeploymentStrategy) Convert() v1beta1.DeploymentStrategy {
 				v := intstr.FromInt(*i.RollingUpdateDeployment.MaxSurgeCount)
 				deploymentStrategy.RollingUpdate.MaxSurge = &v
 			}
-		} // TODO should probably erorr here
+		}
 	}
 
 	return deploymentStrategy

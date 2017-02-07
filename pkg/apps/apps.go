@@ -112,7 +112,7 @@ func (i *AppComponent) MakeContainer(params AppParams, name string) *resources.C
 	return &container
 }
 
-func (i *AppComponent) MakeDeployment(params AppParams) *v1beta1.Deployment {
+func (i *AppComponent) MakeDeployment(params AppParams) (*v1beta1.Deployment, error) {
 	name := i.getName()
 
 	deployment := resources.Deployment{
@@ -127,16 +127,19 @@ func (i *AppComponent) MakeDeployment(params AppParams) *v1beta1.Deployment {
 		deployment.Replicas = *i.Replicas
 	}
 
-	deploymentObj := deployment.Convert()
+	deploymentObj, err := deployment.Convert()
+	if err != nil {
+		return nil, err
+	}
 
 	if params.Namespace != "" {
 		deploymentObj.ObjectMeta.Namespace = params.Namespace
 	}
 
-	return deploymentObj
+	return deploymentObj, nil
 }
 
-func (i *AppComponent) MakeService(params AppParams) *v1.Service {
+func (i *AppComponent) MakeService(params AppParams) (*v1.Service, error) {
 	name := i.getName()
 
 	port := resources.ServicePort{
@@ -153,16 +156,20 @@ func (i *AppComponent) MakeService(params AppParams) *v1.Service {
 		Ports: []resources.ServicePort{port},
 	}
 
-	serviceObj := service.Convert()
+	serviceObj, err := service.Convert()
+	if err != nil {
+		return nil, err
+	}
 
 	if params.Namespace != "" {
 		serviceObj.ObjectMeta.Namespace = params.Namespace
 	}
 
-	return serviceObj
+	return serviceObj, nil
 }
 
-func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
+func (i *AppComponent) MakeAll(params AppParams) (*AppComponentResources, error) {
+	var err error
 	resources := AppComponentResources{}
 
 	if i.BasedOnNamedTemplate != "" {
@@ -177,10 +184,10 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 		}
 		base := *i.basedOn
 		if err := mergo.Merge(&base, *i); err != nil {
-			panic(err)
+			return nil, err
 		}
 		if err := mergo.Merge(i, base); err != nil {
-			panic(err)
+			return nil, err
 		}
 	}
 
@@ -188,13 +195,19 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 
 	switch i.Kind {
 	case Deployment:
-		resources.deployment = i.MakeDeployment(params)
+		resources.deployment, err = i.MakeDeployment(params)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	pod := resources.getPod()
 
 	if !i.Opts.WithoutService {
-		resources.service = i.MakeService(params)
+		resources.service, err = i.MakeService(params)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if !i.Opts.WithoutPorts {
@@ -236,11 +249,14 @@ func (i *AppComponent) MakeAll(params AppParams) *AppComponentResources {
 		i.Customize(&resources)
 	}
 
-	return &resources
+	return &resources, nil
 }
 
-func (i *AppComponent) MakeList(params AppParams) *api.List {
-	resources := i.MakeAll(params)
+func (i *AppComponent) MakeList(params AppParams) (*api.List, error) {
+	resources, err := i.MakeAll(params)
+	if err != nil {
+		return nil, err
+	}
 
 	list := &api.List{}
 	switch i.Kind {
@@ -253,7 +269,7 @@ func (i *AppComponent) MakeList(params AppParams) *api.List {
 
 	}
 
-	return list
+	return list, nil
 }
 
 func (i *AppComponentResources) AppendContainer(container v1.Container) AppComponentResources {
@@ -327,7 +343,7 @@ func (i *AppComponentResources) getContainers() []v1.Container {
 
 }
 
-func (i *App) makeDefaultParams() AppParams {
+func (i *App) makeDefaultParams() (AppParams, error) {
 	params := AppParams{
 		Namespace:       i.GroupName,
 		DefaultReplicas: DEFAULT_REPLICAS,
@@ -343,7 +359,7 @@ func (i *App) makeDefaultParams() AppParams {
 			Env:   make(map[string]string),
 		}
 		if err := mergo.Merge(t, template.AppComponent); err != nil {
-			panic(err)
+			return AppParams{}, err
 		}
 		params.templates[template.TemplateName] = *t
 	}
@@ -352,16 +368,23 @@ func (i *App) makeDefaultParams() AppParams {
 		params.commonEnv = i.CommonEnv
 	}
 
-	return params
+	return params, nil
 }
 
 // TODO: params argument
-func (i *App) MakeAll() []*AppComponentResources {
-	params := i.makeDefaultParams()
+func (i *App) MakeAll() ([]*AppComponentResources, error) {
+	params, err := i.makeDefaultParams()
+	if err != nil {
+		return nil, err
+	}
 
 	list := []*AppComponentResources{}
 	for _, component := range i.Components {
-		list = append(list, component.MakeAll(params))
+		c, err := component.MakeAll(params)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, c)
 	}
 
 	for _, component := range i.ComponentsFromImages {
@@ -370,9 +393,13 @@ func (i *App) MakeAll() []*AppComponentResources {
 			Env:   make(map[string]string),
 		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
-			panic(err)
+			return nil, err
 		}
-		list = append(list, c.MakeAll(params))
+		item, err := c.MakeAll(params)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, item)
 	}
 
 	for _, component := range i.ComponentsFromTemplates {
@@ -383,20 +410,31 @@ func (i *App) MakeAll() []*AppComponentResources {
 			Env:                  make(map[string]string),
 		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
-			panic(err)
+			return nil, err
 		}
-		list = append(list, c.MakeAll(params))
+		item, err := c.MakeAll(params)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, item)
 	}
 
-	return list
+	return list, nil
 }
 
-func (i *App) MakeList() *api.List {
-	params := i.makeDefaultParams()
+func (i *App) MakeList() (*api.List, error) {
+	params, err := i.makeDefaultParams()
+	if err != nil {
+		return nil, err
+	}
 
 	list := &api.List{}
 	for _, component := range i.Components {
-		list.Items = append(list.Items, component.MakeList(params).Items...)
+		c, err := component.MakeList(params)
+		if err != nil {
+			return nil, err
+		}
+		list.Items = append(list.Items, c.Items...)
 	}
 
 	for _, component := range i.ComponentsFromImages {
@@ -405,9 +443,13 @@ func (i *App) MakeList() *api.List {
 			Env:   make(map[string]string),
 		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
-			panic(err)
+			return nil, err
 		}
-		list.Items = append(list.Items, c.MakeList(params).Items...)
+		items, err := c.MakeList(params)
+		if err != nil {
+			return nil, err
+		}
+		list.Items = append(list.Items, items.Items...)
 	}
 
 	for _, component := range i.ComponentsFromTemplates {
@@ -418,10 +460,14 @@ func (i *App) MakeList() *api.List {
 			Env:                  make(map[string]string),
 		}
 		if err := mergo.Merge(c, component.AppComponent); err != nil {
-			panic(err)
+			return nil, err
 		}
-		list.Items = append(list.Items, c.MakeList(params).Items...)
+		items, err := c.MakeList(params)
+		if err != nil {
+			return nil, err
+		}
+		list.Items = append(list.Items, items.Items...)
 	}
 
-	return list
+	return list, nil
 }

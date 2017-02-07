@@ -11,7 +11,11 @@ import (
 func main() {
 	generated := []string{}
 	app := sockshop.MakeSockShop()
-	for _, resources := range app.MakeAll() {
+	appManifest, err := app.MakeAll()
+	if err != nil {
+		panic(err)
+	}
+	for _, resources := range appManifest {
 		deployment, err := json.Marshal(resources.Deployment())
 		if err != nil {
 			panic(err)

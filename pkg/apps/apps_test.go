@@ -38,8 +38,11 @@ func TestMakeAll(t *testing.T) {
 	temp := new(interface{})
 
 	app, serialized := parseManifest(t)
-
-	for _, resources := range app.MakeAll() {
+	manifests, err := app.MakeAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, resources := range manifests {
 		data, err := json.Marshal(resources.Deployment())
 		if err != nil {
 			t.Fatal(err)
@@ -79,7 +82,11 @@ func TestMarshalMakeAllEachToJSON(t *testing.T) {
 
 	app, serialized := parseManifest(t)
 
-	for _, resources := range app.MakeAll() {
+	manifests, err := app.MakeAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, resources := range manifests {
 		dataMap, err := resources.MarshalToJSON()
 		if err != nil {
 			t.Fatal(err)

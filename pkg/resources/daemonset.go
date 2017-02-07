@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
@@ -8,14 +10,21 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
-func (i DaemonSet) ToObject() runtime.Object {
-	return runtime.Object(i.Convert())
+func (i DaemonSet) ToObject() (runtime.Object, error) {
+	obj, err := i.Convert()
+	if err != nil {
+		return runtime.Object(nil), err
+	}
+	return runtime.Object(obj), nil
 }
 
-func (i *DaemonSet) Convert() *v1beta1.DaemonSet {
+func (i *DaemonSet) Convert() (*v1beta1.DaemonSet, error) {
 	meta := i.Metadata.Convert(i.Name)
 
-	pod := MakePod(meta, i.Pod)
+	pod, err := MakePod(meta, i.Pod)
+	if err != nil {
+		return nil, fmt.Errorf("unable to define pod for DaemonSet  %q – %v", i.Name, err)
+	}
 
 	daemonSetSpec := v1beta1.DaemonSetSpec{
 		Template: *pod,
@@ -38,5 +47,5 @@ func (i *DaemonSet) Convert() *v1beta1.DaemonSet {
 		Spec:       daemonSetSpec,
 	}
 
-	return &daemonSet
+	return &daemonSet, nil
 }
