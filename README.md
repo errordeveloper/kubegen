@@ -1,5 +1,8 @@
 # `kubegen` – simple way to describe Kubernetes resources
 
+The aim of this project is to make it _easier to write reusable_ Kubernetes resource definitions.
+
+
 ***WORK IN PROGRESS***
 
 <!--

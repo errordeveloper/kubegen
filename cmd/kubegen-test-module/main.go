@@ -21,7 +21,7 @@ func main() {
 }
 
 func command(cmd *cobra.Command, args []string) error {
-	module, err := resources.NewResourceGroupFromPath(args[0])
+	module, err := resources.NewResourceGroupFromFile(args[0])
 	if err != nil {
 		panic(err)
 	}
