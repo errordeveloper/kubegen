@@ -1,5 +1,5 @@
 Deployments:
-  weave-flux-agent:
+- weave-flux-agent:
     replicas: 1
     containers:
         agent:
@@ -7,7 +7,8 @@ Deployments:
               imagePullPolicy: IfNotPresent
               args:
                 - '--token={{.Values.ServiceToken}}'
-  weave-scope-agent:
+
+- weave-scope-agent:
     containers:
         agent:
               image: 'weaveworks/scope:latest'
