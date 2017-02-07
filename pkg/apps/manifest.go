@@ -1,10 +1,53 @@
 package apps
 
-// TODO we do not need most of this, but removing it will require rewriting the unit test
-
 import (
 	"encoding/json"
+	"github.com/errordeveloper/kubegen/pkg/util"
 )
+
+func NewFromHCL(data []byte) (*App, error) {
+	app := &App{}
+
+	if err := util.NewFromHCL(app, data); err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
+func (i *App) EncodeListToYAML() ([]byte, error) {
+	list, err := i.MakeList()
+	if err != nil {
+		return []byte{}, err
+	}
+	return util.EncodeList(list, "application/yaml", false)
+}
+
+func (i *App) EncodeListToJSON() ([]byte, error) {
+	list, err := i.MakeList()
+	if err != nil {
+		return []byte{}, err
+	}
+	return util.EncodeList(list, "application/json", false)
+}
+
+func (i *App) EncodeListToPrettyJSON() ([]byte, error) {
+	list, err := i.MakeList()
+	if err != nil {
+		return []byte{}, err
+	}
+	return util.EncodeList(list, "application/json", true)
+}
+
+func (i *App) DumpListToFilesAsYAML() ([]string, error) {
+	list, err := i.MakeList()
+	if err != nil {
+		return []string{}, err
+	}
+	return util.DumpListToFiles(list, "application/yaml")
+}
+
+// TODO we do not need most of this, but removing it will require rewriting the unit test
 
 func marshalMultipleToJSON(resources map[int]interface{}) (map[int][]byte, error) {
 	var err error

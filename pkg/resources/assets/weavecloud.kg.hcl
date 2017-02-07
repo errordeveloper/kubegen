@@ -92,16 +92,16 @@ deployment "weave-cortex-agent" {
         container_port = 80
         protocol = "TCP"
       }
-      mount "agent-config-volume" {
-        mount_path = "/etc/prometheus"
-      }
+      #mount "agent-config-volume" {
+      #  mount_path = "/etc/prometheus"
+      #}
   }
 
-  volume "agent-config-volume" {
-    config_map {
-      name = "weave-cortex-agent-config"
-    }
-  }
+  #volume "agent-config-volume" {
+  #  configmap {
+  #    name = "weave-cortex-agent-config"
+  #  }
+  #}
 }
 
 configmap "weave-cortex-agent-config" {

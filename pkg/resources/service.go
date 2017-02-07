@@ -35,6 +35,7 @@ func (i *Service) Convert() (*v1.Service, error) {
 	}
 
 	// TODO validate ports are defined withing the group?
+	// TODO validate labels for a given selector are defined withing the group?
 	for _, port := range i.Ports {
 		p := v1.ServicePort{
 			Name:     port.Name,
