@@ -100,7 +100,7 @@ type Container struct {
 	// EnvFrom []EnvFromSource
 	Env                      map[string]string           `hcl:"env"`
 	Resources                ResourceRequirements        `hcl:"resources"`
-	Mounts                   []Mount                     `hcl:"mount"`
+	Mounts                   []Mount                     `hcl:"volumeMounts"`
 	LivenessProbe            *Probe                      `hcl:"livenessProbe"`
 	ReadinessProbe           *Probe                      `hcl:"readinessProbe"`
 	Lifecycle                *Lifecycle                  `hcl:"lifecycle"`

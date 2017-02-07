@@ -21,9 +21,9 @@ Deployments:
               securityContext:
                 privileged: true
               volumeMounts:
-                - name: docker-socket
+                docker-socket:
                   mountPath: /var/run/docker.sock
-                - name: scope-plugins
+                scope-plugins:
                   mountPath: /var/run/scope/plugins
     volumes:
       docker-socket:
