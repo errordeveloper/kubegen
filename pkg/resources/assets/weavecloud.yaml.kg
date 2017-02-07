@@ -18,7 +18,7 @@ Deployments:
                 - '--probe.docker=true'
                 - '--probe.kubernetes=true'
                 - '--service-token={{.Values.ServiceToken}}'
-              security_context:
+              securityContext:
                 privileged: true
               volumeMounts:
                 - name: docker-socket
@@ -32,5 +32,5 @@ Deployments:
       scope-plugins:
         hostPath:
           path: /var/run/scope/plugins
-    hostPid: true
+    hostPID: true
     hostNetwork: true
