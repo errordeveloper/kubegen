@@ -44,6 +44,7 @@ func NewModule(dir string) (*Module, error) {
 		files: make(map[string][]byte),
 	}
 	for _, file := range files {
+		// TODO consolidate with NewResourceGroupFromFile
 		if strings.HasSuffix(file.Name(), "kg.yaml") || strings.HasSuffix(file.Name(), ".kg.yml") {
 			m := &Module{}
 			data, err := ioutil.ReadFile(path.Join(dir, file.Name()))
@@ -62,26 +63,32 @@ func NewModule(dir string) (*Module, error) {
 }
 
 func (m *Module) Load(instance *ModuleInstance) error {
+	// TODO we shuld probably use, as has sane and widely-used syntax,
+	// it is also fairly restrictive https://github.com/hoisie/mustache
 	funcMap := template.FuncMap{}
 	for _, variable := range m.Variables {
+		undefinedNonOptionalVariableError := fmt.Errorf("module instance must set variable %q (of type %s)", variable.Name, variable.Type)
+		unknownVariableTypeError := fmt.Errorf("variable %q of unknown type %q, only types \"string\" and \"number\" are supported", variable.Name, variable.Type)
+
 		switch variable.Type {
 		case "number":
-			var value int
+			// all numeric values from YAML are parsed as float64, but Kubernetes API mostly wants int32
+			var value int32
 			v, isSet := instance.Variables[variable.Name]
 			if variable.Optional {
 				if isSet {
-					value = int(v.(float64))
+					value = int32(v.(float64))
 				} else {
-					value = int(variable.Default.(float64))
+					value = int32(variable.Default.(float64))
 				}
 			} else {
 				if isSet {
-					value = int(v.(float64))
+					value = int32(v.(float64))
 				} else {
-					return fmt.Errorf("module instance must set variable %q", variable.Name)
+					return undefinedNonOptionalVariableError
 				}
 			}
-			funcMap[variable.Name] = func() int { return value }
+			funcMap[variable.Name] = func() int32 { return value }
 		case "string":
 			var value string
 			v, isSet := instance.Variables[variable.Name]
@@ -95,15 +102,18 @@ func (m *Module) Load(instance *ModuleInstance) error {
 				if isSet {
 					value = v.(string)
 				} else {
-					return fmt.Errorf("module instance must set variable %q", variable.Name)
+					return undefinedNonOptionalVariableError
 				}
 			}
 			funcMap[variable.Name] = func() string { return value }
+		default:
+			return unknownVariableTypeError
 		}
 	}
 
 	var output bytes.Buffer
 	for filename, data := range m.files {
+		// Let's use our very familiar delimitors
 		t, err := template.New(filename).Delims("<", ">").Funcs(funcMap).Parse(string(data))
 		if err != nil {
 			return err
@@ -120,6 +130,7 @@ func (m *Module) Load(instance *ModuleInstance) error {
 func (m *Module) MakeGroups() (map[string]*ResourceGroup, error) {
 	groups := make(map[string]*ResourceGroup)
 	for filename, data := range m.files {
+		// TODO also do something about multiple formats here
 		group, err := NewResourceGroupFromYAML(data)
 		if err != nil {
 			return nil, err
@@ -199,7 +210,7 @@ func NewResourceGroupFromFile(path string) (*ResourceGroup, error) {
 		return group, nil
 	}
 	//if strings.HasSuffix(path, ".json") {
-	// TODO allow for vanilla JSON in a module
+	// TODO allow for vanilla JSON in a module, also should allow for JSON equivalent of our YAML syntax
 	//}
 
 	return nil, fmt.Errorf(errfmt, path, "unknown file extention")
