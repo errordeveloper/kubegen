@@ -1,37 +1,5 @@
-Deployments:
-  - name: weave-flux-agent
-    replicas: 1
-    containers:
-            - name: agent
-              image: 'quay.io/weaveworks/fluxd:0.1.0'
-              imagePullPolicy: IfNotPresent
-              args:
-                - '--token={{.Values.ServiceToken}}'
+Variables:
+  flux_replicas: 100
+  service_token: "foobarbaz"
 
-  - name: weave-scope-agent
-    containers:
-            - name: agent
-              image: 'weaveworks/scope:latest'
-              imagePullPolicy: IfNotPresent
-              args:
-                - '--no-app'
-                - '--probe.docker.bridge=docker0'
-                - '--probe.docker=true'
-                - '--probe.kubernetes=true'
-                - '--service-token={{.Values.ServiceToken}}'
-              securityContext:
-                privileged: true
-              volumeMounts:
-                - name: docker-socket
-                  mountPath: /var/run/docker.sock
-                - name: scope-plugins
-                  mountPath: /var/run/scope/plugins
-    volumes:
-      - name: docker-socket
-        hostPath:
-          path: /var/run/docker.sock
-      - name: scope-plugins
-        hostPath:
-          path: /var/run/scope/plugins
-    hostPID: true
-    hostNetwork: true
+Path: modules/weavecloud

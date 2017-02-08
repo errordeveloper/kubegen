@@ -47,6 +47,22 @@ func (i *Metadata) Convert(name string) metav1.ObjectMeta {
 	return meta
 }
 
+func (i *ResourceGroup) EncodeListToYAML() ([]byte, error) {
+	list, err := i.MakeList()
+	if err != nil {
+		return []byte{}, err
+	}
+	return util.EncodeList(list, "application/yaml", false)
+}
+
+func (i *ResourceGroup) EncodeListToJSON() ([]byte, error) {
+	list, err := i.MakeList()
+	if err != nil {
+		return []byte{}, err
+	}
+	return util.EncodeList(list, "application/json", false)
+}
+
 func (i *ResourceGroup) EncodeListToPrettyJSON() ([]byte, error) {
 	list, err := i.MakeList()
 	if err != nil {

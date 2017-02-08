@@ -21,17 +21,17 @@ func main() {
 }
 
 func command(cmd *cobra.Command, args []string) error {
-	module, err := resources.NewResourceGroupFromFile(args[0])
+	module, err := resources.NewModuleInstance(args[0])
 	if err != nil {
 		panic(err)
 	}
 
 	var data []byte
-	if data, err = module.EncodeListToPrettyJSON(); err != nil {
+	if data, err = module.EncodeToYAML(); err != nil {
 		return err
 	}
 
-	if err := util.Dump("json", data); err != nil {
+	if err := util.Dump("yaml", data); err != nil {
 		return err
 	}
 
