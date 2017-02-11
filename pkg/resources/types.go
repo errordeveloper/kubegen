@@ -11,7 +11,7 @@ import (
 // from HCL files or as an intermediate representation for higher-level
 // abstraction, such as the appmaker package.
 
-type ResourceGroup struct {
+type Group struct {
 	Namespace    string        `yaml:"Namespace" hcl:"namespace"`
 	Services     []Service     `yaml:"Services" hcl:"service"`
 	Deployments  []Deployment  `yaml:"Deployments" hcl:"deployment"`

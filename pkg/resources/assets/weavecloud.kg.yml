@@ -1,5 +1,13 @@
-Variables:
-  flux_replicas: 100
-  service_token: "foobarbaz"
-
-Path: modules/weavecloud
+Modules:
+  - Name: "weavecloud"
+    SourceDir: "modules/weavecloud"
+    OutputDir: "prod/weavecloud"
+    Variables:
+      flux_replicas: 100
+      service_token: "foobarbaz"
+  - Name: "weavecloud"
+    SourceDir: "modules/weavecloud"
+    OutputDir: "dev/weavecloud"
+    Variables:
+      flux_replicas: 10
+      service_token: "bazbarfoo"

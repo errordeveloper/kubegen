@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/errordeveloper/kubegen/pkg/resources"
+	"github.com/errordeveloper/kubegen/pkg/modules"
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
@@ -21,13 +21,17 @@ func main() {
 }
 
 func command(cmd *cobra.Command, args []string) error {
-	module, err := resources.NewModuleInstance(args[0])
+	bundle, err := modules.NewBundle(args[0])
 	if err != nil {
-		panic(err)
+		return err
+	}
+
+	if err := bundle.LoadModules(); err != nil {
+		return err
 	}
 
 	var data []byte
-	if data, err = module.EncodeToYAML(); err != nil {
+	if data, err = bundle.EncodeToYAML(); err != nil {
 		return err
 	}
 

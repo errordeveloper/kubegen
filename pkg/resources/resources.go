@@ -47,7 +47,7 @@ func (i *Metadata) Convert(name string) metav1.ObjectMeta {
 	return meta
 }
 
-func (i *ResourceGroup) EncodeListToYAML() ([]byte, error) {
+func (i *Group) EncodeListToYAML() ([]byte, error) {
 	list, err := i.MakeList()
 	if err != nil {
 		return []byte{}, err
@@ -55,7 +55,7 @@ func (i *ResourceGroup) EncodeListToYAML() ([]byte, error) {
 	return util.EncodeList(list, "application/yaml", false)
 }
 
-func (i *ResourceGroup) EncodeListToJSON() ([]byte, error) {
+func (i *Group) EncodeListToJSON() ([]byte, error) {
 	list, err := i.MakeList()
 	if err != nil {
 		return []byte{}, err
@@ -63,7 +63,7 @@ func (i *ResourceGroup) EncodeListToJSON() ([]byte, error) {
 	return util.EncodeList(list, "application/json", false)
 }
 
-func (i *ResourceGroup) EncodeListToPrettyJSON() ([]byte, error) {
+func (i *Group) EncodeListToPrettyJSON() ([]byte, error) {
 	list, err := i.MakeList()
 	if err != nil {
 		return []byte{}, err
@@ -80,7 +80,7 @@ func appendToList(components *api.List, component Convertable) error {
 	return nil
 }
 
-func (i *ResourceGroup) MakeList() (*api.List, error) {
+func (i *Group) MakeList() (*api.List, error) {
 	components := &api.List{}
 	for _, component := range i.Services {
 		if err := appendToList(components, component); err != nil {
