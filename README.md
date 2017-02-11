@@ -4,38 +4,71 @@ Kubernetes resource definitions are too verbose, and there is no built-in framew
 Writing good resource templates is hard, whether you are rolling your own or using Helm.
 
 ***The aim of this project is to make it easier to write reusable Kubernetes resource definitions.***
-The project should be useful as is, but it's ambition is to drive the community towards an improvement
-upstream. However, please note that it is ***WORK IN PROGRESS*** rigth now.
 
+> It should be useful as is, but it's ambition is to drive the community towards an improvement
+upstream. However, please note that it is **WORK IN PROGRESS** rigth now.
 
-<!--
+Firtsly, `kubegen` provides a simple non-recursive system of modules, which allows you to define resource with a few simple parameters once and instantiate it multiple times with different values for those parameters.
 
-There is no clear answer to re-usability and de-duplication for Kubernetes resource definitions.
-
-The aim of `kubegen` is to offer the community with a few different options, and we will decide later
-which one is level of abstraction is best, or if there is a need for abstractions at different levels.
-
-## Service/Deployment pair based on container image
-
+For example, you can use it to describe two different environments where your app runs:
+```YAML
+Modules:
+  - Name: "prodApp"
+    SourceDir: "modules/myapp"
+    OutputDir: "env/prod"
+    Variables:
+      api_service_replicas: 100
+      domain_name: "errors.io"
+  - Name: "testApp"
+    SourceDir: "modules/myapp"
+    OutputDir: "env/test"
+    Variables:
+      api_service_replicas: 10
+      use_rds: false
+      domain_name: "testing.errors.io"
 ```
-kg component-from-image
 
-## CLI Usage
+Additionly, `kubegen` simplifies definition format for resources within the modules. It keeps familiar YAML format, yet reduces nesting of certain fields to make it more intuitive to write a resource definition (perhaps even without having to consult docs or the one you wrote earlier).
 
-You can generate a simple app with just one flag, the image name:
+For example, a front-end service in `errors.io` app has the following definition:
+```YAML
+Variables:
+  - name: replicas
+    type: number
+    default: 2
+  - name: domain_name
+    type: string
+    optional: false
+
+Deployments:
+  - name: frontend
+    replicas: <replicas>
+    containers:
+      - name: agent
+        image: 'errordeveloper/errorsio-frontend'
+        imagePullPolicy: IfNotPresent
+        args:
+          - '--domain=<domain_name>'
+        ports:
+          - name: http
+            containerPort: 8080
+Services:
+  - name: frontend
+    port: 8080
 ```
-kubegen single --image "errordeveloper/foo:latest"
-```
 
-This will geneate app named `foo`, but if you'd like to call it something else,
-you can pass `--name` flag.
+If you are not yet vert familiar with Kubernetes, this should be much easier to understand.
+If you are already using Kubernetes, the rules of how this maps to a "native" format are really quite simple and are outlined down below.
 
-By default, a `Deployment`/`Service` pair is generated with a number of known-best-practice
-options included for you, e.g. liveness and readiness probes as well as Prometheus annotations.
-You can change this behaviour by using high-lvel `--flavor` flag or one of more specific flags
-described below.
+## Usage
 
--->
+The main supported use-case of `kubegen` is for _generating_ files localy and checking in to a repository for use with other tools to implement CD, e.g. [Weave Flux](https://github.com/weaveworks/flux), but piping the output to `kubectl` is also supported for testing purposes.
+
+TODO
+
+## Conversion Rules
+
+TODO
 
 ### Building
 
