@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path"
@@ -16,46 +17,33 @@ import (
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-type Bundle struct {
-	Name          string           `yaml:"Name,omitempty"`
-	Description   string           `yaml:"Description,omitempty"`
-	Modules       []ModuleInstance `yaml:"Modules,omitempty"`
-	path          string           `yaml:"-"`
-	loadedModules []Module         `yaml:"-"`
+func loadFromPath(obj interface{}, data []byte, sourcePath string, instanceName string) error {
+	ext := path.Ext(sourcePath)
+	switch {
+	case ext == ".json":
+		if err := json.Unmarshal(data, obj); err != nil {
+			return fmt.Errorf("error loading module %q source from JSON (%q) – %v", instanceName, sourcePath, err)
+		}
+	case ext == ".yaml" || ext == ".yml":
+		if err := yaml.Unmarshal(data, obj); err != nil {
+			return fmt.Errorf("error loading module %q source from YAML (%q) – %v", instanceName, sourcePath, err)
+		}
+	case ext == ".kg" || ext == ".hcl":
+		if err := util.NewFromHCL(obj, data); err != nil {
+			return fmt.Errorf("error loading module %q source from HCL (%q) – %v", instanceName, sourcePath, err)
+		}
+	default:
+		return fmt.Errorf("error loading module %q source %q – unknown file extension", instanceName, sourcePath)
+	}
+	return nil
 }
-
-type ModuleInstance struct {
-	Name      string                 `yaml:"Name,omitempty"`
-	SourceDir string                 `yaml:"SourceDir"`
-	OutputDir string                 `yaml:"OutputDir"`
-	Variables map[string]interface{} `yaml:"Variables"`
-}
-
-type Module struct {
-	Variables []ModuleVariable  `yaml:"Variables,omitempty"`
-	manifests map[string][]byte `yaml:"-"`
-	path      string            `yaml:"-"`
-}
-
-type ModuleVariable struct {
-	Name     string      `yaml:"name"`
-	Type     string      `yaml:"type"`
-	Optional bool        `yaml:"optional"`
-	Default  interface{} `yaml:"default"`
-}
-
-const (
-	bundleReadErrorFmt        = "kubegen/modules: error reading resource group definition file %q – %v"
-	resourceGroupReadErrorFmt = "kubegen/modules: error reading bundle definition file %q – %v"
-	moduleReadErrorFmt        = "kubegen/modules: error reading file %q in module %q – %v"
-)
 
 func NewBundle(bundlePath string) (*Bundle, error) {
 	b := &Bundle{path: bundlePath}
 
 	data, err := ioutil.ReadFile(bundlePath)
 	if err != nil {
-		return nil, fmt.Errorf(bundleReadErrorFmt, bundlePath, err)
+		return nil, fmt.Errorf("kubegen/modules: error reading module source file %q – %v", bundlePath, err)
 	}
 
 	if err := yaml.Unmarshal(data, b); err != nil {
@@ -68,7 +56,7 @@ func NewBundle(bundlePath string) (*Bundle, error) {
 func (b *Bundle) LoadModules() error {
 	for _, i := range b.Modules {
 		var err error
-		m, err := NewModule(path.Join(path.Dir(b.path), i.SourceDir))
+		m, err := NewModule(path.Join(path.Dir(b.path), i.SourceDir), i.Name)
 		if err != nil {
 			return err
 		}
@@ -95,7 +83,7 @@ func (b *Bundle) WriteToOutputDir(contentType string) ([]string, error) {
 		case "yaml":
 			groups, err = i.EncodeGroupsToYAML(b.Modules[n])
 		case "json":
-			groups, err = i.EncodeGroupsToJSON()
+			groups, err = i.EncodeGroupsToJSON(b.Modules[n])
 		}
 		if err != nil {
 			return nil, err
@@ -141,7 +129,7 @@ func (b *Bundle) EncodeAllToJSON() ([]byte, error) {
 	return nil, nil
 }
 
-func NewModule(dir string) (*Module, error) {
+func NewModule(dir, instanceName string) (*Module, error) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -157,18 +145,10 @@ func NewModule(dir string) (*Module, error) {
 		manifestPath := path.Join(dir, file.Name())
 		data, err := ioutil.ReadFile(manifestPath)
 		if err != nil {
-			return nil, fmt.Errorf(moduleReadErrorFmt, file.Name(), dir, err)
+			return nil, fmt.Errorf("error reading file %q in module %q – %v", file.Name(), dir, err)
 		}
-		ext := path.Ext(manifestPath)
-		if ext == ".yaml" || ext == ".yml" {
-			if err := yaml.Unmarshal(data, m); err != nil {
-				return nil, err
-			}
-		}
-		if ext == ".kg" || ext == ".hcl" {
-			if err := util.NewFromHCL(m, data); err != nil {
-				return nil, err
-			}
+		if err := loadFromPath(m, data, manifestPath, instanceName); err != nil {
+			return nil, err
 		}
 		module.Variables = append(module.Variables, m.Variables...)
 		module.manifests[manifestPath] = data
@@ -182,14 +162,15 @@ func (m *Module) Load(instance ModuleInstance) error {
 	// it is also fairly restrictive https://github.com/hoisie/mustache
 	funcMap := template.FuncMap{}
 	for _, variable := range m.Variables {
-		undefinedNonOptionalVariableError := fmt.Errorf("module instance must set variable %q (of type %s)", variable.Name, variable.Type)
-		unknownVariableTypeError := fmt.Errorf("variable %q of unknown type %q, only types \"string\" and \"number\" are supported", variable.Name, variable.Type)
+		undefinedNonOptionalVariableError := fmt.Errorf("module %q must set variable %q (of type %s)", instance.Name, variable.Name, variable.Type)
+		unknownVariableTypeError := fmt.Errorf("module %q variable %q of unknown type %q, only types \"string\" and \"number\" are supported", variable.Name, variable.Type)
 
 		switch variable.Type {
 		case "number":
 			// all numeric values from YAML are parsed as float64, but Kubernetes API mostly wants int32
 			var value int32
 			v, isSet := instance.Variables[variable.Name]
+			// TODO how can we safely detect if default value is set and derive whether this is optional or not from that?
 			if variable.Optional {
 				if isSet {
 					value = int32(v.(float64))
@@ -242,12 +223,12 @@ func (m *Module) Load(instance ModuleInstance) error {
 	return nil
 }
 
-func (m *Module) MakeGroups() (map[string]*resources.Group, error) {
+func (m *Module) MakeGroups(instanceName string) (map[string]*resources.Group, error) {
 	groups := make(map[string]*resources.Group)
 	for manifestPath, data := range m.manifests {
 		// TODO also do something about multiple formats here
-		group, err := NewResourceGroup(manifestPath, data)
-		if err != nil {
+		group := &resources.Group{}
+		if err := loadFromPath(group, data, manifestPath, instanceName); err != nil {
 			return nil, err
 		}
 		groups[manifestPath] = group
@@ -258,7 +239,7 @@ func (m *Module) MakeGroups() (map[string]*resources.Group, error) {
 
 func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte, error) {
 	output := make(map[string][]byte)
-	groups, err := m.MakeGroups()
+	groups, err := m.MakeGroups(instance.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -282,33 +263,12 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 	return output, nil
 }
 
-func (m *Module) EncodeGroupsToJSON() (map[string][]byte, error) {
+func (m *Module) EncodeGroupsToJSON(instance ModuleInstance) (map[string][]byte, error) {
 	output := make(map[string][]byte)
-	_, err := m.MakeGroups()
+	_, err := m.MakeGroups(instance.Name)
 	if err != nil {
 		return nil, err
 	}
 
 	return output, nil
-}
-
-func NewResourceGroup(groupPath string, data []byte) (*resources.Group, error) {
-	group := &resources.Group{}
-	// TODO we do not load vanilla YAML or JSON directly here, we can handle those via
-	// an explicit declaration
-	ext := path.Ext(groupPath)
-	if ext == ".yaml" || ext == ".yml" {
-		if err := yaml.Unmarshal(data, group); err != nil {
-			return nil, fmt.Errorf("kubegen/resources: error converting YAML to internal representation – %v", err)
-		}
-		return group, nil
-	}
-	if ext == ".kg" || ext == ".hcl" {
-		if err := util.NewFromHCL(group, data); err != nil {
-			return nil, err
-		}
-		return group, nil
-	}
-
-	return nil, fmt.Errorf(resourceGroupReadErrorFmt, groupPath, "unknown file extention")
 }
