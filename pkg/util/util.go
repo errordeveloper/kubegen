@@ -17,6 +17,7 @@ import (
 
 	"github.com/d4l3k/go-highlight"
 	"github.com/docker/docker/pkg/term"
+	"github.com/hashicorp/hcl"
 )
 
 func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
@@ -146,7 +147,7 @@ func Dump(outputFormat string, data []byte) error {
 	if term.IsTerminal(0) {
 		veryPretty, err := highlight.Term(outputFormat, data)
 		if err != nil {
-			return fmt.Errorf("kubegen/util: error creating colorizing the output for %q – %v", outputFormat, err)
+			return fmt.Errorf("kubegen/util: error colorizing the output for %q – %v", outputFormat, err)
 		}
 		output = string(veryPretty)
 	} else {
@@ -154,6 +155,19 @@ func Dump(outputFormat string, data []byte) error {
 	}
 
 	fmt.Println(output)
+
+	return nil
+}
+
+func NewFromHCL(obj interface{}, data []byte) error {
+	manifest, err := hcl.Parse(string(data))
+	if err != nil {
+		return fmt.Errorf("kubegen/util: error parsing HCL – %v", err)
+	}
+
+	if err := hcl.DecodeObject(obj, manifest); err != nil {
+		return fmt.Errorf("kubegen/util: error constructing an object from HCL – %v", err)
+	}
 
 	return nil
 }
