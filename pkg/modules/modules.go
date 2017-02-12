@@ -5,6 +5,7 @@ import (
 
 	"bytes"
 	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"text/template"
@@ -43,12 +44,18 @@ type ModuleVariable struct {
 	Default  interface{} `yaml:"default"`
 }
 
+const (
+	bundleReadErrorFmt        = "kubegen/modules: error reading resource group definition file %q – %v"
+	resourceGroupReadErrorFmt = "kubegen/modules: error reading bundle definition file %q – %v"
+	moduleReadErrorFmt        = "kubegen/modules: error reading file %q in module %q – %v"
+)
+
 func NewBundle(bundlePath string) (*Bundle, error) {
 	b := &Bundle{path: bundlePath}
 
 	data, err := ioutil.ReadFile(bundlePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(bundleReadErrorFmt, bundlePath, err)
 	}
 
 	if err := yaml.Unmarshal(data, b); err != nil {
@@ -76,35 +83,62 @@ func (b *Bundle) LoadModules() error {
 	return nil
 }
 
-func (b *Bundle) EncodeToYAML() ([]byte, error) {
-	output := []byte{}
+func (b *Bundle) WriteToOutputDir(contentType string) ([]string, error) {
+	filesWritten := []string{}
 
 	for n, i := range b.loadedModules {
-		groups, err := i.MakeGroups()
+		var (
+			groups map[string][]byte
+			err    error
+		)
+		switch contentType {
+		case "yaml":
+			groups, err = i.EncodeGroupsToYAML(b.Modules[n])
+		case "json":
+			groups, err = i.EncodeGroupsToJSON()
+		}
 		if err != nil {
-			return []byte{}, err
+			return nil, err
+		}
+
+		dir := b.Modules[n].OutputDir
+
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, fmt.Errorf("kubegen/modules: error creating output directory %q – %v", dir, err)
 		}
 
 		for manifestPath, group := range groups {
-			data, err := group.EncodeListToYAML()
-			if err != nil {
-				return []byte{}, err
+			outputFilename := path.Join(dir, strings.TrimSuffix(path.Base(manifestPath), path.Ext(manifestPath))+"."+contentType)
+			if err := ioutil.WriteFile(outputFilename, group, 0644); err != nil {
+				return nil, fmt.Errorf("kubegen/modules: error writing to file %q – %v", outputFilename, err)
 			}
+			filesWritten = append(filesWritten, outputFilename)
+		}
+	}
 
-			info := fmt.Sprintf(
-				"\n# Generated from module\n#\tName: %q\n#\tSourceDir: %q\n#\tmanifestPath: %q\n",
-				b.Modules[n].Name,
-				b.Modules[n].SourceDir,
-				manifestPath,
-			)
+	return filesWritten, nil
+}
 
-			output = append(output, []byte(info)...)
-			output = append(output, data...)
+func (b *Bundle) EncodeAllToYAML() ([]byte, error) {
+	output := []byte{}
+
+	for n, i := range b.loadedModules {
+		groups, err := i.EncodeGroupsToYAML(b.Modules[n])
+		if err != nil {
+			return nil, err
 		}
 
+		for _, group := range groups {
+			output = append(output, group...)
+		}
 	}
 
 	return output, nil
+}
+
+func (b *Bundle) EncodeAllToJSON() ([]byte, error) {
+	// TODO figure out how are we gonna merge lists
+	return nil, nil
 }
 
 func NewModule(dir string) (*Module, error) {
@@ -119,19 +153,25 @@ func NewModule(dir string) (*Module, error) {
 	}
 	for _, file := range files {
 		// TODO consolidate with NewResourceGroupFromFile
-		if strings.HasSuffix(file.Name(), "kg.yaml") || strings.HasSuffix(file.Name(), ".kg.yml") {
-			m := &Module{}
-			manifestPath := path.Join(dir, file.Name())
-			data, err := ioutil.ReadFile(manifestPath)
-			if err != nil {
-				return nil, err
-			}
+		m := &Module{}
+		manifestPath := path.Join(dir, file.Name())
+		data, err := ioutil.ReadFile(manifestPath)
+		if err != nil {
+			return nil, fmt.Errorf(moduleReadErrorFmt, file.Name(), dir, err)
+		}
+		ext := path.Ext(manifestPath)
+		if ext == ".yaml" || ext == ".yml" {
 			if err := yaml.Unmarshal(data, m); err != nil {
 				return nil, err
 			}
-			module.Variables = append(module.Variables, m.Variables...)
-			module.manifests[manifestPath] = data
 		}
+		if ext == ".kg" || ext == ".hcl" {
+			if err := util.NewFromHCL(m, data); err != nil {
+				return nil, err
+			}
+		}
+		module.Variables = append(module.Variables, m.Variables...)
+		module.manifests[manifestPath] = data
 	}
 
 	return module, nil
@@ -206,7 +246,7 @@ func (m *Module) MakeGroups() (map[string]*resources.Group, error) {
 	groups := make(map[string]*resources.Group)
 	for manifestPath, data := range m.manifests {
 		// TODO also do something about multiple formats here
-		group, err := NewResourceGroupFromYAML(data)
+		group, err := NewResourceGroup(manifestPath, data)
 		if err != nil {
 			return nil, err
 		}
@@ -216,56 +256,59 @@ func (m *Module) MakeGroups() (map[string]*resources.Group, error) {
 	return groups, nil
 }
 
-// TODO all of these need refactoring
-
-func NewResourceGroupFromFile(path string) (*resources.Group, error) {
-	const errfmt = "kubegen/resources: error reading resource group definition file %q – %v"
-	data, err := ioutil.ReadFile(path)
+func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte, error) {
+	output := make(map[string][]byte)
+	groups, err := m.MakeGroups()
 	if err != nil {
-		return nil, fmt.Errorf(errfmt, path, err)
-	}
-
-	var group *resources.Group
-	if strings.HasSuffix(path, "kg.yaml") || strings.HasSuffix(path, ".kg.yml") {
-		group, err = NewResourceGroupFromYAML(data)
-		if err != nil {
-			return nil, err
-		}
-		return group, nil
-	}
-	//if strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".yml") {
-	// TODO allow for vanilla YAML in a module
-	//}
-	if strings.HasSuffix(path, ".kg") || strings.HasSuffix(path, ".kg.hcl") || strings.HasSuffix(path, ".kg.json") {
-		group, err = NewResourceGroupFromHCL(data)
-		if err != nil {
-			return nil, err
-		}
-		return group, nil
-	}
-	//if strings.HasSuffix(path, ".json") {
-	// TODO allow for vanilla JSON in a module, also should allow for JSON equivalent of our YAML syntax
-	//}
-
-	return nil, fmt.Errorf(errfmt, path, "unknown file extention")
-}
-
-func NewResourceGroupFromHCL(data []byte) (*resources.Group, error) {
-	group := &resources.Group{}
-
-	if err := util.NewFromHCL(group, data); err != nil {
 		return nil, err
 	}
 
-	return group, nil
-}
+	for manifestPath, group := range groups {
+		data, err := group.EncodeListToYAML()
+		if err != nil {
+			return nil, err
+		}
 
-func NewResourceGroupFromYAML(data []byte) (*resources.Group, error) {
-	group := &resources.Group{}
+		info := fmt.Sprintf(
+			"\n# Generated from module\n#\tName: %q\n#\tSourceDir: %q\n#\tmanifestPath: %q\n",
+			instance.Name,
+			instance.SourceDir,
+			manifestPath,
+		)
 
-	if err := yaml.Unmarshal(data, group); err != nil {
-		return nil, fmt.Errorf("kubegen/resources: error converting YAML to internal representation – %v", err)
+		output[manifestPath] = append([]byte(info), data...)
 	}
 
-	return group, nil
+	return output, nil
+}
+
+func (m *Module) EncodeGroupsToJSON() (map[string][]byte, error) {
+	output := make(map[string][]byte)
+	_, err := m.MakeGroups()
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
+}
+
+func NewResourceGroup(groupPath string, data []byte) (*resources.Group, error) {
+	group := &resources.Group{}
+	// TODO we do not load vanilla YAML or JSON directly here, we can handle those via
+	// an explicit declaration
+	ext := path.Ext(groupPath)
+	if ext == ".yaml" || ext == ".yml" {
+		if err := yaml.Unmarshal(data, group); err != nil {
+			return nil, fmt.Errorf("kubegen/resources: error converting YAML to internal representation – %v", err)
+		}
+		return group, nil
+	}
+	if ext == ".kg" || ext == ".hcl" {
+		if err := util.NewFromHCL(group, data); err != nil {
+			return nil, err
+		}
+		return group, nil
+	}
+
+	return nil, fmt.Errorf(resourceGroupReadErrorFmt, groupPath, "unknown file extention")
 }
