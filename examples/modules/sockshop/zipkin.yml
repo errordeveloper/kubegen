@@ -1,0 +1,52 @@
+Deployments:
+
+- name: zipkin
+  namespace: sock-shop
+  replicas: 1
+  containers:
+  - name: zipkin
+    image: openzipkin/zipkin
+    ports:
+    - name: zipkin
+      containerPort: 9411
+    env:
+      STORAGE_TYPE: mysql
+      MYSQL_HOST: zipkin-mysql
+
+- name: zipkin-mysql
+  namespace: sock-shop
+  replicas: 1
+  containers:
+  - name: zipkin-mysql
+    image: openzipkin/zipkin-mysql:1.20.0
+    ports:
+    - name: mysql
+      containerPort: 3306
+
+- name: zipkin-cron
+  namespace: sock-shop
+  replicas: 1
+  containers:
+  - name: zipkin-cron
+    image: openzipkin/zipkin-dependencies:1.4.0
+    env:
+      STORAGE_TYPE: mysql
+      MYSQL_HOST: zipkin-mysql
+      MYSQL_USER: zipkin
+      MYSQL_PASS: zipkin
+    command: ["crond"]
+    args: ["-f"]
+
+Services:
+
+- name: zipkin
+  namespace: sock-shop
+  type: NodePort
+  ports:
+  - name: zipkin
+    nodePort: 30002
+
+- name: zipkin-mysql
+  namespace: sock-shop
+  ports:
+  - name: mysql

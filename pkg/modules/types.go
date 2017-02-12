@@ -1,7 +1,7 @@
 package modules
 
 type Bundle struct {
-	Name          string           `yaml:"Name" json:"Name" hcl:",key"`
+	Name          string           `yaml:"Name" json:"Name" hcl:"name"`
 	Description   string           `yaml:"Description,omitempty" json:"Description" hcl:"description"`
 	Modules       []ModuleInstance `yaml:"Modules" "json:"Modules" hcl:"module"`
 	path          string           `yaml:"-" json:"-" hcl:"-"`

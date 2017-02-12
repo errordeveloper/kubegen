@@ -1,0 +1,72 @@
+Deployments:
+
+- name: user
+  namespace: sock-shop
+  replicas: 1
+  containers:
+  - name: user
+    image: weaveworksdemos/user:0.4.0
+    ports:
+    - name: http
+      containerPort: 80
+    env:
+      MONGO_HOST: user-db:27017
+      ZIPKIN: http://zipkin:9411/api/v1/spans
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      capabilities:
+        drop:
+          - all
+        add:
+          - NET_BIND_SERVICE
+      readOnlyRootFilesystem: true
+    livenessProbe:
+      httpGet:
+        path: /health
+      initialDelaySeconds: 300
+      periodSeconds: 3
+    readinessProbe:
+      httpGet:
+        path: /health
+      initialDelaySeconds: 180
+      periodSeconds: 3
+
+- name: user-db
+  namespace: sock-shop
+  replicas: 1
+  containers:
+  - name: user-db
+    image: weaveworksdemos/user-db:0.3.0
+
+    ports:
+    - name: mongo
+      containerPort: 27017
+    securityContext:
+      capabilities:
+        drop:
+          - all
+        add:
+          - CHOWN
+          - SETGID
+          - SETUID
+      readOnlyRootFilesystem: true
+    volumeMounts:
+    - mountPath: /tmp
+      name: tmp-volume
+  volumes:
+    - name: tmp-volume
+      emptyDir:
+        medium: Memory
+
+Services:
+
+- name: user
+  namespace: sock-shop
+  ports:
+  - name: http
+
+- name: user-db
+  namespace: sock-shop
+  ports:
+  - name: mongo

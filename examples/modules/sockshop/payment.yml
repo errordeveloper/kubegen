@@ -1,0 +1,39 @@
+Deployments:
+
+- name: payment
+  namespace: sock-shop
+  replicas: 1
+  containers:
+  - name: payment
+    image: weaveworksdemos/payment:0.4.1
+    ports:
+    - name: http
+      containerPort: 80
+    env:
+      ZIPKIN: http://zipkin:9411/api/v1/spans
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      capabilities:
+        drop:
+          - all
+        add:
+          - NET_BIND_SERVICE
+      readOnlyRootFilesystem: true
+    livenessProbe:
+      httpGet:
+        path: /health
+      initialDelaySeconds: 300
+      periodSeconds: 3
+    readinessProbe:
+      httpGet:
+        path: /health
+      initialDelaySeconds: 180
+      periodSeconds: 3
+
+Services:
+
+- name: payment
+  namespace: sock-shop
+  ports:
+  - name: http

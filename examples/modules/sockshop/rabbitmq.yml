@@ -1,0 +1,66 @@
+Deployments:
+
+- name: rabbitmq
+  labels:
+    name: rabbitmq
+  namespace: sock-shop
+  replicas: 1
+  containers:
+  - name: rabbitmq
+    image: rabbitmq:3
+    ports:
+    - name: rabbitmq
+      containerPort: 5672
+    securityContext:
+      capabilities:
+        drop:
+          - all
+        add:
+          - CHOWN
+          - SETGID
+          - SETUID
+          - DAC_OVERRIDE
+      readOnlyRootFilesystem: true
+
+- name: queue-master
+  labels:
+    name: queue-master
+  namespace: sock-shop
+  replicas: 1
+  containers:
+  - name: queue-master
+    image: weaveworksdemos/queue-master:0.3.0
+    ports:
+    - name: http
+      containerPort: 80
+    livenessProbe:
+      httpGet:
+        path: /health
+      initialDelaySeconds: 300
+      periodSeconds: 3
+    readinessProbe:
+      httpGet:
+        path: /health
+      initialDelaySeconds: 180
+      periodSeconds: 3
+
+Services:
+
+- name: rabbitmq
+  labels:
+    name: rabbitmq
+  namespace: sock-shop
+  ports:
+  - name: rabbitmq
+
+- name: queue-master
+  labels:
+    name: queue-master
+  annotations:
+    prometheus.io/path: "/prometheus"
+  namespace: sock-shop
+  ports:
+  - name: http
+  selector:
+    name: queue-master
+

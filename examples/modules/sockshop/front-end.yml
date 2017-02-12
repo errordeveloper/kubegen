@@ -1,0 +1,43 @@
+Deployments:
+
+- name: front-end
+  namespace: sock-shop
+  replicas: 1
+  containers:
+  - name: front-end
+    image: weaveworksdemos/front-end:0.3.1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 100Mi
+    ports:
+    - name: http
+      containerPort: 8079
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      capabilities:
+        drop:
+          - all
+      readOnlyRootFilesystem: true
+    livenessProbe:
+      httpGet:
+        path: /
+      initialDelaySeconds: 300
+      periodSeconds: 3
+    readinessProbe:
+      httpGet:
+        path: /
+      initialDelaySeconds: 180
+      periodSeconds: 3
+
+Services:
+
+- name: front-end
+  namespace: sock-shop
+  type: NodePort
+  ports:
+  - port: 80
+    targetPortName: http
+    nodePort: 30001
+  sessionAffinity: "ClientIP"

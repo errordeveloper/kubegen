@@ -18,22 +18,29 @@ import (
 )
 
 func loadFromPath(obj interface{}, data []byte, sourcePath string, instanceName string) error {
+	var errorFmt string
+	if instanceName != "" {
+		errorFmt = fmt.Sprintf("error loading module %q source", instanceName)
+	} else {
+		errorFmt = "error loading manifest file"
+	}
+
 	ext := path.Ext(sourcePath)
 	switch {
 	case ext == ".json":
 		if err := json.Unmarshal(data, obj); err != nil {
-			return fmt.Errorf("error loading module %q source from JSON (%q) – %v", instanceName, sourcePath, err)
+			return fmt.Errorf("%s as JSON (%q) – %v", errorFmt, sourcePath, err)
 		}
 	case ext == ".yaml" || ext == ".yml":
 		if err := yaml.Unmarshal(data, obj); err != nil {
-			return fmt.Errorf("error loading module %q source from YAML (%q) – %v", instanceName, sourcePath, err)
+			return fmt.Errorf("%s as YAML (%q) – %v", errorFmt, sourcePath, err)
 		}
 	case ext == ".kg" || ext == ".hcl":
 		if err := util.NewFromHCL(obj, data); err != nil {
-			return fmt.Errorf("error loading module %q source from HCL (%q) – %v", instanceName, sourcePath, err)
+			return fmt.Errorf("%s as HCL (%q) – %v", errorFmt, sourcePath, err)
 		}
 	default:
-		return fmt.Errorf("error loading module %q source %q – unknown file extension", instanceName, sourcePath)
+		return fmt.Errorf("%s %q – unknown file extension", errorFmt, sourcePath)
 	}
 	return nil
 }
@@ -43,10 +50,10 @@ func NewBundle(bundlePath string) (*Bundle, error) {
 
 	data, err := ioutil.ReadFile(bundlePath)
 	if err != nil {
-		return nil, fmt.Errorf("kubegen/modules: error reading module source file %q – %v", bundlePath, err)
+		return nil, fmt.Errorf("error reading manifest file %q – %v", bundlePath, err)
 	}
 
-	if err := yaml.Unmarshal(data, b); err != nil {
+	if err := loadFromPath(b, data, bundlePath, ""); err != nil {
 		return nil, err
 	}
 

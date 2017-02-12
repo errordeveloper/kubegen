@@ -1,0 +1,9 @@
+Modules:
+
+  - Name: "testSockShopTest"
+    SourceDir: "modules/sockshop"
+    OutputDir: "sockshop-test.d"
+
+  - Name: "prodSockShop"
+    SourceDir: "modules/sockshop"
+    OutputDir: "sockshop-prod.d"
