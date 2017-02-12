@@ -38,7 +38,7 @@ Variables:
     default: 2
   - name: domain_name
     type: string
-    optional: false
+    required: true
 
 Deployments:
   - name: frontend

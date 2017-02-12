@@ -171,34 +171,35 @@ func (m *Module) Load(instance ModuleInstance) error {
 			var value int32
 			v, isSet := instance.Variables[variable.Name]
 			// TODO how can we safely detect if default value is set and derive whether this is optional or not from that?
-			if variable.Optional {
+			if variable.Required {
 				if isSet {
 					value = int32(v.(float64))
 				} else {
-					value = int32(variable.Default.(float64))
+					return undefinedNonOptionalVariableError
 				}
 			} else {
 				if isSet {
 					value = int32(v.(float64))
 				} else {
-					return undefinedNonOptionalVariableError
+					value = int32(variable.Default.(float64))
 				}
 			}
 			funcMap[variable.Name] = func() int32 { return value }
 		case "string":
 			var value string
 			v, isSet := instance.Variables[variable.Name]
-			if variable.Optional {
-				if isSet {
-					value = v.(string)
-				} else {
-					value = variable.Default.(string)
-				}
-			} else {
+			if variable.Required {
 				if isSet {
 					value = v.(string)
 				} else {
 					return undefinedNonOptionalVariableError
+				}
+			} else {
+				// TODO warn if we see an empty string here as it is most likely an issue...
+				if isSet {
+					value = v.(string)
+				} else {
+					value = variable.Default.(string)
 				}
 			}
 			funcMap[variable.Name] = func() string { return value }

@@ -31,6 +31,6 @@ type RawResource struct {
 type ModuleVariable struct {
 	Name     string      `yaml:"name" json:"name" hcl:",key"`
 	Type     string      `yaml:"type" json:"type" hcl:"type"`
-	Optional bool        `yaml:"optional" json:"optional" hcl:"optional"`
+	Required bool        `yaml:"required" json:"required" hcl:"required"`
 	Default  interface{} `yaml:"default" json:"default" hcl:"default"`
 }
