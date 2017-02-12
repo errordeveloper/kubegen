@@ -13,7 +13,7 @@ import (
 )
 
 type Convertable interface {
-	ToObject() (runtime.Object, error)
+	ToObject(*Group) (runtime.Object, error)
 }
 
 func exclusiveNonNil(args ...interface{}) *int {
@@ -71,8 +71,8 @@ func (i *Group) EncodeListToPrettyJSON() ([]byte, error) {
 	return util.EncodeList(list, "application/json", true)
 }
 
-func appendToList(components *api.List, component Convertable) error {
-	obj, err := component.ToObject()
+func (i *Group) appendToList(components *api.List, component Convertable) error {
+	obj, err := component.ToObject(i)
 	if err != nil {
 		return err
 	}
@@ -83,32 +83,32 @@ func appendToList(components *api.List, component Convertable) error {
 func (i *Group) MakeList() (*api.List, error) {
 	components := &api.List{}
 	for _, component := range i.Services {
-		if err := appendToList(components, component); err != nil {
+		if err := i.appendToList(components, component); err != nil {
 			return nil, err
 		}
 	}
 	for _, component := range i.Deployments {
-		if err := appendToList(components, component); err != nil {
+		if err := i.appendToList(components, component); err != nil {
 			return nil, err
 		}
 	}
 	for _, component := range i.ReplicaSets {
-		if err := appendToList(components, component); err != nil {
+		if err := i.appendToList(components, component); err != nil {
 			return nil, err
 		}
 	}
 	for _, component := range i.DaemonSets {
-		if err := appendToList(components, component); err != nil {
+		if err := i.appendToList(components, component); err != nil {
 			return nil, err
 		}
 	}
 	for _, component := range i.StatefulSets {
-		if err := appendToList(components, component); err != nil {
+		if err := i.appendToList(components, component); err != nil {
 			return nil, err
 		}
 	}
 	for _, component := range i.ConfigMaps {
-		if err := appendToList(components, component); err != nil {
+		if err := i.appendToList(components, component); err != nil {
 			return nil, err
 		}
 	}

@@ -10,15 +10,15 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
-func (i StatefulSet) ToObject() (runtime.Object, error) {
-	obj, err := i.Convert()
+func (i StatefulSet) ToObject(localGroup *Group) (runtime.Object, error) {
+	obj, err := i.Convert(localGroup)
 	if err != nil {
 		return runtime.Object(nil), err
 	}
 	return runtime.Object(obj), nil
 }
 
-func (i *StatefulSet) Convert() (*v1beta1.StatefulSet, error) {
+func (i *StatefulSet) Convert(localGroup *Group) (*v1beta1.StatefulSet, error) {
 	meta := i.Metadata.Convert(i.Name)
 
 	pod, err := MakePod(meta, i.Pod)

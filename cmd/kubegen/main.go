@@ -59,12 +59,14 @@ func command(cmd *cobra.Command, args []string) error {
 			var data []byte
 			switch format {
 			case "yaml":
-				data, err = bundle.EncodeAllToYAML()
+				if data, err = bundle.EncodeAllToYAML(); err != nil {
+					return err
+				}
+				fmt.Printf("\n---\n")
 			case "json":
-				data, err = bundle.EncodeAllToJSON()
-			}
-			if err != nil {
-				return err
+				if data, err = bundle.EncodeAllToJSON(); err != nil {
+					return err
+				}
 			}
 
 			if err := util.Dump(format, data); err != nil {

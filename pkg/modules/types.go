@@ -9,10 +9,10 @@ type Bundle struct {
 }
 
 type ModuleInstance struct {
-	Name      string                 `yaml:"Name,omitempty" json:"Name" hcl:",key"`
+	Name      string                 `yaml:"Name" json:"Name" hcl:",key"`
 	SourceDir string                 `yaml:"SourceDir" json:"SourceDir" hcl:"source_dir"`
 	OutputDir string                 `yaml:"OutputDir" json:"OutputDir" hcl:"output_dir"`
-	Variables map[string]interface{} `yaml:"Variables" json:"Variables" hcl:"variables"`
+	Variables map[string]interface{} `yaml:"Variables,omitempty" json:"Variables,omitempty" hcl:"variables"`
 }
 
 type Module struct {

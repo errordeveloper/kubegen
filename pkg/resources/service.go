@@ -11,15 +11,66 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
-func (i Service) ToObject() (runtime.Object, error) {
-	obj, err := i.Convert()
+func (i Service) ToObject(localGroup *Group) (runtime.Object, error) {
+	obj, err := i.Convert(localGroup)
 	if err != nil {
 		return runtime.Object(nil), err
 	}
 	return runtime.Object(obj), nil
 }
 
-func (i *Service) Convert() (*v1.Service, error) {
+func (i *Group) findPortByName(serviceName, portName string) (*ContainerPort, error) {
+	allPorts := []ContainerPort{}
+	// TODO we should match a selector, but it is not set before conversion takes place
+	for _, component := range i.Deployments {
+		if component.Name == serviceName {
+			for _, container := range component.Pod.Containers {
+				allPorts = append(allPorts, container.Ports...)
+			}
+		}
+	}
+	for _, component := range i.ReplicaSets {
+		if component.Name == serviceName {
+			for _, container := range component.Pod.Containers {
+				allPorts = append(allPorts, container.Ports...)
+			}
+		}
+
+	}
+	for _, component := range i.DaemonSets {
+		if component.Name == serviceName {
+			for _, container := range component.Pod.Containers {
+				allPorts = append(allPorts, container.Ports...)
+			}
+		}
+	}
+	for _, component := range i.StatefulSets {
+		if component.Name == serviceName {
+			for _, container := range component.Pod.Containers {
+				allPorts = append(allPorts, container.Ports...)
+			}
+		}
+	}
+
+	matchingPorts := []ContainerPort{}
+	for _, port := range allPorts {
+		if port.Name == portName {
+			matchingPorts = append(matchingPorts, port)
+		}
+	}
+
+	if len(matchingPorts) == 0 {
+		return nil, fmt.Errorf("no port matching name %q found for Service name %q in pod controllers with the same name", portName, serviceName)
+	}
+
+	if len(matchingPorts) > 1 {
+		return nil, fmt.Errorf("too many (%d) port matching name %q found for Service name %q in pod controllers with the same name", len(matchingPorts), portName, serviceName)
+	}
+
+	return &matchingPorts[0], nil
+}
+
+func (i *Service) Convert(localGroup *Group) (*v1.Service, error) {
 	meta := i.Metadata.Convert(i.Name)
 
 	serviceSpec := v1.ServiceSpec{
@@ -54,10 +105,26 @@ func (i *Service) Convert() (*v1.Service, error) {
 			}
 			if port.TargetPortName != "" {
 				p.TargetPort = intstr.FromString(port.TargetPortName)
+				if p.Port == 0 && p.Name != "" {
+					matchingPort, err := localGroup.findPortByName(i.Name, port.TargetPortName)
+					if err != nil {
+						return nil, err
+					}
+					p.Port = matchingPort.ContainerPort
+				}
 			}
 		} else {
 			return nil, fmt.Errorf("unable to define ports for service %q – either port or port name must be set", i.Name)
 		}
+
+		if p.Port == 0 && p.Name != "" {
+			matchingPort, err := localGroup.findPortByName(i.Name, p.Name)
+			if err != nil {
+				return nil, err
+			}
+			p.Port = matchingPort.ContainerPort
+		}
+
 		serviceSpec.Ports = append(serviceSpec.Ports, p)
 	}
 

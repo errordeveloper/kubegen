@@ -99,13 +99,13 @@ func (b *Bundle) WriteToOutputDir(contentType string) ([]string, error) {
 		dir := b.Modules[n].OutputDir
 
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			return nil, fmt.Errorf("kubegen/modules: error creating output directory %q – %v", dir, err)
+			return nil, fmt.Errorf("error creating output directory %q – %v", dir, err)
 		}
 
 		for manifestPath, group := range groups {
 			outputFilename := path.Join(dir, strings.TrimSuffix(path.Base(manifestPath), path.Ext(manifestPath))+"."+contentType)
 			if err := ioutil.WriteFile(outputFilename, group, 0644); err != nil {
-				return nil, fmt.Errorf("kubegen/modules: error writing to file %q – %v", outputFilename, err)
+				return nil, fmt.Errorf("error writing to file %q – %v", outputFilename, err)
 			}
 			filesWritten = append(filesWritten, outputFilename)
 		}
@@ -259,7 +259,7 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 		}
 
 		info := fmt.Sprintf(
-			"\n# Generated from module\n#\tName: %q\n#\tSourceDir: %q\n#\tmanifestPath: %q\n",
+			"#\n# Generated from module\n#\tName: %q\n#\tSourceDir: %q\n#\tmanifestPath: %q\n#\n\n",
 			instance.Name,
 			instance.SourceDir,
 			manifestPath,

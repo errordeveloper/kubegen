@@ -14,15 +14,15 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
-func (i ConfigMap) ToObject() (runtime.Object, error) {
-	obj, err := i.Convert()
+func (i ConfigMap) ToObject(localGroup *Group) (runtime.Object, error) {
+	obj, err := i.Convert(localGroup)
 	if err != nil {
 		return runtime.Object(nil), err
 	}
 	return runtime.Object(obj), nil
 }
 
-func (i *ConfigMap) Convert() (*v1.ConfigMap, error) {
+func (i *ConfigMap) Convert(localGroup *Group) (*v1.ConfigMap, error) {
 	meta := i.Metadata.Convert(i.Name)
 
 	configMap := v1.ConfigMap{
