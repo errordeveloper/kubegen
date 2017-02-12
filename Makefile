@@ -1,7 +1,6 @@
 test: build
 	@$(MAKE) -C ./pkg/apps/assets test
 	@go test -v ./pkg/apps
-	@go test -v ./cmd/kubegen
 	@go test -v ./cmd/kubegen-experiment-appgen
 
 build: install
@@ -12,5 +11,4 @@ install:
 
 assets:
 	@$(MAKE) -C ./pkg/apps/assets rebuild
-	@$(MAKE) -C ./cmd/kubegen/assets rebuild
 	@$(MAKE) -C ./cmd/kubegen-experiment-appgen/assets rebuild
