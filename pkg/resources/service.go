@@ -71,7 +71,7 @@ func (i *Group) findPortByName(serviceName, portName string) (*ContainerPort, er
 }
 
 func (i *Service) Convert(localGroup *Group) (*v1.Service, error) {
-	meta := i.Metadata.Convert(i.Name, localGroup.Namespace)
+	meta := i.Metadata.Convert(i.Name, localGroup)
 
 	serviceSpec := v1.ServiceSpec{
 		Ports: []v1.ServicePort{},

@@ -19,7 +19,7 @@ func (i DaemonSet) ToObject(localGroup *Group) (runtime.Object, error) {
 }
 
 func (i *DaemonSet) Convert(localGroup *Group) (*v1beta1.DaemonSet, error) {
-	meta := i.Metadata.Convert(i.Name, localGroup.Namespace)
+	meta := i.Metadata.Convert(i.Name, localGroup)
 
 	pod, err := MakePod(meta, i.Pod)
 	if err != nil {

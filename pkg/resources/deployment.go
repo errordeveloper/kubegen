@@ -20,7 +20,7 @@ func (i Deployment) ToObject(localGroup *Group) (runtime.Object, error) {
 }
 
 func (i *Deployment) Convert(localGroup *Group) (*v1beta1.Deployment, error) {
-	meta := i.Metadata.Convert(i.Name, localGroup.Namespace)
+	meta := i.Metadata.Convert(i.Name, localGroup)
 
 	pod, err := MakePod(meta, i.Pod)
 	if err != nil {

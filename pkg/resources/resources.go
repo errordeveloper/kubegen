@@ -33,7 +33,7 @@ func exclusiveNonNil(args ...interface{}) *int {
 	}
 }
 
-func (i *Metadata) Convert(name, groupNamespace string) metav1.ObjectMeta {
+func (i *Metadata) Convert(name string, localGroup *Group) metav1.ObjectMeta {
 	meta := metav1.ObjectMeta{
 		Name:        name,
 		Labels:      i.Labels,
@@ -41,8 +41,10 @@ func (i *Metadata) Convert(name, groupNamespace string) metav1.ObjectMeta {
 		Namespace:   i.Namespace,
 	}
 
-	if meta.Namespace == "" && groupNamespace != "" {
-		meta.Namespace = groupNamespace
+	if localGroup != nil {
+		if meta.Namespace == "" && localGroup.Namespace != "" {
+			meta.Namespace = localGroup.Namespace
+		}
 	}
 
 	if len(meta.Labels) == 0 {

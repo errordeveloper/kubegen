@@ -127,7 +127,7 @@ func (i *AppComponent) MakeDeployment(params AppParams) (*v1beta1.Deployment, er
 		deployment.Replicas = *i.Replicas
 	}
 
-	deploymentObj, err := deployment.Convert()
+	deploymentObj, err := deployment.Convert(nil)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (i *AppComponent) MakeService(params AppParams) (*v1.Service, error) {
 		Ports: []resources.ServicePort{port},
 	}
 
-	serviceObj, err := service.Convert()
+	serviceObj, err := service.Convert(nil)
 	if err != nil {
 		return nil, err
 	}

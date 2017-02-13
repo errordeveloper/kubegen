@@ -19,7 +19,7 @@ func (i StatefulSet) ToObject(localGroup *Group) (runtime.Object, error) {
 }
 
 func (i *StatefulSet) Convert(localGroup *Group) (*v1beta1.StatefulSet, error) {
-	meta := i.Metadata.Convert(i.Name, localGroup.Namespace)
+	meta := i.Metadata.Convert(i.Name, localGroup)
 
 	pod, err := MakePod(meta, i.Pod)
 	if err != nil {

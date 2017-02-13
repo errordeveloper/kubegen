@@ -23,7 +23,7 @@ func (i ConfigMap) ToObject(localGroup *Group) (runtime.Object, error) {
 }
 
 func (i *ConfigMap) Convert(localGroup *Group) (*v1.ConfigMap, error) {
-	meta := i.Metadata.Convert(i.Name, localGroup.Namespace)
+	meta := i.Metadata.Convert(i.Name, localGroup)
 
 	configMap := v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
