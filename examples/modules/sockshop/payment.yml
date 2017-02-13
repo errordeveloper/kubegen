@@ -1,7 +1,6 @@
 Deployments:
 
 - name: payment
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: payment
@@ -34,6 +33,5 @@ Deployments:
 Services:
 
 - name: payment
-  namespace: sock-shop
   ports:
   - name: http

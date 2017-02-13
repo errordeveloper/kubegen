@@ -3,7 +3,6 @@ Deployments:
 - name: rabbitmq
   labels:
     name: rabbitmq
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: rabbitmq
@@ -25,7 +24,6 @@ Deployments:
 - name: queue-master
   labels:
     name: queue-master
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: queue-master
@@ -49,7 +47,6 @@ Services:
 - name: rabbitmq
   labels:
     name: rabbitmq
-  namespace: sock-shop
   ports:
   - name: rabbitmq
 
@@ -58,7 +55,6 @@ Services:
     name: queue-master
   annotations:
     prometheus.io/path: "/prometheus"
-  namespace: sock-shop
   ports:
   - name: http
   selector:

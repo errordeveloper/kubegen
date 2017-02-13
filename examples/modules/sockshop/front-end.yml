@@ -1,7 +1,6 @@
 Deployments:
 
 - name: front-end
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: front-end
@@ -34,7 +33,6 @@ Deployments:
 Services:
 
 - name: front-end
-  namespace: sock-shop
   type: NodePort
   ports:
   - port: 80

@@ -1,7 +1,6 @@
 Deployments:
 
 - name: cart
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: cart
@@ -37,7 +36,6 @@ Deployments:
       medium: Memory
 
 - name: cart-db
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: cart-db
@@ -67,11 +65,9 @@ Services:
 - name: cart
   annotations:
     prometheus.io/path: "/prometheus"
-  namespace: sock-shop
   ports:
   - name: http
 
 - name: cart-db
-  namespace: sock-shop
   ports:
   - name: mongo

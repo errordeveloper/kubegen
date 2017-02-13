@@ -1,7 +1,6 @@
 Deployments:
 
 - name: shipping
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: shipping
@@ -41,6 +40,5 @@ Services:
 - name: shipping
   annotations:
     prometheus.io/path: "/prometheus"
-  namespace: sock-shop
   ports:
   - name: http

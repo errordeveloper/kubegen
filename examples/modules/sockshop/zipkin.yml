@@ -1,7 +1,6 @@
 Deployments:
 
 - name: zipkin
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: zipkin
@@ -14,7 +13,6 @@ Deployments:
       MYSQL_HOST: zipkin-mysql
 
 - name: zipkin-mysql
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: zipkin-mysql
@@ -24,7 +22,6 @@ Deployments:
       containerPort: 3306
 
 - name: zipkin-cron
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: zipkin-cron
@@ -40,13 +37,11 @@ Deployments:
 Services:
 
 - name: zipkin
-  namespace: sock-shop
   type: NodePort
   ports:
   - name: zipkin
     nodePort: 30002
 
 - name: zipkin-mysql
-  namespace: sock-shop
   ports:
   - name: mysql

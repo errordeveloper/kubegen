@@ -1,7 +1,6 @@
 Deployments:
 
 - name: user
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: user
@@ -33,7 +32,6 @@ Deployments:
       periodSeconds: 3
 
 - name: user-db
-  namespace: sock-shop
   replicas: 1
   containers:
   - name: user-db
@@ -62,11 +60,9 @@ Deployments:
 Services:
 
 - name: user
-  namespace: sock-shop
   ports:
   - name: http
 
 - name: user-db
-  namespace: sock-shop
   ports:
   - name: mongo
