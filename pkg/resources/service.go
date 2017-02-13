@@ -85,6 +85,8 @@ func (i *Service) Convert(localGroup *Group) (*v1.Service, error) {
 		serviceSpec.Selector = i.Selector
 	}
 
+	nodePortIsSet := false
+
 	// TODO validate ports are defined withing the group?
 	// TODO validate labels for a given selector are defined withing the group?
 	for _, port := range i.Ports {
@@ -125,7 +127,15 @@ func (i *Service) Convert(localGroup *Group) (*v1.Service, error) {
 			p.Port = matchingPort.ContainerPort
 		}
 
+		if p.NodePort != 0 {
+			nodePortIsSet = true
+		}
+
 		serviceSpec.Ports = append(serviceSpec.Ports, p)
+	}
+
+	if serviceSpec.Type == "" && nodePortIsSet {
+		serviceSpec.Type = "NodePort"
 	}
 
 	service := v1.Service{
