@@ -33,11 +33,16 @@ func exclusiveNonNil(args ...interface{}) *int {
 	}
 }
 
-func (i *Metadata) Convert(name string) metav1.ObjectMeta {
+func (i *Metadata) Convert(name, groupNamespace string) metav1.ObjectMeta {
 	meta := metav1.ObjectMeta{
 		Name:        name,
 		Labels:      i.Labels,
 		Annotations: i.Annotations,
+		Namespace:   i.Namespace,
+	}
+
+	if meta.Namespace == "" && groupNamespace != "" {
+		meta.Namespace = groupNamespace
 	}
 
 	if len(meta.Labels) == 0 {

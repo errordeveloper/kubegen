@@ -11,8 +11,9 @@ import (
 // from HCL files or as an intermediate representation for higher-level
 // abstraction, such as the appmaker package.
 
+// TODO add JSON tags...
 type Group struct {
-	Namespace    string        `yaml:"Namespace" hcl:"namespace"`
+	Namespace    string        `yaml:"Namespace hcl:"namespace"`
 	Services     []Service     `yaml:"Services" hcl:"service"`
 	Deployments  []Deployment  `yaml:"Deployments" hcl:"deployment"`
 	ReplicaSets  []ReplicaSet  `yaml:"ReplicaSets" hcl:"replicaset"`
@@ -22,8 +23,9 @@ type Group struct {
 }
 
 type Metadata struct {
-	Labels      map[string]string `yaml:"labels" hcl:"labels"`
-	Annotations map[string]string `yaml:"labels" hcl:"annotations"`
+	Labels      map[string]string `yaml:"labels,omitempty" hcl:"labels"`
+	Annotations map[string]string `yaml:"annotations,omitempty" hcl:"annotations"`
+	Namespace   string            `yaml:"namespace,omitempty" hcl:"namespace"`
 }
 
 type Service struct {

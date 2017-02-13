@@ -19,7 +19,7 @@ func (i ReplicaSet) ToObject(localGroup *Group) (runtime.Object, error) {
 }
 
 func (i *ReplicaSet) Convert(localGroup *Group) (*v1beta1.ReplicaSet, error) {
-	meta := i.Metadata.Convert(i.Name)
+	meta := i.Metadata.Convert(i.Name, localGroup.Namespace)
 
 	pod, err := MakePod(meta, i.Pod)
 	if err != nil {
