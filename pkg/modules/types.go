@@ -2,6 +2,7 @@ package modules
 
 type Bundle struct {
 	Name          string           `yaml:"Name" json:"Name" hcl:"name"`
+	Namespace     string           `yaml:"Namespace,omitempty" json:"Namespace,omitempty" hcl:"namespace"`
 	Description   string           `yaml:"Description,omitempty" json:"Description" hcl:"description"`
 	Modules       []ModuleInstance `yaml:"Modules" "json:"Modules" hcl:"module"`
 	path          string           `yaml:"-" json:"-" hcl:"-"`
@@ -10,6 +11,7 @@ type Bundle struct {
 
 type ModuleInstance struct {
 	Name      string                 `yaml:"Name" json:"Name" hcl:",key"`
+	Namespace string                 `yaml:"Namespace,omitempty" json:"Namespace,omitempty" hcl:"namespace"`
 	SourceDir string                 `yaml:"SourceDir" json:"SourceDir" hcl:"source_dir"`
 	OutputDir string                 `yaml:"OutputDir" json:"OutputDir" hcl:"output_dir"`
 	Variables map[string]interface{} `yaml:"Variables,omitempty" json:"Variables,omitempty" hcl:"variables"`

@@ -61,11 +61,16 @@ func NewBundle(bundlePath string) (*Bundle, error) {
 }
 
 func (b *Bundle) LoadModules() error {
-	for _, i := range b.Modules {
+	for n, i := range b.Modules {
 		var err error
 		m, err := NewModule(path.Join(path.Dir(b.path), i.SourceDir), i.Name)
 		if err != nil {
 			return err
+		}
+
+		// Local namespace overrides global namespace if set
+		if i.Namespace == "" && b.Namespace != "" {
+			b.Modules[n].Namespace = b.Namespace
 		}
 
 		if err := m.Load(i); err != nil {
@@ -164,81 +169,103 @@ func NewModule(dir, instanceName string) (*Module, error) {
 	return module, nil
 }
 
+func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, error) {
+	undefinedNonOptionalVariableError := fmt.Errorf(
+		"module %q must set variable %q (of type %s)",
+		instance.Name, i.Name, i.Type)
+
+	unknownVariableTypeError := fmt.Errorf(
+		"module %q variable %q of unknown type %q, only types \"string\" and \"number\" are supported",
+		instance.Name, i.Name, i.Type)
+
+	switch i.Type {
+	case "number":
+		// all numeric values from YAML are parsed as float64, but Kubernetes API mostly wants int32
+		var value int32
+		v, isSet := instance.Variables[i.Name]
+		// TODO how can we safely detect if default value is set and derive whether this is optional or not from that?
+		if i.Required {
+			if isSet {
+				value = int32(v.(float64))
+			} else {
+				return nil, undefinedNonOptionalVariableError
+			}
+		} else {
+			if isSet {
+				value = int32(v.(float64))
+			} else {
+				value = int32(i.Default.(float64))
+			}
+		}
+		return func() int32 { return value }, nil
+	case "string":
+		var value string
+		v, isSet := instance.Variables[i.Name]
+		if i.Required {
+			if isSet {
+				value = v.(string)
+			} else {
+				return nil, undefinedNonOptionalVariableError
+			}
+		} else {
+			// TODO warn if we see an empty string here as it is most likely an issue...
+			if isSet {
+				value = v.(string)
+			} else {
+				value = i.Default.(string)
+			}
+		}
+		return func() string { return value }, nil
+	default:
+		return nil, unknownVariableTypeError
+	}
+}
+
 func (m *Module) Load(instance ModuleInstance) error {
 	// TODO we shuld probably use, as has sane and widely-used syntax,
 	// it is also fairly restrictive https://github.com/hoisie/mustache
 	funcMap := template.FuncMap{}
 	for _, variable := range m.Variables {
-		undefinedNonOptionalVariableError := fmt.Errorf("module %q must set variable %q (of type %s)", instance.Name, variable.Name, variable.Type)
-		unknownVariableTypeError := fmt.Errorf("module %q variable %q of unknown type %q, only types \"string\" and \"number\" are supported", variable.Name, variable.Type)
-
-		switch variable.Type {
-		case "number":
-			// all numeric values from YAML are parsed as float64, but Kubernetes API mostly wants int32
-			var value int32
-			v, isSet := instance.Variables[variable.Name]
-			// TODO how can we safely detect if default value is set and derive whether this is optional or not from that?
-			if variable.Required {
-				if isSet {
-					value = int32(v.(float64))
-				} else {
-					return undefinedNonOptionalVariableError
-				}
-			} else {
-				if isSet {
-					value = int32(v.(float64))
-				} else {
-					value = int32(variable.Default.(float64))
-				}
-			}
-			funcMap[variable.Name] = func() int32 { return value }
-		case "string":
-			var value string
-			v, isSet := instance.Variables[variable.Name]
-			if variable.Required {
-				if isSet {
-					value = v.(string)
-				} else {
-					return undefinedNonOptionalVariableError
-				}
-			} else {
-				// TODO warn if we see an empty string here as it is most likely an issue...
-				if isSet {
-					value = v.(string)
-				} else {
-					value = variable.Default.(string)
-				}
-			}
-			funcMap[variable.Name] = func() string { return value }
-		default:
-			return unknownVariableTypeError
+		valFunc, err := variable.makeValFunc(instance)
+		if err != nil {
+			return err
 		}
+
+		funcMap[variable.Name] = valFunc
 	}
 
-	var output bytes.Buffer
 	for manifestPath, data := range m.manifests {
-		// Let's use our very familiar delimitors
+		output := bytes.Buffer{}
+		// Let's use some very familiar delimitors
 		t, err := template.New(manifestPath).Delims("<", ">").Funcs(funcMap).Parse(string(data))
 		if err != nil {
 			return err
 		}
+
 		if err := t.Execute(&output, nil); err != nil {
 			return err
 		}
+
 		m.manifests[manifestPath] = output.Bytes()
 	}
 
 	return nil
 }
 
-func (m *Module) MakeGroups(instanceName string) (map[string]*resources.Group, error) {
-	groups := make(map[string]*resources.Group)
+func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resources.Group, error) {
+	groups := make(map[string]resources.Group)
 	for manifestPath, data := range m.manifests {
 		// TODO also do something about multiple formats here
-		group := &resources.Group{}
-		if err := loadFromPath(group, data, manifestPath, instanceName); err != nil {
+		group := resources.Group{}
+		if err := loadFromPath(&group, data, manifestPath, instanceName); err != nil {
 			return nil, err
 		}
+
+		// Local namespace overrides global namespace if set
+		if group.Namespace == "" && namespace != "" {
+			group.Namespace = namespace
+		}
+
 		groups[manifestPath] = group
 	}
 
@@ -247,7 +274,7 @@ func (m *Module) MakeGroups(instanceName string) (map[string]*resources.Group, e
 
 func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte, error) {
 	output := make(map[string][]byte)
-	groups, err := m.MakeGroups(instance.Name)
+	groups, err := m.MakeGroups(instance.Name, instance.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +286,7 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 		}
 
 		info := fmt.Sprintf(
-			"#\n# Generated from module\n#\tName: %q\n#\tSourceDir: %q\n#\tmanifestPath: %q\n#\n\n",
+			"\n---\n#\n# Generated from module\n#\tName: %q\n#\tSourceDir: %q\n#\tmanifestPath: %q\n#\n\n",
 			instance.Name,
 			instance.SourceDir,
 			manifestPath,
@@ -273,7 +300,7 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 
 func (m *Module) EncodeGroupsToJSON(instance ModuleInstance) (map[string][]byte, error) {
 	output := make(map[string][]byte)
-	_, err := m.MakeGroups(instance.Name)
+	_, err := m.MakeGroups(instance.Name, instance.Namespace)
 	if err != nil {
 		return nil, err
 	}
