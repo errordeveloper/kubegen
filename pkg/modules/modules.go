@@ -50,7 +50,7 @@ func NewBundle(bundlePath string) (*Bundle, error) {
 
 	data, err := ioutil.ReadFile(bundlePath)
 	if err != nil {
-		return nil, fmt.Errorf("error reading manifest file %q – %v", bundlePath, err)
+		return nil, fmt.Errorf("error reading bundle manifest file %q – %v", bundlePath, err)
 	}
 
 	if err := loadFromPath(b, data, bundlePath, ""); err != nil {
@@ -60,8 +60,22 @@ func NewBundle(bundlePath string) (*Bundle, error) {
 	return b, nil
 }
 
-func (b *Bundle) LoadModules() error {
+func (b *Bundle) LoadModules(selectNames []string) error {
+	applyNameSelector := len(selectNames) > 0
+
 	for n, i := range b.Modules {
+		if applyNameSelector {
+			skip := true
+			for _, name := range selectNames {
+				if i.Name == name {
+					skip = false
+				}
+			}
+			if skip {
+				continue
+			}
+		}
+
 		var err error
 		m, err := NewModule(path.Join(path.Dir(b.path), i.SourceDir), i.Name)
 		if err != nil {

@@ -11,13 +11,14 @@ import (
 )
 
 var (
-	stdout bool
-	format string
+	stdout        bool
+	format        string
+	selectModules []string
 )
 
 func main() {
 	var rootCmd = &cobra.Command{
-		Use:  "kubegen <manifest> ...",
+		Use:  "kubegen <bundleManifest> ...",
 		RunE: command,
 	}
 
@@ -25,6 +26,9 @@ func main() {
 		"Output to stdout instead of creating files")
 	rootCmd.Flags().StringVarP(&format, "output", "o", "yaml",
 		"Output format [\"yaml\" or \"json\"]")
+
+	rootCmd.Flags().StringSliceVarP(&selectModules, "module", "m", []string{},
+		"Names of modules to process (all modules in each given bundle are processed by defult)")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -42,7 +46,7 @@ func command(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		if err := bundle.LoadModules(); err != nil {
+		if err := bundle.LoadModules(selectModules); err != nil {
 			return err
 		}
 
@@ -51,10 +55,19 @@ func command(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Wrote %d files based on manifest %q:\n", len(wroteFiles), manifest)
+
+			fmt.Printf("Wrote %d files based on bundle manifest %q", len(wroteFiles), manifest)
+
+			if len(wroteFiles) == 0 {
+				fmt.Printf(".\n")
+				return nil
+			}
+
+			fmt.Printf(":\n")
 			for _, file := range wroteFiles {
 				fmt.Printf("  – %s\n", file)
 			}
+			return nil
 		} else {
 			var data []byte
 			switch format {

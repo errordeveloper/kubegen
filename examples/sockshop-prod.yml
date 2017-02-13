@@ -1,6 +1,6 @@
 Modules:
 
-  - Name: "testSockShopTest"
+  - Name: "testSockShop"
     Namespace: "sock-shop-test"
     SourceDir: "modules/sockshop"
     OutputDir: "sockshop-test.d"
