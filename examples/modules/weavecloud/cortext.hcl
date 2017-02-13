@@ -1,3 +1,5 @@
+namespace = "kube-system"
+
 deployment "weave-cortex-agent" {
   labels = {
     app = "weave-cortex"

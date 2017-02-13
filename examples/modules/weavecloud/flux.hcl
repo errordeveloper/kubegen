@@ -1,3 +1,5 @@
+namespace = "kube-system"
+
 deployment "weave-flux-agent" {
   labels {
     app = "weave-flux"

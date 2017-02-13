@@ -1,3 +1,5 @@
+namespace = "kube-system"
+
 daemonset "weave-scope-agent" {
   labels {
     app = "weave-scope"
