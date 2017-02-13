@@ -62,7 +62,6 @@ func command(cmd *cobra.Command, args []string) error {
 				if data, err = bundle.EncodeAllToYAML(); err != nil {
 					return err
 				}
-				fmt.Printf("\n---\n")
 			case "json":
 				if data, err = bundle.EncodeAllToJSON(); err != nil {
 					return err

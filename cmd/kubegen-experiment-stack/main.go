@@ -46,6 +46,8 @@ func command(cmd *cobra.Command, args []string) error {
 		if data, err = app.EncodeListToYAML(); err != nil {
 			return err
 		}
+		preamble := "---\n"
+		data = append([]byte(preamble), data...)
 	case "json":
 		if data, err = app.EncodeListToPrettyJSON(); err != nil {
 			return err

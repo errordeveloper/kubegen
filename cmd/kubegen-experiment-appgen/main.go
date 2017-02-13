@@ -90,6 +90,10 @@ func command(cmd *cobra.Command, args []string) error {
 	if len(wroteFiles) > 0 {
 		fmt.Printf("Wrote these files in the current working directory:\n %s", wroteFiles)
 	} else {
+		if contentType == "yaml" {
+			preamble := "---\n"
+			data = append([]byte(preamble), data...)
+		}
 		if err := util.Dump(contentType, data); err != nil {
 			return err
 		}

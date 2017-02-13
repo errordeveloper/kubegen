@@ -137,13 +137,6 @@ func Dump(outputFormat string, data []byte) error {
 		output string
 	)
 
-	switch outputFormat {
-	case "yaml":
-		data = append([]byte("---\n"), data...)
-	case "json":
-
-	}
-
 	if term.IsTerminal(0) {
 		veryPretty, err := highlight.Term(outputFormat, data)
 		if err != nil {
