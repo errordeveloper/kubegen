@@ -1,4 +1,4 @@
-package main
+package main // import "github.com/errordeveloper/kubegen/cmd/kubegen"
 
 import (
 	"fmt"
