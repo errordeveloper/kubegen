@@ -34,7 +34,7 @@ Deployments:
   replicas: 1
   containers:
   - name: catalogue-db
-    image: weaveworksdemos/catalogue-db:0.3.0
+    image: <image_registry>/catalogue-db:0.3.0
     env:
       MYSQL_ROOT_PASSWORD: fake_password
       MYSQL_DATABASE: socksdb

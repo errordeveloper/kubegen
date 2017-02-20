@@ -35,7 +35,7 @@ Deployments:
   replicas: 1
   containers:
   - name: user-db
-    image: weaveworksdemos/user-db:0.3.0
+    image: <image_registry>/user-db:0.3.0
 
     ports:
     - name: mongo
