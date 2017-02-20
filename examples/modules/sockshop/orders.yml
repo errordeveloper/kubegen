@@ -4,7 +4,7 @@ Deployments:
   replicas: 1
   containers:
   - name: orders
-    image: weaveworksdemos/orders:0.4.2
+    image: <image_registry>/orders:0.4.2
     ports:
     - name: http
       containerPort: 80

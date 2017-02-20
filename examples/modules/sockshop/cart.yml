@@ -4,7 +4,7 @@ Deployments:
   replicas: 1
   containers:
   - name: cart
-    image: weaveworksdemos/cart:0.4.0
+    image: <image_registry>/cart:0.4.0
     ports:
     - name: http
       containerPort: 80

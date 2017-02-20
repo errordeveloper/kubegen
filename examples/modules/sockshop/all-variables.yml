@@ -1,0 +1,4 @@
+Variables:
+  - name: image_registry
+    type: string
+    default: "docker.io/weaveworksdemos"

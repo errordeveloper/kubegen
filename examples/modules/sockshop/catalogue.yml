@@ -4,7 +4,7 @@ Deployments:
   replicas: 1
   containers:
   - name: catalogue
-    image: weaveworksdemos/catalogue:0.3.0
+    image: <image_registry>/catalogue:0.3.0
     env:
       ZIPKIN: http://zipkin:9411/api/v1/spans
     ports:

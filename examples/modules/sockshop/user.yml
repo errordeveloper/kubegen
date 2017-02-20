@@ -4,7 +4,7 @@ Deployments:
   replicas: 1
   containers:
   - name: user
-    image: weaveworksdemos/user:0.4.0
+    image: <image_registry>/user:0.4.0
     ports:
     - name: http
       containerPort: 80

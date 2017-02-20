@@ -4,7 +4,7 @@ Deployments:
   replicas: 1
   containers:
   - name: payment
-    image: weaveworksdemos/payment:0.4.1
+    image: <image_registry>/payment:0.4.1
     ports:
     - name: http
       containerPort: 80
