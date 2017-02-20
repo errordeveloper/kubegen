@@ -1,0 +1,20 @@
+steps:
+
+- name: 'gcr.io/cloud-builders/go'
+  env: ['PROJECT_ROOT=github.com/errordeveloper/kubegen']
+  args: ['get', 'github.com/Masterminds/glide']
+
+- name: 'gcr.io/cloud-builders/golang-project'
+  env: ['PROJECT_ROOT=github.com/errordeveloper/kubegen']
+  args: ['github.com/Masterminds/glide', '--base-image=gcr.io/cloud-builders/golang-project', '--tag=builder-with-glide']
+
+- name: 'builder-with-glide'
+  env: ['PROJECT_ROOT=github.com/errordeveloper/kubegen']
+  args: ['-c', 'source /builder/prepare_workspace.inc && prepare_workspace && cd ./gopath/src/github.com/errordeveloper/kubegen && glide up --strip-vendor']
+  entrypoint: '/bin/sh'
+
+- name: 'gcr.io/cloud-builders/golang-project'
+  env: ['PROJECT_ROOT=github.com/errordeveloper/kubegen']
+  args: ['github.com/errordeveloper/kubegen/cmd/kubegen', '--base-image=scratch', '--tag=gcr.io/$PROJECT_ID/kubegen']
+
+images: ['gcr.io/$PROJECT_ID/kubegen']
