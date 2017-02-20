@@ -57,24 +57,39 @@ func (i *Metadata) Convert(name string, localGroup *Group) metav1.ObjectMeta {
 func (i *Group) EncodeListToYAML() ([]byte, error) {
 	list, err := i.MakeList()
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
+
+	if len(list.Items) == 0 {
+		return nil, nil
+	}
+
 	return util.EncodeList(list, "application/yaml", false)
 }
 
 func (i *Group) EncodeListToJSON() ([]byte, error) {
 	list, err := i.MakeList()
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
+
+	if len(list.Items) == 0 {
+		return nil, nil
+	}
+
 	return util.EncodeList(list, "application/json", false)
 }
 
 func (i *Group) EncodeListToPrettyJSON() ([]byte, error) {
 	list, err := i.MakeList()
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
+
+	if len(list.Items) == 0 {
+		return nil, nil
+	}
+
 	return util.EncodeList(list, "application/json", true)
 }
 

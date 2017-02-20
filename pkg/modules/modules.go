@@ -299,6 +299,10 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 			return nil, err
 		}
 
+		if data == nil {
+			continue
+		}
+
 		info := fmt.Sprintf(
 			"\n---\n#\n# Generated from module\n#\tName: %q\n#\tSourceDir: %q\n#\tmanifestPath: %q\n#\n\n",
 			instance.Name,
