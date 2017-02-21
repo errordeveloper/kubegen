@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -142,8 +143,15 @@ func (b *Bundle) EncodeAllToYAML() ([]byte, error) {
 			return nil, err
 		}
 
-		for _, group := range groups {
-			output = append(output, group...)
+		sortedGroups := []string{}
+		for manifestPath, _ := range groups {
+			sortedGroups = append(sortedGroups, manifestPath)
+		}
+
+		sort.Strings(sortedGroups)
+
+		for _, manifestPath := range sortedGroups {
+			output = append(output, groups[manifestPath]...)
 		}
 	}
 
@@ -268,6 +276,7 @@ func (m *Module) Load(instance ModuleInstance) error {
 
 func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resources.Group, error) {
 	groups := make(map[string]resources.Group)
+
 	for manifestPath, data := range m.manifests {
 		// TODO also do something about multiple formats here
 		group := resources.Group{}
