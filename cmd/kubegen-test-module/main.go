@@ -67,12 +67,27 @@ func command(cmd *cobra.Command, args []string) error {
 		module.OutputDir = module.Name
 	}
 
+	if len(variables) > 0 {
+		module.Variables = make(map[string]interface{})
+	}
+
 	for _, v := range variables {
 		kv := strings.SplitN(v, "=", 2)
 		if len(kv) < 2 {
-			return fmt.Errorf("invalid variable %q, expected \"key=value\"")
+			return fmt.Errorf("invalid variable declaration %q, expected \"key=value\"", v)
 		}
-		module.Variables[kv[0]] = intstr.Parse(kv[1])
+
+		if kv[1] == "" {
+			return fmt.Errorf("invalid variable value %q, expected a non-empty string", v)
+		}
+
+		v := intstr.Parse(kv[1])
+		switch v.Type {
+		case intstr.Int:
+			module.Variables[kv[0]] = v.IntValue()
+		case intstr.String:
+			module.Variables[kv[0]] = v.String()
+		}
 	}
 
 	bundle := &modules.Bundle{Modules: []modules.ModuleInstance{module}}

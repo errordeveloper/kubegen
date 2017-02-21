@@ -200,6 +200,10 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 		"module %q variable %q of unknown type %q, only types \"string\" and \"number\" are supported",
 		instance.Name, i.Name, i.Type)
 
+	wrongVariableTypeError := fmt.Errorf(
+		"module %q variable %q not of type %q",
+		instance.Name, i.Name, i.Type)
+
 	switch i.Type {
 	case "number":
 		// all numeric values from YAML are parsed as float64, but Kubernetes API mostly wants int32
@@ -208,15 +212,30 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 		// TODO how can we safely detect if default value is set and derive whether this is optional or not from that?
 		if i.Required {
 			if isSet {
-				value = int32(v.(float64))
+				switch v.(type) {
+				case float64:
+					value = int32(v.(float64))
+				default:
+					return nil, wrongVariableTypeError
+				}
 			} else {
 				return nil, undefinedNonOptionalVariableError
 			}
 		} else {
 			if isSet {
-				value = int32(v.(float64))
+				switch v.(type) {
+				case float64:
+					value = int32(v.(float64))
+				default:
+					return nil, wrongVariableTypeError
+				}
 			} else {
-				value = int32(i.Default.(float64))
+				switch i.Default.(type) {
+				case string:
+					value = int32(i.Default.(float64))
+				default:
+					return nil, wrongVariableTypeError
+				}
 			}
 		}
 		return func() int32 { return value }, nil
@@ -225,16 +244,31 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 		v, isSet := instance.Variables[i.Name]
 		if i.Required {
 			if isSet {
-				value = v.(string)
+				switch v.(type) {
+				case string:
+					value = v.(string)
+				default:
+					return nil, wrongVariableTypeError
+				}
 			} else {
 				return nil, undefinedNonOptionalVariableError
 			}
 		} else {
 			// TODO warn if we see an empty string here as it is most likely an issue...
 			if isSet {
-				value = v.(string)
+				switch v.(type) {
+				case string:
+					value = v.(string)
+				default:
+					return nil, wrongVariableTypeError
+				}
 			} else {
-				value = i.Default.(string)
+				switch i.Default.(type) {
+				case string:
+					value = i.Default.(string)
+				default:
+					return nil, wrongVariableTypeError
+				}
 			}
 		}
 		return func() string { return value }, nil
