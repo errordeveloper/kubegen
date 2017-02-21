@@ -15,22 +15,21 @@ deployment "weave-cortex-agent" {
       image_pull_policy = "IfNotPresent"
       args = [
         "-config.file=/etc/prometheus/prometheus.yml",
-        "-web.listen-address=:80"
+        "-web.listen-address=:8080",
+        "-storage.local.engine=none",
       ]
       port "agent" {
-        container_port = 80
+        container_port = 8080
         protocol = "TCP"
       }
-      #mount "agent-config-volume" {
-      #  mount_path = "/etc/prometheus"
-      #}
+      mount "agent-config-volume-config" {
+        mount_path = "/etc/prometheus"
+      }
   }
 
-  #volume "agent-config-volume" {
-  #  configmap {
-  #    name = "weave-cortex-agent-config"
-  #  }
-  #}
+  volume "agent-config-volume-config" {
+    configmap { }
+  }
 }
 
 
@@ -42,7 +41,9 @@ service "weave-cortex-agent" {
       weave-cortex-component = "agent"
     }
 
-    port "agent" { }
+    port "agent" {
+      port = 80
+    }
 }
 
 daemonset "weave-cortex-node-exporter" {

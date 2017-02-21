@@ -194,7 +194,7 @@ func (i *Probe) Convert(ports []ContainerPort) (*v1.Probe, error) {
 func (i *Volume) Convert() (*v1.Volume, error) {
 	volume := v1.Volume{Name: i.Name}
 
-	whichVolumeSource := exclusiveNonNil(i.HostPath, i.EmptyDir, i.Secret)
+	whichVolumeSource := exclusiveNonNil(i.HostPath, i.EmptyDir, i.Secret, i.ConfigMap)
 	if whichVolumeSource != nil {
 		switch *whichVolumeSource {
 		case 0:
@@ -206,7 +206,17 @@ func (i *Volume) Convert() (*v1.Volume, error) {
 		case 2:
 			s := v1.SecretVolumeSource{}
 			deepcopier.Copy(i.VolumeSource.Secret).To(&s)
+			if s.SecretName == "" {
+				s.SecretName = i.Name
+			}
 			volume.VolumeSource.Secret = &s
+		case 3:
+			s := v1.ConfigMapVolumeSource{}
+			deepcopier.Copy(i.VolumeSource.ConfigMap).To(&s)
+			if s.Name == "" {
+				s.Name = i.Name
+			}
+			volume.VolumeSource.ConfigMap = &s
 		}
 	} else {
 		return nil, fmt.Errorf("one volume source must be defined, none or too many given")

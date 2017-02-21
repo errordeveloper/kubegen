@@ -195,13 +195,21 @@ items:
         containers:
         - args:
           - -config.file=/etc/prometheus/prometheus.yml
-          - -web.listen-address=:80
+          - -web.listen-address=:8080
+          - -storage.local.engine=none
           image: prom/prometheus:v1.3.1
           name: agent
           ports:
-          - containerPort: 80
+          - containerPort: 8080
             name: agent
             protocol: TCP
+          volumeMounts:
+          - mountPath: /etc/prometheus
+            name: agent-config-volume-config
+        volumes:
+        - configMap:
+            name: agent-config-volume-config
+          name: agent-config-volume-config
 - apiVersion: extensions/v1beta1
   kind: DaemonSet
   metadata:

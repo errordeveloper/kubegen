@@ -160,9 +160,10 @@ type Volume struct {
 
 // TODO: Figure out how to generate or import these
 type VolumeSource struct {
-	HostPath *HostPathVolumeSource `yaml:"hostPath,omitempty" hcl:"host_path"`
-	EmptyDir *EmptyDirVolumeSource `yaml:"emptyDir,omitempty" hcl:"empty_dir"`
-	Secret   *SecretVolumeSource   `yaml:"secret,omitempty" hcl:"secret"`
+	HostPath  *HostPathVolumeSource  `yaml:"hostPath,omitempty" hcl:"host_path"`
+	EmptyDir  *EmptyDirVolumeSource  `yaml:"emptyDir,omitempty" hcl:"empty_dir"`
+	Secret    *SecretVolumeSource    `yaml:"secret,omitempty" hcl:"secret"`
+	ConfigMap *ConfigMapVolumeSource `yaml:"configMap" hcl:"configmap"`
 }
 
 type HostPathVolumeSource struct {
@@ -176,8 +177,19 @@ type EmptyDirVolumeSource struct {
 type SecretVolumeSource struct {
 	SecretName  string      `yaml:"secretName,omitempty" hcl:"secret_name"`
 	Items       []KeyToPath `yaml:"items,omitempty" hcl:"item"`
-	DefaultMode int32       `yaml:"defaultMode,omitempty" hcl:"default_mode"`
-	Optional    bool        `yaml:"optional,omitempty" hcl:"optional"`
+	DefaultMode *int32      `yaml:"defaultMode,omitempty" hcl:"default_mode"`
+	Optional    *bool       `yaml:"optional,omitempty" hcl:"optional"`
+}
+
+type ConfigMapVolumeSource struct {
+	LocalObjectReference `yaml:",inline" hcl:",squash"`
+	Items                []KeyToPath `yaml:"items,omitempty" hcl:"items"`
+	DefaultMode          *int32      `yaml:"defaultMode,omitempty" hcl:"default_mode"`
+	Optional             *bool       `json:"optional,omitempty" hcl:"optional"`
+}
+
+type LocalObjectReference struct {
+	Name string `yaml:"name,omitempty" hcl:"name"`
 }
 
 type KeyToPath struct {
