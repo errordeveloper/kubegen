@@ -12,6 +12,9 @@ func init() {
 	Commands = make(map[string][]string)
 	commands := [][]string{
 		{"--stdout=true", "--source-dir=.examples/modules/sockshop"},
+		{"-s", "-D", ".examples/modules/sockshop", "-v", "image_registry=gcr.io/sockshop"},
+		{"-s", "-D", ".examples/modules/sockshop", "-v", "image_registry=quay.io/sockshop"},
+		{"-s", "-D", ".examples/modules/weavecloud", "-v", "service_token=abc123"},
 	}
 
 	for _, command := range commands {

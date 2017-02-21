@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -37,7 +38,7 @@ func main() {
 		"Output format [\"yaml\" or \"json\"]")
 
 	rootCmd.Flags().StringVarP(&module.SourceDir, "source-dir", "D", "",
-		"Module source directory (must be specified)")
+		"Module source directory (must be specified, if it is same as current working directory `--stdout` will be set)")
 	rootCmd.Flags().StringVarP(&module.OutputDir, "output-dir", "O", defaultOutputDir,
 		"Output directory")
 
@@ -60,6 +61,20 @@ func command(cmd *cobra.Command, args []string) error {
 	}
 
 	if module.Name == defaultName {
+		sourceDirAbsPath, err := filepath.Abs(module.SourceDir)
+		if err != nil {
+			return err
+		}
+
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+
+		if sourceDirAbsPath == wd {
+			stdout = true
+		}
+
 		module.Name = path.Base(module.SourceDir)
 	}
 
