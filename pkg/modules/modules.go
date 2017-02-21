@@ -18,6 +18,10 @@ import (
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
+// TODO report unknown keys in manifests
+// TODO require Type key to be set in manifests and bundles
+// TODO bail on unknown variable keys
+
 func loadFromPath(obj interface{}, data []byte, sourcePath string, instanceName string) error {
 	var errorFmt string
 	if instanceName != "" {
