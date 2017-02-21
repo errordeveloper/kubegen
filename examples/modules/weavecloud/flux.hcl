@@ -14,7 +14,7 @@ deployment "weave-flux-agent" {
     image = "quay.io/weaveworks/fluxd:0.1.0"
     image_pull_policy = "IfNotPresent"
     args = [
-          "--token={{.Values.ServiceToken}}"
+          "--token=<service_token>"
     ]
   }
 }
