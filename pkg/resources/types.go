@@ -160,9 +160,10 @@ type Volume struct {
 
 // TODO: Figure out how to generate or import these
 type VolumeSource struct {
-	HostPath *HostPathVolumeSource `yaml:"hostPath,omitempty" hcl:"host_path"`
-	EmptyDir *EmptyDirVolumeSource `yaml:"emptyDir,omitempty" hcl:"empty_dir"`
-	Secret   *SecretVolumeSource   `yaml:"secret,omitempty" hcl:"secret"`
+	HostPath  *HostPathVolumeSource  `yaml:"hostPath,omitempty" hcl:"host_path"`
+	EmptyDir  *EmptyDirVolumeSource  `yaml:"emptyDir,omitempty" hcl:"empty_dir"`
+	Secret    *SecretVolumeSource    `yaml:"secret,omitempty" hcl:"secret"`
+	ConfigMap *ConfigMapVolumeSource `yaml:"configMap" hcl:"configmap"`
 }
 
 type HostPathVolumeSource struct {
@@ -178,6 +179,10 @@ type SecretVolumeSource struct {
 	Items       []KeyToPath `yaml:"items,omitempty" hcl:"item"`
 	DefaultMode int32       `yaml:"defaultMode,omitempty" hcl:"default_mode"`
 	Optional    bool        `yaml:"optional,omitempty" hcl:"optional"`
+}
+
+type ConfigMapVolumeSource struct {
+	LocalObjectReference
 }
 
 type KeyToPath struct {
