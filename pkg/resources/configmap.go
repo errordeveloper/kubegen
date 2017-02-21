@@ -35,6 +35,10 @@ func (i *ConfigMap) Convert(localGroup *Group) (*v1.ConfigMap, error) {
 
 	deepcopier.Copy(i).To(&configMap)
 
+	if len(configMap.Data) == 0 {
+		configMap.Data = make(map[string]string)
+	}
+
 	for _, v := range i.DataFromFiles {
 		data, err := ioutil.ReadFile(v)
 		if err != nil {
