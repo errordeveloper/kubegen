@@ -8,7 +8,7 @@ import (
 	"github.com/errordeveloper/testcli"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/errordeveloper/kubegen/cmd/kubegen-test-module/assets/commands"
+	"github.com/errordeveloper/kubegen/cmd/kubegen/assets/commands"
 )
 
 func TestKubegenCmd(t *testing.T) {

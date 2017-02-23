@@ -31,8 +31,6 @@ var moduleCmd = &cobra.Command{
 }
 
 func init() {
-	//moduleCmd.Flags().StringVarP(&module.SourceDir, "source-dir", "D", "",
-	//	"Module source directory (must be specified, if it is same as current working directory `--stdout` will be set)")
 	moduleCmd.Flags().StringVarP(&module.OutputDir, "output-dir", "O", defaultOutputDir,
 		"Output directory")
 
@@ -46,7 +44,6 @@ func init() {
 }
 
 func moduleFn(cmd *cobra.Command, args []string) error {
-	//if module.SourceDir == "" {
 	if len(args) == 0 {
 		return fmt.Errorf("please provide module source directory")
 	}
