@@ -81,10 +81,9 @@ go get github.com/Masterminds/glide
 go get -d github.com/errordeveloper/kubegen
 cd $GOPATH/src/github.com/errordeveloper/kubegen
 $GOPATH/bin/glide up --strip-vendor
-go install ./appmaker
 ```
 
 Build `kubegen`:
 ```bash
-go build .
+make
 ```
