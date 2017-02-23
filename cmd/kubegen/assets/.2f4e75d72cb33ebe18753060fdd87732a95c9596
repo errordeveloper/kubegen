@@ -1,0 +1,2780 @@
+
+---
+#
+# Generated from module
+#	Name: "weavecloud"
+#	SourceDir: "modules/weavecloud"
+#	manifestPath: ".examples/modules/weavecloud/cortext-configmap.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  data:
+    prometheus.yml: |
+      global:
+        scrape_interval: 15s
+      remote_write:
+        basic_auth:
+          password: foobarbaz
+        url: https://cloud.weave.works/api/prom/push
+      scrape_configs:
+      - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        job_name: kubernetes-service-endpoints
+        kubernetes_sd_configs:
+        - role: endpoints
+        relabel_configs:
+        - action: replace
+          regex: apiserver
+          replacement: https
+          source_labels:
+          - __meta_kubernetes_service_label_component
+          target_label: __scheme__
+        - action: drop
+          regex: "true"
+          source_labels:
+          - __meta_kubernetes_service_label_kubernetes_io_cluster_service
+        - action: drop
+          regex: "false"
+          source_labels:
+          - __meta_kubernetes_service_annotation_prometheus_io_scrape
+        - action: drop
+          regex: .*-noscrape
+          source_labels:
+          - __meta_kubernetes_pod_container_port_name
+        - action: replace
+          regex: ^(https?)$
+          replacement: $1
+          source_labels:
+          - __meta_kubernetes_service_annotation_prometheus_io_scheme
+          target_label: __scheme__
+        - action: replace
+          regex: ^(.+)$
+          replacement: $1
+          source_labels:
+          - __meta_kubernetes_service_annotation_prometheus_io_path
+          target_label: __metrics_path__
+        - action: replace
+          regex: ^(.+)(?::\d+);(\d+)$
+          replacement: $1:$2
+          source_labels:
+          - __address__
+          - __meta_kubernetes_service_annotation_prometheus_io_port
+          target_label: __address__
+        - action: labelmap
+          regex: ^__meta_kubernetes_service_label_(.+)$
+          replacement: $1
+        - separator: /
+          source_labels:
+          - __meta_kubernetes_namespace
+          - __meta_kubernetes_service_name
+          target_label: job
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - action: keep
+          regex: "true"
+          source_labels:
+          - __meta_kubernetes_pod_annotation_prometheus_io_scrape
+        - separator: /
+          source_labels:
+          - __meta_kubernetes_namespace
+          - __meta_kubernetes_pod_label_name
+          target_label: job
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        job_name: kubernetes-nodes
+        kubernetes_sd_configs:
+        - role: node
+        relabel_configs:
+        - replacement: https
+          target_label: __scheme__
+        - source_labels:
+          - __meta_kubernetes_node_label_kubernetes_io_hostname
+          target_label: instance
+        tls_config:
+          insecure_skip_verify: true
+      - job_name: weave
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - action: keep
+          regex: ^kube-system;weave-net$
+          source_labels:
+          - __meta_kubernetes_namespace
+          - __meta_kubernetes_pod_label_name
+        - action: replace
+          regex: ^weave;(.+?)(?::\d+)?$
+          replacement: $1:6782
+          source_labels:
+          - __meta_kubernetes_pod_container_name
+          - __address__
+          target_label: __address__
+        - action: replace
+          regex: ^weave-npc;(.+?)(?::\d+)?$
+          replacement: $1:6781
+          source_labels:
+          - __meta_kubernetes_pod_container_name
+          - __address__
+          target_label: __address__
+        - action: replace
+          source_labels:
+          - __meta_kubernetes_pod_container_name
+          target_label: job
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-cortex
+      name: weave-cortex-agent-config
+      weave-cloud-component: cortex
+      weave-cortex-component: agent-config
+    name: weave-cortex-agent-config
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "weavecloud"
+#	SourceDir: "modules/weavecloud"
+#	manifestPath: ".examples/modules/weavecloud/cortext.hcl"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
+    name: weave-cortex-agent
+    namespace: kube-system
+  spec:
+    ports:
+    - name: agent
+      port: 80
+      targetPort: agent
+    selector:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
+    name: weave-cortex-agent
+    namespace: kube-system
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: weave-cortex
+        name: weave-cortex-agent
+        weave-cloud-component: cortex
+        weave-cortex-component: agent
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: weave-cortex
+          name: weave-cortex-agent
+          weave-cloud-component: cortex
+          weave-cortex-component: agent
+      spec:
+        containers:
+        - args:
+          - -config.file=/etc/prometheus/prometheus.yml
+          - -web.listen-address=:80
+          image: prom/prometheus:v1.3.1
+          name: agent
+          ports:
+          - containerPort: 80
+            name: agent
+            protocol: TCP
+          resources: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-cortex
+      name: weave-cortex-node-exporter
+      weave-cloud-component: cortex
+      weave-cortex-component: node-exporter
+    name: weave-cortex-node-exporter
+    namespace: kube-system
+  spec:
+    selector:
+      matchLabels:
+        app: weave-cortex
+        name: weave-cortex-node-exporter
+        weave-cloud-component: cortex
+        weave-cortex-component: node-exporter
+    template:
+      metadata:
+        annotations:
+          prometheus.io.scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: weave-cortex
+          name: weave-cortex-node-exporter
+          weave-cloud-component: cortex
+          weave-cortex-component: node-exporter
+      spec:
+        containers:
+        - image: prom/node-exporter:0.12.0
+          name: agent
+          ports:
+          - containerPort: 9100
+            name: agent
+            protocol: TCP
+          resources: {}
+          securityContext: {}
+  status:
+    currentNumberScheduled: 0
+    desiredNumberScheduled: 0
+    numberMisscheduled: 0
+    numberReady: 0
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "weavecloud"
+#	SourceDir: "modules/weavecloud"
+#	manifestPath: ".examples/modules/weavecloud/flux.hcl"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
+    name: weave-flux-agent
+    namespace: kube-system
+  spec:
+    selector:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
+    name: weave-flux-agent
+    namespace: kube-system
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: weave-flux
+        name: weave-flux-agent
+        weave-cloud-component: flux
+        weave-flux-component: agent
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: weave-flux
+          name: weave-flux-agent
+          weave-cloud-component: flux
+          weave-flux-component: agent
+      spec:
+        containers:
+        - args:
+          - --token=foobarbaz
+          image: quay.io/weaveworks/fluxd:0.1.0
+          name: agent
+          resources: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "weavecloud"
+#	SourceDir: "modules/weavecloud"
+#	manifestPath: ".examples/modules/weavecloud/scope.hcl"
+#
+
+apiVersion: v1
+items:
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-scope
+      name: weave-scope-agent
+      weave-cloud-component: scop
+      weave-scope-component: agent
+    name: weave-scope-agent
+    namespace: kube-system
+  spec:
+    selector:
+      matchLabels:
+        app: weave-scope
+        name: weave-scope-agent
+        weave-cloud-component: scop
+        weave-scope-component: agent
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: weave-scope
+          name: weave-scope-agent
+          weave-cloud-component: scop
+          weave-scope-component: agent
+      spec:
+        containers:
+        - args:
+          - --no-app
+          - --probe.docker.bridge=docker0
+          - --probe.docker=true
+          - --probe.kubernetes=true
+          - --service-token=foobarbaz
+          image: weaveworks/scope:latest
+          name: agent
+          resources: {}
+          securityContext: {}
+          volumeMounts:
+          - mountPath: /var/run/scope/plugins
+            name: scope-plugins
+        volumes:
+        - hostPath:
+            path: /var/run/docker.sock
+          name: docker-socket
+        - hostPath:
+            path: /var/run/scope/plugins
+          name: scope-plugins
+  status:
+    currentNumberScheduled: 0
+    desiredNumberScheduled: 0
+    numberMisscheduled: 0
+    numberReady: 0
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "weavecloud"
+#	SourceDir: "modules/weavecloud"
+#	manifestPath: ".examples/modules/weavecloud/cortext-configmap.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  data:
+    prometheus.yml: |
+      global:
+        scrape_interval: 15s
+      remote_write:
+        basic_auth:
+          password: bazbarfoo
+        url: https://cloud.weave.works/api/prom/push
+      scrape_configs:
+      - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        job_name: kubernetes-service-endpoints
+        kubernetes_sd_configs:
+        - role: endpoints
+        relabel_configs:
+        - action: replace
+          regex: apiserver
+          replacement: https
+          source_labels:
+          - __meta_kubernetes_service_label_component
+          target_label: __scheme__
+        - action: drop
+          regex: "true"
+          source_labels:
+          - __meta_kubernetes_service_label_kubernetes_io_cluster_service
+        - action: drop
+          regex: "false"
+          source_labels:
+          - __meta_kubernetes_service_annotation_prometheus_io_scrape
+        - action: drop
+          regex: .*-noscrape
+          source_labels:
+          - __meta_kubernetes_pod_container_port_name
+        - action: replace
+          regex: ^(https?)$
+          replacement: $1
+          source_labels:
+          - __meta_kubernetes_service_annotation_prometheus_io_scheme
+          target_label: __scheme__
+        - action: replace
+          regex: ^(.+)$
+          replacement: $1
+          source_labels:
+          - __meta_kubernetes_service_annotation_prometheus_io_path
+          target_label: __metrics_path__
+        - action: replace
+          regex: ^(.+)(?::\d+);(\d+)$
+          replacement: $1:$2
+          source_labels:
+          - __address__
+          - __meta_kubernetes_service_annotation_prometheus_io_port
+          target_label: __address__
+        - action: labelmap
+          regex: ^__meta_kubernetes_service_label_(.+)$
+          replacement: $1
+        - separator: /
+          source_labels:
+          - __meta_kubernetes_namespace
+          - __meta_kubernetes_service_name
+          target_label: job
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - action: keep
+          regex: "true"
+          source_labels:
+          - __meta_kubernetes_pod_annotation_prometheus_io_scrape
+        - separator: /
+          source_labels:
+          - __meta_kubernetes_namespace
+          - __meta_kubernetes_pod_label_name
+          target_label: job
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        job_name: kubernetes-nodes
+        kubernetes_sd_configs:
+        - role: node
+        relabel_configs:
+        - replacement: https
+          target_label: __scheme__
+        - source_labels:
+          - __meta_kubernetes_node_label_kubernetes_io_hostname
+          target_label: instance
+        tls_config:
+          insecure_skip_verify: true
+      - job_name: weave
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - action: keep
+          regex: ^kube-system;weave-net$
+          source_labels:
+          - __meta_kubernetes_namespace
+          - __meta_kubernetes_pod_label_name
+        - action: replace
+          regex: ^weave;(.+?)(?::\d+)?$
+          replacement: $1:6782
+          source_labels:
+          - __meta_kubernetes_pod_container_name
+          - __address__
+          target_label: __address__
+        - action: replace
+          regex: ^weave-npc;(.+?)(?::\d+)?$
+          replacement: $1:6781
+          source_labels:
+          - __meta_kubernetes_pod_container_name
+          - __address__
+          target_label: __address__
+        - action: replace
+          source_labels:
+          - __meta_kubernetes_pod_container_name
+          target_label: job
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-cortex
+      name: weave-cortex-agent-config
+      weave-cloud-component: cortex
+      weave-cortex-component: agent-config
+    name: weave-cortex-agent-config
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "weavecloud"
+#	SourceDir: "modules/weavecloud"
+#	manifestPath: ".examples/modules/weavecloud/cortext.hcl"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
+    name: weave-cortex-agent
+    namespace: kube-system
+  spec:
+    ports:
+    - name: agent
+      port: 80
+      targetPort: agent
+    selector:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
+    name: weave-cortex-agent
+    namespace: kube-system
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: weave-cortex
+        name: weave-cortex-agent
+        weave-cloud-component: cortex
+        weave-cortex-component: agent
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: weave-cortex
+          name: weave-cortex-agent
+          weave-cloud-component: cortex
+          weave-cortex-component: agent
+      spec:
+        containers:
+        - args:
+          - -config.file=/etc/prometheus/prometheus.yml
+          - -web.listen-address=:80
+          image: prom/prometheus:v1.3.1
+          name: agent
+          ports:
+          - containerPort: 80
+            name: agent
+            protocol: TCP
+          resources: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-cortex
+      name: weave-cortex-node-exporter
+      weave-cloud-component: cortex
+      weave-cortex-component: node-exporter
+    name: weave-cortex-node-exporter
+    namespace: kube-system
+  spec:
+    selector:
+      matchLabels:
+        app: weave-cortex
+        name: weave-cortex-node-exporter
+        weave-cloud-component: cortex
+        weave-cortex-component: node-exporter
+    template:
+      metadata:
+        annotations:
+          prometheus.io.scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: weave-cortex
+          name: weave-cortex-node-exporter
+          weave-cloud-component: cortex
+          weave-cortex-component: node-exporter
+      spec:
+        containers:
+        - image: prom/node-exporter:0.12.0
+          name: agent
+          ports:
+          - containerPort: 9100
+            name: agent
+            protocol: TCP
+          resources: {}
+          securityContext: {}
+  status:
+    currentNumberScheduled: 0
+    desiredNumberScheduled: 0
+    numberMisscheduled: 0
+    numberReady: 0
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "weavecloud"
+#	SourceDir: "modules/weavecloud"
+#	manifestPath: ".examples/modules/weavecloud/flux.hcl"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
+    name: weave-flux-agent
+    namespace: kube-system
+  spec:
+    selector:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
+    name: weave-flux-agent
+    namespace: kube-system
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: weave-flux
+        name: weave-flux-agent
+        weave-cloud-component: flux
+        weave-flux-component: agent
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: weave-flux
+          name: weave-flux-agent
+          weave-cloud-component: flux
+          weave-flux-component: agent
+      spec:
+        containers:
+        - args:
+          - --token=bazbarfoo
+          image: quay.io/weaveworks/fluxd:0.1.0
+          name: agent
+          resources: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "weavecloud"
+#	SourceDir: "modules/weavecloud"
+#	manifestPath: ".examples/modules/weavecloud/scope.hcl"
+#
+
+apiVersion: v1
+items:
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: weave-scope
+      name: weave-scope-agent
+      weave-cloud-component: scop
+      weave-scope-component: agent
+    name: weave-scope-agent
+    namespace: kube-system
+  spec:
+    selector:
+      matchLabels:
+        app: weave-scope
+        name: weave-scope-agent
+        weave-cloud-component: scop
+        weave-scope-component: agent
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: weave-scope
+          name: weave-scope-agent
+          weave-cloud-component: scop
+          weave-scope-component: agent
+      spec:
+        containers:
+        - args:
+          - --no-app
+          - --probe.docker.bridge=docker0
+          - --probe.docker=true
+          - --probe.kubernetes=true
+          - --service-token=bazbarfoo
+          image: weaveworks/scope:latest
+          name: agent
+          resources: {}
+          securityContext: {}
+          volumeMounts:
+          - mountPath: /var/run/scope/plugins
+            name: scope-plugins
+        volumes:
+        - hostPath:
+            path: /var/run/docker.sock
+          name: docker-socket
+        - hostPath:
+            path: /var/run/scope/plugins
+          name: scope-plugins
+  status:
+    currentNumberScheduled: 0
+    desiredNumberScheduled: 0
+    numberMisscheduled: 0
+    numberReady: 0
+kind: List
+metadata: {}
+
+
+---
+#
+# Generated from module
+#	Name: "testSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/cart.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    creationTimestamp: null
+    labels:
+      name: cart
+    name: cart
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: cart
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart-db
+    name: cart-db
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: cart-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart
+    name: cart
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: cart
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: cart
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/cart:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: cart
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart-db
+    name: cart-db
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: cart-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: cart-db
+      spec:
+        containers:
+        - image: mongo
+          name: cart-db
+          ports:
+          - containerPort: 27017
+            name: mongo
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "testSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/catalogue.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue
+    name: catalogue
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: catalogue
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue-db
+    name: catalogue-db
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+    selector:
+      name: catalogue-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue
+    name: catalogue
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: catalogue
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: catalogue
+      spec:
+        containers:
+        - env:
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: docker.io/weaveworksdemos/catalogue:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: catalogue
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue-db
+    name: catalogue-db
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: catalogue-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: catalogue-db
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_DATABASE
+            value: socksdb
+          - name: MYSQL_ROOT_PASSWORD
+            value: fake_password
+          image: docker.io/weaveworksdemos/catalogue-db:0.3.0
+          name: catalogue-db
+          ports:
+          - containerPort: 3306
+            name: mysql
+          resources: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "testSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/front-end.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: front-end
+    name: front-end
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - nodePort: 30001
+      port: 80
+      targetPort: http
+    selector:
+      name: front-end
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: front-end
+    name: front-end
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: front-end
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: front-end
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/front-end:0.3.1
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: front-end
+          ports:
+          - containerPort: 8079
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          securityContext: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "testSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/orders.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    creationTimestamp: null
+    labels:
+      name: orders
+    name: orders
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: orders
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders-db
+    name: orders-db
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: orders-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders
+    name: orders
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: orders
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: orders
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/orders:0.4.2
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: orders
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders-db
+    name: orders-db
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: orders-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: orders-db
+      spec:
+        containers:
+        - image: mongo
+          name: orders-db
+          ports:
+          - containerPort: 27017
+            name: mongo
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "testSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/payment.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: payment
+    name: payment
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: payment
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: payment
+    name: payment
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: payment
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: payment
+      spec:
+        containers:
+        - env:
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: docker.io/weaveworksdemos/payment:0.4.1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: payment
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "testSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/rabbitmq.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: rabbitmq
+    name: rabbitmq
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: rabbitmq
+      port: 5672
+      targetPort: rabbitmq
+    selector:
+      name: rabbitmq
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    creationTimestamp: null
+    labels:
+      name: queue-master
+    name: queue-master
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: queue-master
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: rabbitmq
+    name: rabbitmq
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: rabbitmq
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: rabbitmq
+      spec:
+        containers:
+        - image: rabbitmq:3
+          name: rabbitmq
+          ports:
+          - containerPort: 5672
+            name: rabbitmq
+          resources: {}
+          securityContext: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: queue-master
+    name: queue-master
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: queue-master
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: queue-master
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/queue-master:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: queue-master
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "testSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/shipping.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    creationTimestamp: null
+    labels:
+      name: shipping
+    name: shipping
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: shipping
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: shipping
+    name: shipping
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: shipping
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: shipping
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/shipping:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: shipping
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "testSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/user.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user
+    name: user
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: user
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user-db
+    name: user-db
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: user-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user
+    name: user
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: user
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: user
+      spec:
+        containers:
+        - env:
+          - name: MONGO_HOST
+            value: user-db:27017
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: docker.io/weaveworksdemos/user:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: user
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user-db
+    name: user-db
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: user-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: user-db
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/user-db:0.3.0
+          name: user-db
+          ports:
+          - containerPort: 27017
+            name: mongo
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "testSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/zipkin.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin
+    name: zipkin
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: zipkin
+      nodePort: 30002
+      port: 9411
+      targetPort: zipkin
+    selector:
+      name: zipkin
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin-mysql
+    name: zipkin-mysql
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+    selector:
+      name: zipkin-mysql
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin
+    name: zipkin
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: zipkin
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: zipkin
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_HOST
+            value: zipkin-mysql
+          - name: STORAGE_TYPE
+            value: mysql
+          image: openzipkin/zipkin
+          name: zipkin
+          ports:
+          - containerPort: 9411
+            name: zipkin
+          resources: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin-mysql
+    name: zipkin-mysql
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: zipkin-mysql
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: zipkin-mysql
+      spec:
+        containers:
+        - image: openzipkin/zipkin-mysql:1.20.0
+          name: zipkin-mysql
+          ports:
+          - containerPort: 3306
+            name: mysql
+          resources: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin-cron
+    name: zipkin-cron
+    namespace: sock-shop-test
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: zipkin-cron
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: zipkin-cron
+      spec:
+        containers:
+        - args:
+          - -f
+          command:
+          - crond
+          env:
+          - name: MYSQL_HOST
+            value: zipkin-mysql
+          - name: MYSQL_PASS
+            value: zipkin
+          - name: MYSQL_USER
+            value: zipkin
+          - name: STORAGE_TYPE
+            value: mysql
+          image: openzipkin/zipkin-dependencies:1.4.0
+          name: zipkin-cron
+          resources: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "prodSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/cart.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    creationTimestamp: null
+    labels:
+      name: cart
+    name: cart
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: cart
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart-db
+    name: cart-db
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: cart-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart
+    name: cart
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: cart
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: cart
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/cart:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: cart
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: cart-db
+    name: cart-db
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: cart-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: cart-db
+      spec:
+        containers:
+        - image: mongo
+          name: cart-db
+          ports:
+          - containerPort: 27017
+            name: mongo
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "prodSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/catalogue.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue
+    name: catalogue
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: catalogue
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue-db
+    name: catalogue-db
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+    selector:
+      name: catalogue-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue
+    name: catalogue
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: catalogue
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: catalogue
+      spec:
+        containers:
+        - env:
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: docker.io/weaveworksdemos/catalogue:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: catalogue
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: catalogue-db
+    name: catalogue-db
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: catalogue-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: catalogue-db
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_DATABASE
+            value: socksdb
+          - name: MYSQL_ROOT_PASSWORD
+            value: fake_password
+          image: docker.io/weaveworksdemos/catalogue-db:0.3.0
+          name: catalogue-db
+          ports:
+          - containerPort: 3306
+            name: mysql
+          resources: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "prodSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/front-end.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: front-end
+    name: front-end
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - nodePort: 30001
+      port: 80
+      targetPort: http
+    selector:
+      name: front-end
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: front-end
+    name: front-end
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: front-end
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: front-end
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/front-end:0.3.1
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: front-end
+          ports:
+          - containerPort: 8079
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          securityContext: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "prodSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/orders.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    creationTimestamp: null
+    labels:
+      name: orders
+    name: orders
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: orders
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders-db
+    name: orders-db
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: orders-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders
+    name: orders
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: orders
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: orders
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/orders:0.4.2
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: orders
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: orders-db
+    name: orders-db
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: orders-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: orders-db
+      spec:
+        containers:
+        - image: mongo
+          name: orders-db
+          ports:
+          - containerPort: 27017
+            name: mongo
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "prodSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/payment.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: payment
+    name: payment
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: payment
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: payment
+    name: payment
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: payment
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: payment
+      spec:
+        containers:
+        - env:
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: docker.io/weaveworksdemos/payment:0.4.1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: payment
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "prodSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/rabbitmq.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: rabbitmq
+    name: rabbitmq
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: rabbitmq
+      port: 5672
+      targetPort: rabbitmq
+    selector:
+      name: rabbitmq
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    creationTimestamp: null
+    labels:
+      name: queue-master
+    name: queue-master
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: queue-master
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: rabbitmq
+    name: rabbitmq
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: rabbitmq
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: rabbitmq
+      spec:
+        containers:
+        - image: rabbitmq:3
+          name: rabbitmq
+          ports:
+          - containerPort: 5672
+            name: rabbitmq
+          resources: {}
+          securityContext: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: queue-master
+    name: queue-master
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: queue-master
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: queue-master
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/queue-master:0.3.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: queue-master
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "prodSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/shipping.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    creationTimestamp: null
+    labels:
+      name: shipping
+    name: shipping
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: shipping
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: shipping
+    name: shipping
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: shipping
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: shipping
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/shipping:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: shipping
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "prodSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/user.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user
+    name: user
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: user
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user-db
+    name: user-db
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: user-db
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user
+    name: user
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: user
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: user
+      spec:
+        containers:
+        - env:
+          - name: MONGO_HOST
+            value: user-db:27017
+          - name: ZIPKIN
+            value: http://zipkin:9411/api/v1/spans
+          image: docker.io/weaveworksdemos/user:0.4.0
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 3
+          name: user
+          ports:
+          - containerPort: 80
+            name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          resources: {}
+          securityContext: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: user-db
+    name: user-db
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: user-db
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: user-db
+      spec:
+        containers:
+        - image: docker.io/weaveworksdemos/user-db:0.3.0
+          name: user-db
+          ports:
+          - containerPort: 27017
+            name: mongo
+          resources: {}
+          securityContext: {}
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+  status: {}
+kind: List
+metadata: {}
+
+---
+#
+# Generated from module
+#	Name: "prodSockShop"
+#	SourceDir: "modules/sockshop"
+#	manifestPath: ".examples/modules/sockshop/zipkin.yml"
+#
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin
+    name: zipkin
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: zipkin
+      nodePort: 30002
+      port: 9411
+      targetPort: zipkin
+    selector:
+      name: zipkin
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin-mysql
+    name: zipkin-mysql
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+    selector:
+      name: zipkin-mysql
+  status:
+    loadBalancer: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin
+    name: zipkin
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: zipkin
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: zipkin
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_HOST
+            value: zipkin-mysql
+          - name: STORAGE_TYPE
+            value: mysql
+          image: openzipkin/zipkin
+          name: zipkin
+          ports:
+          - containerPort: 9411
+            name: zipkin
+          resources: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin-mysql
+    name: zipkin-mysql
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: zipkin-mysql
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: zipkin-mysql
+      spec:
+        containers:
+        - image: openzipkin/zipkin-mysql:1.20.0
+          name: zipkin-mysql
+          ports:
+          - containerPort: 3306
+            name: mysql
+          resources: {}
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: zipkin-cron
+    name: zipkin-cron
+    namespace: sock-shop-prod
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: zipkin-cron
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: zipkin-cron
+      spec:
+        containers:
+        - args:
+          - -f
+          command:
+          - crond
+          env:
+          - name: MYSQL_HOST
+            value: zipkin-mysql
+          - name: MYSQL_PASS
+            value: zipkin
+          - name: MYSQL_USER
+            value: zipkin
+          - name: STORAGE_TYPE
+            value: mysql
+          image: openzipkin/zipkin-dependencies:1.4.0
+          name: zipkin-cron
+          resources: {}
+  status: {}
+kind: List
+metadata: {}
+

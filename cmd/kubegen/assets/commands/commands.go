@@ -8,6 +8,9 @@ import (
 
 var Commands map[string][]string
 
+// TODO `--output=json`
+// TODO `--stdout=false`
+// TODO `bundle -m`
 func init() {
 	Commands = make(map[string][]string)
 	commands := [][]string{
@@ -15,6 +18,9 @@ func init() {
 		{"module", "-s", ".examples/modules/sockshop", "-v", "image_registry=gcr.io/sockshop"},
 		{"module", "-s", ".examples/modules/sockshop", "-v", "image_registry=quay.io/sockshop"},
 		{"module", "-s", ".examples/modules/weavecloud", "-v", "service_token=abc123"},
+		{"bundle", "--stdout", ".examples/sockshop-prod.yml"},
+		{"bundle", "--stdout", ".examples/weavecloud.yml"},
+		{"bundle", "--stdout", ".examples/weavecloud.yml", ".examples/sockshop-prod.yml"},
 	}
 
 	for _, command := range commands {
