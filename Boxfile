@@ -30,10 +30,11 @@ run make_test_cmds
 run "apk del #{build_deps_core}"
 
 run "mv /go/bin/kubegen /usr/bin"
+run "mv #{path}/examples /"
 run "rm -rf /go /usr/local"
 
 set_exec entrypoint: [ "kubegen" ], cmd: []
 
 flatten
 
-tag "kubegen"
+tag "errordeveloper/kubegen"

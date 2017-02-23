@@ -21,6 +21,7 @@ image: Boxfile
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -w $(PWD) \
 	    erikh/box:master Boxfile --debug
+	@docker push errordeveloper/kubegen
 
 test-cmds:
 	@for cmd in kubegen ; do cd cmd/$${cmd} ; \
