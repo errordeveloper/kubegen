@@ -7,12 +7,12 @@ import (
 
 	"github.com/errordeveloper/testcli"
 
-	"github.com/errordeveloper/kubegen/cmd/kubegen-test-module/assets/commands"
+	"github.com/errordeveloper/kubegen/cmd/kubegen/assets/commands"
 )
 
 func main() {
 	for filename, command := range commands.Commands {
-		c := testcli.GoRun("../main.go", command...)
+		c := testcli.GoRun("../main.go", append([]string{"../bundle.go", "../module.go"}, command...)...)
 		c.Run()
 		if !c.Success() {
 			fmt.Fprintf(os.Stderr, "Command %v was expected to succeed, but failed with error: %s\n%s\n", command, c.Error(), c.StdoutAndStderr())

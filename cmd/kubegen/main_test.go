@@ -11,10 +11,10 @@ import (
 	"github.com/errordeveloper/kubegen/cmd/kubegen-test-module/assets/commands"
 )
 
-func TestKubegenModule(t *testing.T) {
+func TestKubegenCmd(t *testing.T) {
 	assert := assert.New(t)
 	for filename, command := range commands.Commands {
-		c := testcli.GoRunMain(command...)
+		c := testcli.GoRunMain(append([]string{"bundle.go", "module.go"}, command...)...)
 		c.Run()
 		if !c.Success() {
 			t.Fatalf("Command %v was expected to succeed, but failed with error: %s\n%s\n", c.Error(), c.StdoutAndStderr())

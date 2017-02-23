@@ -1,4 +1,4 @@
-package main // import "github.com/errordeveloper/kubegen/cmd/kubegen-test-module"
+package main // import "github.com/errordeveloper/kubegen/cmd/kubegen"
 
 import (
 	"fmt"
@@ -15,8 +15,6 @@ import (
 )
 
 var (
-	stdout    bool
-	format    string
 	module    modules.ModuleInstance
 	variables []string
 )
@@ -26,39 +24,37 @@ const (
 	defaultOutputDir = "./<name>"
 )
 
-func main() {
-	var rootCmd = &cobra.Command{
-		Use:  "kubegen-test-module",
-		RunE: command,
-	}
-
-	rootCmd.Flags().BoolVarP(&stdout, "stdout", "s", false,
-		"Output to stdout instead of creating files")
-	rootCmd.Flags().StringVarP(&format, "output", "o", "yaml",
-		"Output format [\"yaml\" or \"json\"]")
-
-	rootCmd.Flags().StringVarP(&module.SourceDir, "source-dir", "D", "",
-		"Module source directory (must be specified, if it is same as current working directory `--stdout` will be set)")
-	rootCmd.Flags().StringVarP(&module.OutputDir, "output-dir", "O", defaultOutputDir,
-		"Output directory")
-
-	rootCmd.Flags().StringVarP(&module.Name, "name", "n", defaultName,
-		"Name of the module instance (optional)")
-	rootCmd.Flags().StringVarP(&module.Namespace, "namespace", "N", "",
-		"Namespace of the module instance (optional)")
-
-	rootCmd.Flags().StringSliceVarP(&variables, "variables", "v", []string{},
-		"Variables to set for the module instance")
-
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
-	}
+var moduleCmd = &cobra.Command{
+	Use:   "module <moduleSourceDir>",
+	Short: "Generate single module as specified with flags",
+	RunE:  moduleFn,
 }
 
-func command(cmd *cobra.Command, args []string) error {
-	if module.SourceDir == "" {
+func init() {
+	//moduleCmd.Flags().StringVarP(&module.SourceDir, "source-dir", "D", "",
+	//	"Module source directory (must be specified, if it is same as current working directory `--stdout` will be set)")
+	moduleCmd.Flags().StringVarP(&module.OutputDir, "output-dir", "O", defaultOutputDir,
+		"Output directory")
+
+	moduleCmd.Flags().StringVarP(&module.Name, "name", "n", defaultName,
+		"Name of the module instance (optional)")
+	moduleCmd.Flags().StringVarP(&module.Namespace, "namespace", "N", "",
+		"Namespace of the module instance (optional)")
+
+	moduleCmd.Flags().StringSliceVarP(&variables, "variables", "v", []string{},
+		"Variables to set for the module instance")
+}
+
+func moduleFn(cmd *cobra.Command, args []string) error {
+	//if module.SourceDir == "" {
+	if len(args) == 0 {
 		return fmt.Errorf("please provide module source directory")
 	}
+	if len(args) > 1 {
+		return fmt.Errorf("only one module source directory needed")
+	}
+
+	module.SourceDir = args[0]
 
 	if module.Name == defaultName {
 		sourceDirAbsPath, err := filepath.Abs(module.SourceDir)

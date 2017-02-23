@@ -1,0 +1,39 @@
+from "golang:1.8.0-alpine"
+
+import_path = "github.com/errordeveloper/kubegen"
+path = "/go/src/#{import_path}"
+
+
+run "apk update"
+
+build_deps_core = "make gcc"
+
+build_deps_misc = "libc-dev dev86 pcre-dev"
+
+runtime_deps = "pcre"
+
+make_test_cmds = "make -C #{path} test-cmds"
+
+run "apk add #{build_deps_core} #{build_deps_misc}"
+
+copy ".", path
+
+run "go install -v #{import_path}/cmd/kubegen"
+
+run make_test_cmds
+
+run "apk del #{build_deps_misc}"
+run "apk add #{runtime_deps}"
+
+run make_test_cmds
+
+run "apk del #{build_deps_core}"
+
+run "mv /go/bin/kubegen /usr/bin"
+run "rm -rf /go /usr/local"
+
+set_exec entrypoint: [ "kubegen" ], cmd: []
+
+flatten
+
+tag "kubegen"
