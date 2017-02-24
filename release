@@ -1,0 +1,87 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+## To be sure, this won't work in your fork :)
+## Surelly it's secure already, but we want to avoid any silly
+## errors in your fork's build output.
+test "${TRAVIS_REPO_SLUG}" = 'errordeveloper/kubegen' || exit 1
+
+## # This is the shape of unencrypted `/tmp/relase-secrets.sh`
+##
+## cat > '/tmp/equinox.key' << EOF
+## -----BEGIN ECDSA PRIVATE KEY-----
+## <...>
+## -----END ECDSA PRIVATE KEY-----
+## EOF
+## readonly app='...'
+## readonly token='...'
+## 
+## # To update, edit local copy of `release-secrets.sh` and run
+## travis encrypt-file -r errordeveloper/kubegen do-relase-binaries
+## cat do-relase-binaries.enc | base64 -b 64
+## # Next, copy the output down below and update `.travis.yml`
+
+openssl base64 -d << EOF \
+  | openssl aes-256-cbc -d -K "${1}" -iv "${2}" \
+    -out 'release-secrets.sh'
+Ys8P0VfCixh2n2bmEg8EMmnik07BQCP8VBgBDFX7Js4K8TwFxo7gHYpBmGuJBLp9
+5ywYJvF2Ghxwl6UzPt15Si3wBLe1muNv/XpEfXDy/iZLZSSJMbOus0kihMnj6AET
+NeQ0s0GTDgP3gZF0CaX1inqb0rtto2OFJRAkMj577lz00n5oike6n33ksA2z4Bib
+bzO2eK35k3gG8yE6+1t4jrb7cAWh7RlbX4Q4Q1WBY2jfTHk9TSZdP2DikZlF2mLa
+2RfrA4hgLDrlaxqMWUavwBTurWpbf9BWPw9nhn904QZ+Vq8cdgorQPT26iYP0BCp
+AAIMAvStWGmIcRSbsmbRnffSElAk3ZQDaiLfwWH9hksX/DfBAJZDRDPgsMPj1dO+
+hfJ8ZE9L1J6Ff4+1fuLG6EIwoJPkyq8j2FEChjTmvhXTAQnKAptT5JYpwnNWDpX9
+b4mwwPLqmJyZbegjnZUbOyb9X6Ix1f0palqmqRLRImjoqUq+vN7g+hPoRZgMitOK
+FAp4f4Zr/502glUcICJiUEIbCRhOWa6JV5jkfv5zAleL7KLFBvFPtbWvCcuaRjdP
+pB28BTHaazh7Pdr9Ys9vNNVfdBmkbAwD6psXAahQbqQHgwUkDNKDFfFeNXKt0QyO
+IL32Y4yE9v+YvHDUFDmc7pNfORV+FXtXgMtRji2Ygshl2s3mP8eY5yKRnzbv5T5T
++0qpoGEEL3coPRSMZquQtF4Ih953XqYL5jRJzqg/mJKjw2gyxEmNoyG1EA+1bQ/i
+7UdvQ+k2XT+MkhiTtvGOzMKcBXw6TXL1W0aKodUp9ESppUAt41pNtIfZMactMgzH
+mORXWXNLq4z1OxNh9eTvlpw9FXpWSESsnLY+f17+MK4QkANpEw0CR4ALbUyBs2FQ
+Rs0xsIJeRN3iZ8JN5bXVVVZhBCMAVQUS6VKhO2xPiS/jWlo6DOtCV0HDpOn+GF0q
+hSnpL+A6ovht5n98KJ6VfwBfQfqzxY+aA8kIuIxXehYQqYKrNCywUt7sol/H2quu
+DqUdzqwaR9ljdyxOf34b1GatvA+Q/hDTi9uR3KQ76RBR1IHgvKpu/mgac7flJ416
+Dwk16pSQ/v+Aniye6S3jW6hhSjVS3mzwisR0vlN5KhUrR95yHx6nNopFuAnIEv6E
+li7Cm4cGwsanuudjMC+xLGTdpzK4REZR/HBWlQm43Yo/fMPz7b7nEBzvzt4xUV5n
+TvTMgPFQAk7emdqjVMWmQPfQbn0ZJf0UyCkK39oa8n9YvwtEBVTGc/hIOW5F3zov
++TPOwAUgTpPSO8Fj3ZqKWiXAwR6C3b7I1x5bntpsxqrkXavmnXDqC/Yy3fKCOdXE
+RTT28IeXgtNmoRKVsuREc2fa5r8NW04AGkcPOghmnXUfQQIvQZgtDYaN8MiMXVX2
+M886zs1dzFpZHWn2j54J2JVgH3F8zmur7KE+XwcOhHqVjGhv925doodLdf/7Rlm6
+46O6ugTjJq5xXEFvHol5xg==
+EOF
+
+source '/tmp/release-secrets.sh'
+
+version="${TRAVIS_BRANCH}-${TRAVIS_COMMIT}"
+channel='latest'
+
+if [ -n "${TRAVIS_TAG}" ]; then
+  ## Travis will run separate build for commit and tag pushes,
+  version="${TRAVIS_TAG}"
+  channel='stable'
+fi
+
+export CGO_ENABLED=1
+
+case "${TRAVIS_OS_NAME}" in
+  osx)
+    readonly platform='darwin_amd64'
+    ;;
+  linux)
+    readonly platform='linux_amd64'
+    ;;
+esac
+
+equinox release \
+  --platforms="${platform}" \
+  --app="${app}" \
+  --token="${token}" \
+  --signing-key='/tmp/equinox.key' \
+  --channel="${channel}" \
+  --version="${version}" \
+    'github.com/errordeveloper/kubegen/cmd/kubegen'
+
+rm -f '/tmp/equinox.key' '/tmp/release-secrets.sh'

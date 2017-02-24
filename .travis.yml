@@ -9,10 +9,22 @@ dist: trusty
 go:
   - 1.8
 
-addons: { apt: { packages: [ "pkg-config", "libpcre++0", "libpcre++-dev" ] } }
+addons:
+  apt:
+    packages:
+    - pkg-config
+    - libpcre++0
+    - libpcre++-dev
 
 install:
-- go get github.com/Masterminds/glide
-- glide up --strip-vendor
+  - go get github.com/Masterminds/glide
+  - glide up --strip-vendor
 
 script: make test
+
+deploy:
+  provider: script
+  script: release $encrypted_a38a02e186b4_key $encrypted_a38a02e186b4_iv
+  on:
+    # `tags: true` seems to imply that only tagged commits are allowed?
+    all_branches: true
