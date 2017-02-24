@@ -23,6 +23,7 @@ func main() {
 
 	rootCmd.AddCommand(bundleCmd)
 	rootCmd.AddCommand(moduleCmd)
+	rootCmd.AddCommand(updateCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

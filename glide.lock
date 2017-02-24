@@ -1,5 +1,5 @@
-hash: e028f4c3f48f6e66b5e04b61803b81078ce0c9baa1d4e38bad3c14592725f3bc
-updated: 2017-02-24T10:52:27.004985357Z
+hash: 8802a5d882ecb2d08ca87ff84832b897fcd25420bb3644a5e1431cef0186f179
+updated: 2017-02-24T14:06:39.52655332Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -30,6 +30,8 @@ imports:
   subpackages:
   - log
   - swagger
+- name: github.com/equinox-io/equinox
+  version: 6f97d0d3970881d3e53dd6f547a41109eb055e54
 - name: github.com/errordeveloper/testcli
   version: c3cf1050baf4b6f38358757401d041e83a758c8a
 - name: github.com/fatih/color

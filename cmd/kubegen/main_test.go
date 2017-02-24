@@ -14,7 +14,7 @@ import (
 func TestKubegenCmd(t *testing.T) {
 	assert := assert.New(t)
 	for filename, command := range commands.Commands {
-		c := testcli.GoRunMain(append([]string{"bundle.go", "module.go"}, command...)...)
+		c := testcli.GoRunMain(append([]string{"bundle.go", "module.go", "update.go"}, command...)...)
 		c.Run()
 		if !c.Success() {
 			t.Fatalf("Command %v was expected to succeed, but failed with error: %s\n%s\n", c.Error(), c.StdoutAndStderr())

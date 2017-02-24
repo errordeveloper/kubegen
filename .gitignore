@@ -2,7 +2,6 @@
 release-secrets.sh
 equinox.key
 equinox.pub
-kubegen
 kubegen-experiment-appgen
 kubegen-experiment-stack
 vendor/
