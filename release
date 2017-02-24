@@ -44,7 +44,7 @@ EOF
 
 source "${secrets}"
 
-version="${TRAVIS_BRANCH}-${TRAVIS_COMMIT}"
+version="${TRAVIS_BRANCH}-${TRAVIS_COMMIT:8}"
 channel='latest'
 
 if [ -n "${TRAVIS_TAG}" ]; then
@@ -53,15 +53,14 @@ if [ -n "${TRAVIS_TAG}" ]; then
   channel='stable'
 fi
 
-export CGO_ENABLED=1
+export CGO_ENABLED=0
 
 case "${TRAVIS_OS_NAME}" in
   osx)
-    readonly platform='darwin_amd64'
-    readonly equinox='https://bin.equinox.io/c/mBWdkfai63v/release-tool-stable-darwin-amd64.tgz'
+    exit 0
     ;;
   linux)
-    readonly platform='linux_amd64'
+    readonly platforms='linux_amd64 darwin_amd64'
     readonly equinox='https://bin.equinox.io/c/mBWdkfai63v/release-tool-stable-linux-amd64.tgz'
     ;;
 esac
@@ -69,7 +68,7 @@ esac
 curl --silent --location "${equinox}" | tar -vzx
 
 ./equinox release \
-  --platforms="${platform}" \
+  --platforms="${platforms}" \
   --app="${app}" \
   --token="${token}" \
   --signing-key="${signing_key}" \

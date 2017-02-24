@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/pkg/api"
@@ -15,8 +14,6 @@ import (
 	_ "k8s.io/client-go/pkg/apis/extensions/install"
 	extensionsv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
-	"github.com/d4l3k/go-highlight"
-	"github.com/docker/docker/pkg/term"
 	"github.com/hashicorp/hcl"
 )
 
@@ -130,26 +127,6 @@ func DumpListToFiles(list *api.List, contentType string) ([]string, error) {
 	}
 
 	return filenames, nil
-}
-
-func Dump(outputFormat string, data []byte) error {
-	var (
-		output string
-	)
-
-	if term.IsTerminal(0) {
-		veryPretty, err := highlight.Term(outputFormat, data)
-		if err != nil {
-			return fmt.Errorf("kubegen/util: error colorizing the output for %q – %v", outputFormat, err)
-		}
-		output = string(veryPretty)
-	} else {
-		output = string(data)
-	}
-
-	fmt.Println(output)
-
-	return nil
 }
 
 func NewFromHCL(obj interface{}, data []byte) error {
