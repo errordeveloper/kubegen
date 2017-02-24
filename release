@@ -58,13 +58,17 @@ export CGO_ENABLED=1
 case "${TRAVIS_OS_NAME}" in
   osx)
     readonly platform='darwin_amd64'
+    readonly equinox='https://bin.equinox.io/c/mBWdkfai63v/release-tool-stable-darwin-amd64.tgz'
     ;;
   linux)
     readonly platform='linux_amd64'
+    readonly equinox='https://bin.equinox.io/c/mBWdkfai63v/release-tool-stable-linux-amd64.tgz'
     ;;
 esac
 
-equinox release \
+curl --silent --location "${equinox}" | tar -vzx
+
+./equinox release \
   --platforms="${platform}" \
   --app="${app}" \
   --token="${token}" \
