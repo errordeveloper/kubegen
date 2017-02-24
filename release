@@ -9,7 +9,9 @@ set -o nounset
 ## errors in your fork's build output.
 test "${TRAVIS_REPO_SLUG}" = 'errordeveloper/kubegen' || exit 1
 
-## # This is the shape of unencrypted `/tmp/relase-secrets.sh`
+## # This is the shape of unencrypted `/tmp/release-secrets.sh`
+##
+## readonly signing_key='/tmp/equinox.key'
 ##
 ## cat > '/tmp/equinox.key' << EOF
 ## -----BEGIN ECDSA PRIVATE KEY-----
@@ -20,40 +22,27 @@ test "${TRAVIS_REPO_SLUG}" = 'errordeveloper/kubegen' || exit 1
 ## readonly token='...'
 ##
 ## # To update, edit local copy of `release-secrets.sh` and run
-## travis encrypt-file -r errordeveloper/kubegen do-relase-binaries
-## cat do-relase-binaries.enc | base64 -b 64
+## travis encrypt-file -r errordeveloper/kubegen release-secrets.sh
+## cat release-secrets.sh.enc | base64 -b 64
 ## # Next, copy the output down below and update `.travis.yml`
 
+readonly secrets='/tmp/release-secrets.sh'
 openssl base64 -d << EOF \
   | openssl aes-256-cbc -d -K "${1}" -iv "${2}" \
-    -out 'release-secrets.sh'
-Ys8P0VfCixh2n2bmEg8EMmnik07BQCP8VBgBDFX7Js4K8TwFxo7gHYpBmGuJBLp9
-5ywYJvF2Ghxwl6UzPt15Si3wBLe1muNv/XpEfXDy/iZLZSSJMbOus0kihMnj6AET
-NeQ0s0GTDgP3gZF0CaX1inqb0rtto2OFJRAkMj577lz00n5oike6n33ksA2z4Bib
-bzO2eK35k3gG8yE6+1t4jrb7cAWh7RlbX4Q4Q1WBY2jfTHk9TSZdP2DikZlF2mLa
-2RfrA4hgLDrlaxqMWUavwBTurWpbf9BWPw9nhn904QZ+Vq8cdgorQPT26iYP0BCp
-AAIMAvStWGmIcRSbsmbRnffSElAk3ZQDaiLfwWH9hksX/DfBAJZDRDPgsMPj1dO+
-hfJ8ZE9L1J6Ff4+1fuLG6EIwoJPkyq8j2FEChjTmvhXTAQnKAptT5JYpwnNWDpX9
-b4mwwPLqmJyZbegjnZUbOyb9X6Ix1f0palqmqRLRImjoqUq+vN7g+hPoRZgMitOK
-FAp4f4Zr/502glUcICJiUEIbCRhOWa6JV5jkfv5zAleL7KLFBvFPtbWvCcuaRjdP
-pB28BTHaazh7Pdr9Ys9vNNVfdBmkbAwD6psXAahQbqQHgwUkDNKDFfFeNXKt0QyO
-IL32Y4yE9v+YvHDUFDmc7pNfORV+FXtXgMtRji2Ygshl2s3mP8eY5yKRnzbv5T5T
-+0qpoGEEL3coPRSMZquQtF4Ih953XqYL5jRJzqg/mJKjw2gyxEmNoyG1EA+1bQ/i
-7UdvQ+k2XT+MkhiTtvGOzMKcBXw6TXL1W0aKodUp9ESppUAt41pNtIfZMactMgzH
-mORXWXNLq4z1OxNh9eTvlpw9FXpWSESsnLY+f17+MK4QkANpEw0CR4ALbUyBs2FQ
-Rs0xsIJeRN3iZ8JN5bXVVVZhBCMAVQUS6VKhO2xPiS/jWlo6DOtCV0HDpOn+GF0q
-hSnpL+A6ovht5n98KJ6VfwBfQfqzxY+aA8kIuIxXehYQqYKrNCywUt7sol/H2quu
-DqUdzqwaR9ljdyxOf34b1GatvA+Q/hDTi9uR3KQ76RBR1IHgvKpu/mgac7flJ416
-Dwk16pSQ/v+Aniye6S3jW6hhSjVS3mzwisR0vlN5KhUrR95yHx6nNopFuAnIEv6E
-li7Cm4cGwsanuudjMC+xLGTdpzK4REZR/HBWlQm43Yo/fMPz7b7nEBzvzt4xUV5n
-TvTMgPFQAk7emdqjVMWmQPfQbn0ZJf0UyCkK39oa8n9YvwtEBVTGc/hIOW5F3zov
-+TPOwAUgTpPSO8Fj3ZqKWiXAwR6C3b7I1x5bntpsxqrkXavmnXDqC/Yy3fKCOdXE
-RTT28IeXgtNmoRKVsuREc2fa5r8NW04AGkcPOghmnXUfQQIvQZgtDYaN8MiMXVX2
-M886zs1dzFpZHWn2j54J2JVgH3F8zmur7KE+XwcOhHqVjGhv925doodLdf/7Rlm6
-46O6ugTjJq5xXEFvHol5xg==
+    -out "${secrets}"
+30TZdtV5iQJbQ2rfAjNVbB1+WFmjlE6HkVGGyNL0EGJtvMKdk6x9yz7cBdQ7AQjM
+DdQO9sHkjbyZpL2FXGf3d0v5maBJGJffi8ZmIca6cARG7hasu0Q64HfnUgAqh5oZ
+QG19NyksXuiBWAHagfWAMsCQdtKqScK6JAfFo4+IK3jRJqHFh/pTizjHejUn93vY
+VNdh9boazLrbVW0YrAyHMYJ2sc8c0oFMTor0gWKxgRUvA7mZYph5x0GZEtnEeMVy
+kz/ehXlzUJYJGFwI4fpEAWIqjisGCJ7L14J8DTkuOxm3efCjbdUTqhdsL00SvGYe
+zu6PZn2WuBkl0Us4OOf4GGJoNWhlwey9pNkfZIm/BfjVvEqmmnzWZSKle2uF1U3Z
+uFdeoe9RpEJaXoc0cwixxezqEb4DWrZy5AmRK6xD3b6ybM1td75cYdW2Ed1+9cun
+FM+lLMxtPdLao8RZLArTUud+D5AojJhda85AD27wHMhsMbOXcKBlrUZWlGD2mYYu
+j4EmtgmPo4vZ9nwwTP3Ecvr7IugS7fptyfV7av2KwHJiAnaEZC+TuKOahc55geBG
+XuswP9BmzIZHa2OK3/+AuGKc9I8DJhGxmKxC9xkBCZXEfdHoJ9NlrPF6QpiHtpvW
 EOF
 
-source '/tmp/release-secrets.sh'
+source "${secrets}"
 
 version="${TRAVIS_BRANCH}-${TRAVIS_COMMIT}"
 channel='latest'
@@ -79,9 +68,9 @@ equinox release \
   --platforms="${platform}" \
   --app="${app}" \
   --token="${token}" \
-  --signing-key='/tmp/equinox.key' \
+  --signing-key="${signing_key}" \
   --channel="${channel}" \
   --version="${version}" \
     'github.com/errordeveloper/kubegen/cmd/kubegen'
 
-rm -f '/tmp/equinox.key' '/tmp/release-secrets.sh'
+rm -f "${secrets}" "${signing_key}"
