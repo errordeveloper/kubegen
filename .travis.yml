@@ -7,7 +7,7 @@ os:
 dist: trusty
 
 go:
-  - 1.8rc3
+  - 1.8
 
 addons: { apt: { packages: [ "pkg-config", "libpcre++0", "libpcre++-dev" ] } }
 
