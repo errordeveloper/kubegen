@@ -1,0 +1,80 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+## To be sure, this won't work in your fork :)
+## Surelly it's secure already, but we want to avoid any silly
+## errors in your fork's build output.
+test "${TRAVIS_REPO_SLUG}" = 'errordeveloper/kubegen' || exit 1
+
+## # This is the shape of unencrypted `/tmp/release-secrets.sh`
+##
+## readonly signing_key='/tmp/equinox.key'
+##
+## cat > '/tmp/equinox.key' << EOF
+## -----BEGIN ECDSA PRIVATE KEY-----
+## <...>
+## -----END ECDSA PRIVATE KEY-----
+## EOF
+## readonly app='...'
+## readonly token='...'
+##
+## # To update, edit local copy of `release-secrets.sh` and run
+## travis encrypt-file -r errordeveloper/kubegen release-secrets.sh
+## cat release-secrets.sh.enc | base64 -b 64
+## # Next, copy the output down below and update `.travis.yml`
+
+readonly secrets='/tmp/release-secrets.sh'
+openssl base64 -d << EOF \
+  | openssl aes-256-cbc -d -K "${1}" -iv "${2}" \
+    -out "${secrets}"
+30TZdtV5iQJbQ2rfAjNVbB1+WFmjlE6HkVGGyNL0EGJtvMKdk6x9yz7cBdQ7AQjM
+DdQO9sHkjbyZpL2FXGf3d0v5maBJGJffi8ZmIca6cARG7hasu0Q64HfnUgAqh5oZ
+QG19NyksXuiBWAHagfWAMsCQdtKqScK6JAfFo4+IK3jRJqHFh/pTizjHejUn93vY
+VNdh9boazLrbVW0YrAyHMYJ2sc8c0oFMTor0gWKxgRUvA7mZYph5x0GZEtnEeMVy
+kz/ehXlzUJYJGFwI4fpEAWIqjisGCJ7L14J8DTkuOxm3efCjbdUTqhdsL00SvGYe
+zu6PZn2WuBkl0Us4OOf4GGJoNWhlwey9pNkfZIm/BfjVvEqmmnzWZSKle2uF1U3Z
+uFdeoe9RpEJaXoc0cwixxezqEb4DWrZy5AmRK6xD3b6ybM1td75cYdW2Ed1+9cun
+FM+lLMxtPdLao8RZLArTUud+D5AojJhda85AD27wHMhsMbOXcKBlrUZWlGD2mYYu
+j4EmtgmPo4vZ9nwwTP3Ecvr7IugS7fptyfV7av2KwHJiAnaEZC+TuKOahc55geBG
+XuswP9BmzIZHa2OK3/+AuGKc9I8DJhGxmKxC9xkBCZXEfdHoJ9NlrPF6QpiHtpvW
+EOF
+
+source "${secrets}"
+
+version="${TRAVIS_BRANCH}-${TRAVIS_COMMIT}"
+channel='latest'
+
+if [ -n "${TRAVIS_TAG}" ]; then
+  ## Travis will run separate build for commit and tag pushes,
+  version="${TRAVIS_TAG}"
+  channel='stable'
+fi
+
+export CGO_ENABLED=1
+
+case "${TRAVIS_OS_NAME}" in
+  osx)
+    readonly platform='darwin_amd64'
+    readonly equinox='https://bin.equinox.io/c/mBWdkfai63v/release-tool-stable-darwin-amd64.tgz'
+    ;;
+  linux)
+    readonly platform='linux_amd64'
+    readonly equinox='https://bin.equinox.io/c/mBWdkfai63v/release-tool-stable-linux-amd64.tgz'
+    ;;
+esac
+
+curl --silent --location "${equinox}" | tar -vzx
+
+./equinox release \
+  --platforms="${platform}" \
+  --app="${app}" \
+  --token="${token}" \
+  --signing-key="${signing_key}" \
+  --channel="${channel}" \
+  --version="${version}" \
+    'github.com/errordeveloper/kubegen/cmd/kubegen'
+
+rm -f "${secrets}" "${signing_key}"
