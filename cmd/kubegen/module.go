@@ -89,6 +89,8 @@ func moduleFn(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("invalid variable value %q, expected a non-empty string", v)
 		}
 
+		// TODO: intstr is really not good for us, it makes floats into strings and that's
+		// going to surprise the users, parsing it as JSON value is a better idea
 		v := intstr.Parse(kv[1])
 		switch v.Type {
 		case intstr.Int:

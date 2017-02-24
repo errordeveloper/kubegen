@@ -201,12 +201,18 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 		instance.Name, i.Name, i.Type)
 
 	unknownVariableTypeError := fmt.Errorf(
-		"module %q variable %q of unknown type %q, only types \"string\" and \"number\" are supported",
-		instance.Name, i.Name, i.Type)
+		"variable %q in module %q of unknown type %q, only types \"string\" and \"number\" are supported",
+		i.Name, instance.Name, i.Type)
 
-	wrongVariableTypeError := fmt.Errorf(
-		"module %q variable %q not of type %q",
-		instance.Name, i.Name, i.Type)
+	wrongVariableTypeError := func(v interface{}) error {
+		return fmt.Errorf(
+			"variable %q in module %q not of type %q [value: %#v]",
+			i.Name, instance.Name, i.Type, v)
+	}
+
+	defaultValueNotSetError := fmt.Errorf(
+		"variable %q in module %q of type %q must either be required or provide a default value",
+		i.Name, instance.Name, i.Type)
 
 	switch i.Type {
 	case "number":
@@ -219,8 +225,10 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 				switch v.(type) {
 				case float64:
 					value = int32(v.(float64))
+				case int:
+					value = int32(v.(int))
 				default:
-					return nil, wrongVariableTypeError
+					return nil, wrongVariableTypeError(v)
 				}
 			} else {
 				return nil, undefinedNonOptionalVariableError
@@ -230,15 +238,20 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 				switch v.(type) {
 				case float64:
 					value = int32(v.(float64))
+				case int:
+					value = int32(v.(int))
 				default:
-					return nil, wrongVariableTypeError
+					return nil, wrongVariableTypeError(v)
 				}
 			} else {
+				if i.Default == nil {
+					return nil, defaultValueNotSetError
+				}
 				switch i.Default.(type) {
 				case string:
 					value = int32(i.Default.(float64))
 				default:
-					return nil, wrongVariableTypeError
+					return nil, wrongVariableTypeError(v)
 				}
 			}
 		}
@@ -252,7 +265,7 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 				case string:
 					value = v.(string)
 				default:
-					return nil, wrongVariableTypeError
+					return nil, wrongVariableTypeError(v)
 				}
 			} else {
 				return nil, undefinedNonOptionalVariableError
@@ -264,14 +277,17 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 				case string:
 					value = v.(string)
 				default:
-					return nil, wrongVariableTypeError
+					return nil, wrongVariableTypeError(v)
 				}
 			} else {
+				if i.Default == nil {
+					return nil, defaultValueNotSetError
+				}
 				switch i.Default.(type) {
 				case string:
 					value = i.Default.(string)
 				default:
-					return nil, wrongVariableTypeError
+					return nil, wrongVariableTypeError(v)
 				}
 			}
 		}
