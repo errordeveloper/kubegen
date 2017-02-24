@@ -66,9 +66,64 @@ The main supported use-case of `kubegen` is for _generating_ files localy and ch
 
 TODO
 
-## Conversion Rules
+## General Specification
 
-TODO
+There are 2 main layers in `kubegen`:
+
+- _bundles_ – a way of instatiating one or more modules
+- _modules_ - a collection of one or more YAML, JSON or HCL maifests
+
+A manifest withing a module may contain the following top-level keys:
+
+- `Variables`
+- `Deployments`
+- `Services`
+- `DaemonSets`
+- `ReplicaSets`
+- `StatefulSets`
+- `ConfigMaps`
+- `Secrets`
+
+Each of those keys is expected to contains a list of objects of the same type (as denoted by the key).
+
+## Resource Conversion Rules
+
+Broadly, `kubegen` flattens the most non-intuitive parts of a Kubernetes resource.
+For example, a native `Deployment` object has `spec.template.spec.containers`, for `kubegen` that simply become `containers`.
+Additionally, you shouldn't have to specify `metadata.name` along with `metadata.labels.name`, you simply set `name` along with optional `labels`, and selectors are also infered unless specified otherwise.
+
+<!-- TODO more details or an example
+Additionally, there are currently some minor details in how container and service ports are specified a little differently...
+-->
+
+### HCL translation
+
+`kubegen` is polyglot and supports HCL in addition to traditional Kubernetes JSON and YAML formats.
+
+The style of HCL keys is a little different.
+First of all, top-level keys are singular instead of plural, e.g.
+```HCL
+variable "my_replicas" {
+  type = "string"
+  required = true
+}
+```
+
+All of attributes within `Deployment` or other resources use `snake_case` instead of `lowerCamel`, e.g.
+```HCL
+deployment "my_deployment" {
+  labels {
+    app = "my-app"
+  }
+
+  replicas = "<my_replicas>"
+
+  container "main" {
+    image = "myorg/app"
+    image_pull_policy = "IfNotPresent"
+  }
+}
+```
 
 ### Building
 
