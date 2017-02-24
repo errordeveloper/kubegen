@@ -24,7 +24,7 @@ script: make test
 
 deploy:
   provider: script
-  script: release $encrypted_a38a02e186b4_key $encrypted_a38a02e186b4_iv
+  script: ./release $encrypted_a38a02e186b4_key $encrypted_a38a02e186b4_iv
   skip_cleanup: true
   on:
     # `tags: true` seems to imply that only tagged commits are allowed?

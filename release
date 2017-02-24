@@ -18,7 +18,7 @@ test "${TRAVIS_REPO_SLUG}" = 'errordeveloper/kubegen' || exit 1
 ## EOF
 ## readonly app='...'
 ## readonly token='...'
-## 
+##
 ## # To update, edit local copy of `release-secrets.sh` and run
 ## travis encrypt-file -r errordeveloper/kubegen do-relase-binaries
 ## cat do-relase-binaries.enc | base64 -b 64
