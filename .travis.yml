@@ -9,12 +9,16 @@ dist: trusty
 go:
   - 1.8
 
+env:
+  global:
+    - CGO_ENABLED=0
+
 addons:
   apt:
     packages:
-    - pkg-config
-    - libpcre++0
-    - libpcre++-dev
+      - pkg-config
+      - libpcre++0
+      - libpcre++-dev
 
 install:
   - go get github.com/Masterminds/glide
