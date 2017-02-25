@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const equinoxAppID = "app_gcaAhA7xVE6"
+const equinoxAppID = "app_gAaxG6Siijv"
 
 var equinoxPublicKey = []byte(`
 -----BEGIN ECDSA PUBLIC KEY-----
@@ -25,6 +25,7 @@ var updateCmd = &cobra.Command{
 
 func updateFn(cmd *cobra.Command, args []string) error {
 	opts := equinox.Options{Channel: "latest"}
+	fmt.Printf("Checking for updates on the %s release channel...\n", opts.Channel)
 	if err := opts.SetPublicKeyPEM(equinoxPublicKey); err != nil {
 		return err
 	}
@@ -38,6 +39,7 @@ func updateFn(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// TODO can ask user for confirmation and print binary path etc
 	err = resp.Apply()
 	if err != nil {
 		return err
