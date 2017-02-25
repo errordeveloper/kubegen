@@ -30,16 +30,16 @@ readonly secrets='/tmp/release-secrets.sh'
 openssl base64 -d << EOF \
   | openssl aes-256-cbc -d -K "${1}" -iv "${2}" \
     -out "${secrets}"
-30TZdtV5iQJbQ2rfAjNVbB1+WFmjlE6HkVGGyNL0EGJtvMKdk6x9yz7cBdQ7AQjM
-DdQO9sHkjbyZpL2FXGf3d0v5maBJGJffi8ZmIca6cARG7hasu0Q64HfnUgAqh5oZ
-QG19NyksXuiBWAHagfWAMsCQdtKqScK6JAfFo4+IK3jRJqHFh/pTizjHejUn93vY
-VNdh9boazLrbVW0YrAyHMYJ2sc8c0oFMTor0gWKxgRUvA7mZYph5x0GZEtnEeMVy
-kz/ehXlzUJYJGFwI4fpEAWIqjisGCJ7L14J8DTkuOxm3efCjbdUTqhdsL00SvGYe
-zu6PZn2WuBkl0Us4OOf4GGJoNWhlwey9pNkfZIm/BfjVvEqmmnzWZSKle2uF1U3Z
-uFdeoe9RpEJaXoc0cwixxezqEb4DWrZy5AmRK6xD3b6ybM1td75cYdW2Ed1+9cun
-FM+lLMxtPdLao8RZLArTUud+D5AojJhda85AD27wHMhsMbOXcKBlrUZWlGD2mYYu
-j4EmtgmPo4vZ9nwwTP3Ecvr7IugS7fptyfV7av2KwHJiAnaEZC+TuKOahc55geBG
-XuswP9BmzIZHa2OK3/+AuGKc9I8DJhGxmKxC9xkBCZXEfdHoJ9NlrPF6QpiHtpvW
+DfTZCnjSRE5+b2o4B4ZDGKJDY5MQF7auWNEkLWzLbT+QALaSJ5hk7dlGQWSgw8Iy
+ZC2MGwrYogUBBEhG2VkjopHQ82xc90scRgryYQpOgKYB8CCpJMiYapTJ/z1ABxTE
+wauJVov+LjOycB9wA/ZDio1ldkyqBSSvBGDQxoi/eRe+EB37q8ky/L0vD6e4kJnH
+fjKWLv+/L8Z//kkbyafFaMMZziO+AKlpn/kODwTUAUOdlGhxDfqrcTkkZZ9Q/0Qk
+OuBQ7gsPGWvCnGz8PM4H50ViNRv7HNuJRo5VZ1Lu/eePP/GN6IefNe9qAoJngP43
+zYe2L8L0RqGnBFSfatW07xohWsSHyVLkSsHqBEQ1EBSGSHcwWJd/ftx5q6nrn+KE
+O9h85Hj1x11oajXs0ri2BMmBARM7FsM/F4RMduzJMNS0mIyMZ6zmZN2eFQv5LLy0
+NjvSZR8Dl5737je9v0pAKrmWOv9mWHcfuRNkXMS2gRse5hrG9AHfNnPy+6equQgl
+Pn+Ux5tYEE0bOWtDJSIQR83mLupiMaKyCMxeYqzA7Gk14R0rZvssjsdXBDRWbNVn
+8Z7aBu5efkN7xo3s9uLcqOHbiUWC0JF9UI9vpWeTqAaspAlIYe53wQUxhLslMmfT
 EOF
 
 source "${secrets}"
