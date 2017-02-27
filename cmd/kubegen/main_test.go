@@ -17,7 +17,7 @@ func TestKubegenCmd(t *testing.T) {
 	assert := assert.New(t)
 	for filename, command := range commands.Commands {
 		t.Run(fmt.Sprintf("args=[%v]", command), func(t *testing.T) {
-			c := testcli.GoRunMain(append([]string{"bundle.go", "module.go", "update.go"}, command...)...)
+			c := testcli.GoRunMain(append([]string{"bundle.go", "module.go", "self_upgrade.go"}, command...)...)
 			c.Run()
 			if !c.Success() {
 				t.Fatalf("Command %v was expected to succeed, but failed with error: %s\n%s\n", c.Error(), c.StdoutAndStderr())

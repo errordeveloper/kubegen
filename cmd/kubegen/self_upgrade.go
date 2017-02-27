@@ -17,13 +17,13 @@ bd2Ua3/c7IRUyPpqm/bn4PIIXEI4/VbrYKcxNbGj75xPEA1eEzPoSstN+0V/2SSX
 -----END ECDSA PUBLIC KEY-----
 `)
 
-var updateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update kubegen to latest version",
-	RunE:  updateFn,
+var selfUpgradeCmd = &cobra.Command{
+	Use:   "self-upgrade",
+	Short: "Upgrade kubegen to latest version",
+	RunE:  selfUpgradeFn,
 }
 
-func updateFn(cmd *cobra.Command, args []string) error {
+func selfUpgradeFn(cmd *cobra.Command, args []string) error {
 	opts := equinox.Options{Channel: "latest"}
 	fmt.Printf("Checking for updates on the %s release channel...\n", opts.Channel)
 	if err := opts.SetPublicKeyPEM(equinoxPublicKey); err != nil {
