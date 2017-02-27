@@ -17,6 +17,7 @@ func TestKubegenCmd(t *testing.T) {
 	assert := assert.New(t)
 	for filename, command := range commands.Commands {
 		t.Run(fmt.Sprintf("args=[%v]", command), func(t *testing.T) {
+			t.Parallel()
 			c := testcli.GoRunMain(append([]string{"bundle.go", "module.go", "self_upgrade.go"}, command...)...)
 			c.Run()
 			if !c.Success() {
