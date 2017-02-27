@@ -57,12 +57,12 @@ Services:
     port: 8080
 ```
 
-If you are not yet vert familiar with Kubernetes, this should be much easier to understand.
+If you are not yet very familiar with Kubernetes, this should be much easier to understand.
 If you are already using Kubernetes, the rules of how this maps to a "native" format are really quite simple and are outlined down below.
 
 ## Usage
 
-The main supported use-case of `kubegen` is for _generating_ files localy and checking in to a repository for use with other tools to implement CD, e.g. [Weave Flux](https://github.com/weaveworks/flux), but piping the output to `kubectl` is also supported for testing purposes.
+The main supported use-case of `kubegen` is for _generating_ files localy and checking in to a repository for use with other tools to implement CD, e.g. [Weave Flux](https://github.com/weaveworks/flux). You can pipe the output to `kubectl` for testing, but it's not recommended.
 
 TODO
 
@@ -70,8 +70,8 @@ TODO
 
 There are 2 main layers in `kubegen`:
 
-- _bundles_ – a way of instatiating one or more modules
-- _modules_ - a collection of one or more YAML, JSON or HCL maifests
+- _bundle_ provides a way of instatiating one or more _modules_
+- _module_ is a collection of one or more YAML, JSON or HCL maifests
 
 A manifest withing a module may contain the following top-level keys:
 
@@ -85,6 +85,10 @@ A manifest withing a module may contain the following top-level keys:
 - `Secrets`
 
 Each of those keys is expected to contains a list of objects of the same type (as denoted by the key).
+
+Variabels are scoped globaly per-module, and you can provide a varibale-only manifest, which is useful for denoting variables that are shared by all manifests withing a module.
+
+A manifest is converted to `List` of objects defined within it and results in one file. In other words, module instance will result in as many native manifest files as there are manifests withing a module, unless variable-only manifests are used.
 
 ## Resource Conversion Rules
 
