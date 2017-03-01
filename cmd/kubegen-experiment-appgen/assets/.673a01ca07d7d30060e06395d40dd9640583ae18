@@ -14,7 +14,6 @@ items:
         name: test
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: test
       spec:
@@ -29,7 +28,6 @@ items:
           ports:
           - containerPort: 4040
             name: test
-          resources: {}
 - apiVersion: v1
   kind: Service
   metadata:

@@ -14,7 +14,6 @@ items:
         name: foo
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: foo
       spec:
@@ -24,7 +23,6 @@ items:
           ports:
           - containerPort: 80
             name: foo
-          resources: {}
 - apiVersion: v1
   kind: Service
   metadata:

@@ -186,7 +186,6 @@ items:
         weave-cortex-component: agent
     template:
       metadata:
-        creationTimestamp: null
         labels:
           app: weave-cortex
           name: weave-cortex-agent
@@ -203,7 +202,6 @@ items:
           - containerPort: 80
             name: agent
             protocol: TCP
-          resources: {}
 - apiVersion: extensions/v1beta1
   kind: DaemonSet
   metadata:
@@ -225,7 +223,6 @@ items:
       metadata:
         annotations:
           prometheus.io.scrape: "true"
-        creationTimestamp: null
         labels:
           app: weave-cortex
           name: weave-cortex-node-exporter
@@ -239,8 +236,6 @@ items:
           - containerPort: 9100
             name: agent
             protocol: TCP
-          resources: {}
-          securityContext: {}
   status:
     currentNumberScheduled: 0
     desiredNumberScheduled: 0
@@ -294,7 +289,6 @@ items:
         weave-flux-component: agent
     template:
       metadata:
-        creationTimestamp: null
         labels:
           app: weave-flux
           name: weave-flux-agent
@@ -306,7 +300,6 @@ items:
           - --token=abc123
           image: quay.io/weaveworks/fluxd:0.1.0
           name: agent
-          resources: {}
 kind: List
 
 ---
@@ -338,7 +331,6 @@ items:
         weave-scope-component: agent
     template:
       metadata:
-        creationTimestamp: null
         labels:
           app: weave-scope
           name: weave-scope-agent
@@ -354,8 +346,6 @@ items:
           - --service-token=abc123
           image: weaveworks/scope:latest
           name: agent
-          resources: {}
-          securityContext: {}
           volumeMounts:
           - mountPath: /var/run/scope/plugins
             name: scope-plugins

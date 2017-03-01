@@ -4,7 +4,6 @@ items:
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: cart
     name: cart
@@ -14,10 +13,8 @@ items:
     selector:
       matchLabels:
         name: cart
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: cart
       spec:
@@ -39,12 +36,9 @@ items:
               port: 80
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: cart
     name: cart
@@ -56,12 +50,9 @@ items:
       targetPort: cart
     selector:
       name: cart
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: catalogue-db
     name: catalogue-db
@@ -71,10 +62,8 @@ items:
     selector:
       matchLabels:
         name: catalogue-db
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: catalogue-db
       spec:
@@ -101,12 +90,9 @@ items:
               port: 3306
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: catalogue-db
     name: catalogue-db
@@ -118,12 +104,9 @@ items:
       targetPort: catalogue-db
     selector:
       name: catalogue-db
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: catalogue
     name: catalogue
@@ -133,10 +116,8 @@ items:
     selector:
       matchLabels:
         name: catalogue
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: catalogue
       spec:
@@ -161,12 +142,9 @@ items:
               port: 80
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: catalogue
     name: catalogue
@@ -178,12 +156,9 @@ items:
       targetPort: catalogue
     selector:
       name: catalogue
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: front-end
     name: front-end
@@ -193,10 +168,8 @@ items:
     selector:
       matchLabels:
         name: front-end
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: front-end
       spec:
@@ -218,12 +191,9 @@ items:
               port: 8079
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: front-end
     name: front-end
@@ -235,12 +205,9 @@ items:
       targetPort: front-end
     selector:
       name: front-end
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: orders
     name: orders
@@ -250,10 +217,8 @@ items:
     selector:
       matchLabels:
         name: orders
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: orders
       spec:
@@ -275,12 +240,9 @@ items:
               port: 80
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: orders
     name: orders
@@ -292,12 +254,9 @@ items:
       targetPort: orders
     selector:
       name: orders
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: payment
     name: payment
@@ -307,10 +266,8 @@ items:
     selector:
       matchLabels:
         name: payment
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: payment
       spec:
@@ -335,12 +292,9 @@ items:
               port: 80
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: payment
     name: payment
@@ -352,12 +306,9 @@ items:
       targetPort: payment
     selector:
       name: payment
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: queue-master
     name: queue-master
@@ -367,10 +318,8 @@ items:
     selector:
       matchLabels:
         name: queue-master
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: queue-master
       spec:
@@ -392,12 +341,9 @@ items:
               port: 80
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: queue-master
     name: queue-master
@@ -409,12 +355,9 @@ items:
       targetPort: queue-master
     selector:
       name: queue-master
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: rabbitmq
     name: rabbitmq
@@ -424,10 +367,8 @@ items:
     selector:
       matchLabels:
         name: rabbitmq
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: rabbitmq
       spec:
@@ -449,12 +390,9 @@ items:
               port: 5672
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: rabbitmq
     name: rabbitmq
@@ -466,12 +404,9 @@ items:
       targetPort: rabbitmq
     selector:
       name: rabbitmq
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: shipping
     name: shipping
@@ -481,10 +416,8 @@ items:
     selector:
       matchLabels:
         name: shipping
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: shipping
       spec:
@@ -506,12 +439,9 @@ items:
               port: 80
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: shipping
     name: shipping
@@ -523,12 +453,9 @@ items:
       targetPort: shipping
     selector:
       name: shipping
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: user
     name: user
@@ -538,10 +465,8 @@ items:
     selector:
       matchLabels:
         name: user
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: user
       spec:
@@ -568,12 +493,9 @@ items:
               port: 80
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: user
     name: user
@@ -585,12 +507,9 @@ items:
       targetPort: user
     selector:
       name: user
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: zipkin
     name: zipkin
@@ -600,10 +519,8 @@ items:
     selector:
       matchLabels:
         name: zipkin
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: zipkin
       spec:
@@ -625,12 +542,9 @@ items:
               port: 9411
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: zipkin
     name: zipkin
@@ -642,12 +556,9 @@ items:
       targetPort: zipkin
     selector:
       name: zipkin
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: cart-db
     name: cart-db
@@ -657,10 +568,8 @@ items:
     selector:
       matchLabels:
         name: cart-db
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: cart-db
       spec:
@@ -681,12 +590,9 @@ items:
               port: 80
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: cart-db
     name: cart-db
@@ -698,12 +604,9 @@ items:
       targetPort: cart-db
     selector:
       name: cart-db
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: orders-db
     name: orders-db
@@ -713,10 +616,8 @@ items:
     selector:
       matchLabels:
         name: orders-db
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: orders-db
       spec:
@@ -729,12 +630,9 @@ items:
           ports:
           - containerPort: 27017
             name: orders-db
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: orders-db
     name: orders-db
@@ -746,12 +644,9 @@ items:
       targetPort: orders-db
     selector:
       name: orders-db
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: user-db
     name: user-db
@@ -761,10 +656,8 @@ items:
     selector:
       matchLabels:
         name: user-db
-    strategy: {}
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: user-db
       spec:
@@ -777,12 +670,9 @@ items:
           ports:
           - containerPort: 27017
             name: user-db
-          resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: user-db
     name: user-db
@@ -794,8 +684,5 @@ items:
       targetPort: user-db
     selector:
       name: user-db
-  status:
-    loadBalancer: {}
 kind: List
-metadata: {}
 

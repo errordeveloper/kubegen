@@ -14,7 +14,6 @@ items:
         name: nginx
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: nginx
       spec:
@@ -24,7 +23,6 @@ items:
           ports:
           - containerPort: 80
             name: nginx
-          resources: {}
 - apiVersion: v1
   kind: Service
   metadata:

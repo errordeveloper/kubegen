@@ -14,7 +14,6 @@ items:
         name: foo
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: foo
       spec:
@@ -36,7 +35,6 @@ items:
               port: 8080
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
 - apiVersion: v1
   kind: Service
   metadata:

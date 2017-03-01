@@ -186,7 +186,6 @@ items:
         weave-cortex-component: agent
     template:
       metadata:
-        creationTimestamp: null
         labels:
           app: weave-cortex
           name: weave-cortex-agent
@@ -203,7 +202,6 @@ items:
           - containerPort: 80
             name: agent
             protocol: TCP
-          resources: {}
 - apiVersion: extensions/v1beta1
   kind: DaemonSet
   metadata:
@@ -225,7 +223,6 @@ items:
       metadata:
         annotations:
           prometheus.io.scrape: "true"
-        creationTimestamp: null
         labels:
           app: weave-cortex
           name: weave-cortex-node-exporter
@@ -239,8 +236,6 @@ items:
           - containerPort: 9100
             name: agent
             protocol: TCP
-          resources: {}
-          securityContext: {}
   status:
     currentNumberScheduled: 0
     desiredNumberScheduled: 0
@@ -294,7 +289,6 @@ items:
         weave-flux-component: agent
     template:
       metadata:
-        creationTimestamp: null
         labels:
           app: weave-flux
           name: weave-flux-agent
@@ -306,7 +300,6 @@ items:
           - --token=foobarbaz
           image: quay.io/weaveworks/fluxd:0.1.0
           name: agent
-          resources: {}
 kind: List
 
 ---
@@ -338,7 +331,6 @@ items:
         weave-scope-component: agent
     template:
       metadata:
-        creationTimestamp: null
         labels:
           app: weave-scope
           name: weave-scope-agent
@@ -354,8 +346,6 @@ items:
           - --service-token=foobarbaz
           image: weaveworks/scope:latest
           name: agent
-          resources: {}
-          securityContext: {}
           volumeMounts:
           - mountPath: /var/run/scope/plugins
             name: scope-plugins
@@ -560,7 +550,6 @@ items:
         weave-cortex-component: agent
     template:
       metadata:
-        creationTimestamp: null
         labels:
           app: weave-cortex
           name: weave-cortex-agent
@@ -577,7 +566,6 @@ items:
           - containerPort: 80
             name: agent
             protocol: TCP
-          resources: {}
 - apiVersion: extensions/v1beta1
   kind: DaemonSet
   metadata:
@@ -599,7 +587,6 @@ items:
       metadata:
         annotations:
           prometheus.io.scrape: "true"
-        creationTimestamp: null
         labels:
           app: weave-cortex
           name: weave-cortex-node-exporter
@@ -613,8 +600,6 @@ items:
           - containerPort: 9100
             name: agent
             protocol: TCP
-          resources: {}
-          securityContext: {}
   status:
     currentNumberScheduled: 0
     desiredNumberScheduled: 0
@@ -668,7 +653,6 @@ items:
         weave-flux-component: agent
     template:
       metadata:
-        creationTimestamp: null
         labels:
           app: weave-flux
           name: weave-flux-agent
@@ -680,7 +664,6 @@ items:
           - --token=bazbarfoo
           image: quay.io/weaveworks/fluxd:0.1.0
           name: agent
-          resources: {}
 kind: List
 
 ---
@@ -712,7 +695,6 @@ items:
         weave-scope-component: agent
     template:
       metadata:
-        creationTimestamp: null
         labels:
           app: weave-scope
           name: weave-scope-agent
@@ -728,8 +710,6 @@ items:
           - --service-token=bazbarfoo
           image: weaveworks/scope:latest
           name: agent
-          resources: {}
-          securityContext: {}
           volumeMounts:
           - mountPath: /var/run/scope/plugins
             name: scope-plugins
@@ -802,7 +782,6 @@ items:
         name: cart
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: cart
       spec:
@@ -824,8 +803,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -844,7 +821,6 @@ items:
         name: cart-db
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: cart-db
       spec:
@@ -854,8 +830,6 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -914,7 +888,6 @@ items:
         name: catalogue
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: catalogue
       spec:
@@ -939,8 +912,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -955,7 +926,6 @@ items:
         name: catalogue-db
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: catalogue-db
       spec:
@@ -970,7 +940,6 @@ items:
           ports:
           - containerPort: 3306
             name: mysql
-          resources: {}
 kind: List
 
 ---
@@ -1012,7 +981,6 @@ items:
         name: front-end
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: front-end
       spec:
@@ -1038,7 +1006,6 @@ items:
             requests:
               cpu: 100m
               memory: 100Mi
-          securityContext: {}
 kind: List
 
 ---
@@ -1095,7 +1062,6 @@ items:
         name: orders
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: orders
       spec:
@@ -1117,8 +1083,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -1137,7 +1101,6 @@ items:
         name: orders-db
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: orders-db
       spec:
@@ -1147,8 +1110,6 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -1193,7 +1154,6 @@ items:
         name: payment
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: payment
       spec:
@@ -1218,8 +1178,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
 kind: List
 
 ---
@@ -1276,7 +1234,6 @@ items:
         name: rabbitmq
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: rabbitmq
       spec:
@@ -1286,8 +1243,6 @@ items:
           ports:
           - containerPort: 5672
             name: rabbitmq
-          resources: {}
-          securityContext: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1302,7 +1257,6 @@ items:
         name: queue-master
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: queue-master
       spec:
@@ -1324,7 +1278,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
 kind: List
 
 ---
@@ -1367,7 +1320,6 @@ items:
         name: shipping
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: shipping
       spec:
@@ -1389,8 +1341,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -1449,7 +1399,6 @@ items:
         name: user
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: user
       spec:
@@ -1476,8 +1425,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1492,7 +1439,6 @@ items:
         name: user-db
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: user-db
       spec:
@@ -1502,8 +1448,6 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -1564,7 +1508,6 @@ items:
         name: zipkin
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: zipkin
       spec:
@@ -1579,7 +1522,6 @@ items:
           ports:
           - containerPort: 9411
             name: zipkin
-          resources: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1594,7 +1536,6 @@ items:
         name: zipkin-mysql
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: zipkin-mysql
       spec:
@@ -1604,7 +1545,6 @@ items:
           ports:
           - containerPort: 3306
             name: mysql
-          resources: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1619,7 +1559,6 @@ items:
         name: zipkin-cron
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: zipkin-cron
       spec:
@@ -1639,7 +1578,6 @@ items:
             value: mysql
           image: openzipkin/zipkin-dependencies:1.4.0
           name: zipkin-cron
-          resources: {}
 kind: List
 
 ---
@@ -1696,7 +1634,6 @@ items:
         name: cart
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: cart
       spec:
@@ -1718,8 +1655,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -1738,7 +1673,6 @@ items:
         name: cart-db
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: cart-db
       spec:
@@ -1748,8 +1682,6 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -1808,7 +1740,6 @@ items:
         name: catalogue
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: catalogue
       spec:
@@ -1833,8 +1764,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1849,7 +1778,6 @@ items:
         name: catalogue-db
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: catalogue-db
       spec:
@@ -1864,7 +1792,6 @@ items:
           ports:
           - containerPort: 3306
             name: mysql
-          resources: {}
 kind: List
 
 ---
@@ -1906,7 +1833,6 @@ items:
         name: front-end
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: front-end
       spec:
@@ -1932,7 +1858,6 @@ items:
             requests:
               cpu: 100m
               memory: 100Mi
-          securityContext: {}
 kind: List
 
 ---
@@ -1989,7 +1914,6 @@ items:
         name: orders
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: orders
       spec:
@@ -2011,8 +1935,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -2031,7 +1953,6 @@ items:
         name: orders-db
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: orders-db
       spec:
@@ -2041,8 +1962,6 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -2087,7 +2006,6 @@ items:
         name: payment
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: payment
       spec:
@@ -2112,8 +2030,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
 kind: List
 
 ---
@@ -2170,7 +2086,6 @@ items:
         name: rabbitmq
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: rabbitmq
       spec:
@@ -2180,8 +2095,6 @@ items:
           ports:
           - containerPort: 5672
             name: rabbitmq
-          resources: {}
-          securityContext: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2196,7 +2109,6 @@ items:
         name: queue-master
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: queue-master
       spec:
@@ -2218,7 +2130,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
 kind: List
 
 ---
@@ -2261,7 +2172,6 @@ items:
         name: shipping
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: shipping
       spec:
@@ -2283,8 +2193,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -2343,7 +2251,6 @@ items:
         name: user
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: user
       spec:
@@ -2370,8 +2277,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          resources: {}
-          securityContext: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2386,7 +2291,6 @@ items:
         name: user-db
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: user-db
       spec:
@@ -2396,8 +2300,6 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
-          resources: {}
-          securityContext: {}
         volumes:
         - emptyDir:
             medium: Memory
@@ -2458,7 +2360,6 @@ items:
         name: zipkin
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: zipkin
       spec:
@@ -2473,7 +2374,6 @@ items:
           ports:
           - containerPort: 9411
             name: zipkin
-          resources: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2488,7 +2388,6 @@ items:
         name: zipkin-mysql
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: zipkin-mysql
       spec:
@@ -2498,7 +2397,6 @@ items:
           ports:
           - containerPort: 3306
             name: mysql
-          resources: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2513,7 +2411,6 @@ items:
         name: zipkin-cron
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: zipkin-cron
       spec:
@@ -2533,6 +2430,5 @@ items:
             value: mysql
           image: openzipkin/zipkin-dependencies:1.4.0
           name: zipkin-cron
-          resources: {}
 kind: List
 
