@@ -14,7 +14,6 @@ import (
 	_ "k8s.io/client-go/pkg/apis/extensions/install"
 	extensionsv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
-	"github.com/ghodss/yaml"
 	"github.com/hashicorp/hcl"
 )
 
@@ -48,97 +47,6 @@ func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
 	)
 
 	return codec, nil
-}
-
-func deleteKeyIfValueIsNil(obj map[string]interface{}, key string) {
-	if v, ok := obj[key]; ok {
-		if v == nil {
-			delete(obj, key)
-		}
-	}
-}
-
-func deleteSubKeyIfValueIsNil(obj map[string]interface{}, k0, k1 string) {
-	if v, ok := obj[k0]; ok {
-		if v := v.(map[string]interface{}); len(v) != 0 {
-			deleteKeyIfValueIsNil(v, k1)
-		}
-	}
-	deleteKeyIfValueIsEmptyMap(obj, k0)
-}
-
-func deleteKeyIfValueIsEmptyMap(obj map[string]interface{}, key string) {
-	if v, ok := obj[key]; ok {
-		if v := v.(map[string]interface{}); len(v) == 0 {
-			delete(obj, key)
-		}
-	}
-}
-
-func deleteSubKeyIfValueIsEmptyMap(obj map[string]interface{}, k0, k1 string) {
-	if v, ok := obj[k0]; ok {
-		if v := v.(map[string]interface{}); len(v) != 0 {
-			deleteKeyIfValueIsEmptyMap(v, k1)
-		}
-	}
-	deleteKeyIfValueIsEmptyMap(obj, k0)
-}
-
-func cleanup(contentType string, input []byte) ([]byte, error) {
-	obj := make(map[string]interface{})
-	switch contentType {
-	case "application/yaml":
-		if err := yaml.Unmarshal(input, &obj); err != nil {
-			return nil, err
-		}
-
-		deleteKeyIfValueIsEmptyMap(obj, "metadata")
-		if items, ok := obj["items"]; ok {
-			if items := items.([]interface{}); len(items) != 0 {
-				for _, item := range items {
-					if item := item.(map[string]interface{}); len(item) != 0 {
-						deleteSubKeyIfValueIsNil(item, "metadata", "creationTimestamp")
-						deleteSubKeyIfValueIsEmptyMap(item, "status", "loadBalancer")
-
-						deleteSubKeyIfValueIsEmptyMap(item, "spec", "strategy")
-
-						if spec, ok := item["spec"]; ok {
-							if spec := spec.(map[string]interface{}); len(spec) != 0 {
-								if template, ok := spec["template"]; ok {
-									if template := template.(map[string]interface{}); len(template) != 0 {
-										if spec, ok := template["spec"]; ok {
-											if spec := spec.(map[string]interface{}); len(spec) != 0 {
-												if containers, ok := spec["containers"]; ok {
-													if containers := containers.([]interface{}); len(containers) != 0 {
-														for _, container := range containers {
-															if container := container.(map[string]interface{}); len(container) != 0 {
-																deleteKeyIfValueIsEmptyMap(container, "resources")
-																deleteKeyIfValueIsEmptyMap(container, "securityContext")
-															}
-														}
-													}
-												}
-											}
-										}
-										deleteSubKeyIfValueIsNil(template, "metadata", "creationTimestamp")
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		output, err := yaml.Marshal(obj)
-		if err != nil {
-			return nil, err
-		}
-		return output, nil
-	default:
-		return input, nil
-	}
-
 }
 
 func Encode(object runtime.Object, contentType string, pretty bool) ([]byte, error) {
