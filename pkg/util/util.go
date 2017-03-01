@@ -50,10 +50,6 @@ func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
 	return codec, nil
 }
 
-//type resourceList struct {
-//
-//}
-
 func deleteKeyIfValueIsNil(obj map[string]interface{}, key string) {
 	if v, ok := obj[key]; ok {
 		if v == nil {
@@ -62,12 +58,30 @@ func deleteKeyIfValueIsNil(obj map[string]interface{}, key string) {
 	}
 }
 
+func deleteSubKeyIfValueIsNil(obj map[string]interface{}, k0, k1 string) {
+	if v, ok := obj[k0]; ok {
+		if v := v.(map[string]interface{}); len(v) != 0 {
+			deleteKeyIfValueIsNil(v, k1)
+		}
+	}
+	deleteKeyIfValueIsEmptyMap(obj, k0)
+}
+
 func deleteKeyIfValueIsEmptyMap(obj map[string]interface{}, key string) {
 	if v, ok := obj[key]; ok {
 		if v := v.(map[string]interface{}); len(v) == 0 {
 			delete(obj, key)
 		}
 	}
+}
+
+func deleteSubKeyIfValueIsEmptyMap(obj map[string]interface{}, k0, k1 string) {
+	if v, ok := obj[k0]; ok {
+		if v := v.(map[string]interface{}); len(v) != 0 {
+			deleteKeyIfValueIsEmptyMap(v, k1)
+		}
+	}
+	deleteKeyIfValueIsEmptyMap(obj, k0)
 }
 
 func cleanup(contentType string, input []byte) ([]byte, error) {
@@ -83,21 +97,33 @@ func cleanup(contentType string, input []byte) ([]byte, error) {
 			if items := items.([]interface{}); len(items) != 0 {
 				for _, item := range items {
 					if item := item.(map[string]interface{}); len(item) != 0 {
+						deleteSubKeyIfValueIsNil(item, "metadata", "creationTimestamp")
+						deleteSubKeyIfValueIsEmptyMap(item, "status", "loadBalancer")
 
-						if meta, ok := item["metadata"]; ok {
-							meta := meta.(map[string]interface{})
-							deleteKeyIfValueIsNil(meta, "creationTimestamp")
-						}
-
-						if status, ok := item["status"]; ok {
-							status := status.(map[string]interface{})
-							deleteKeyIfValueIsEmptyMap(status, "loadBalancer")
-						}
-						deleteKeyIfValueIsEmptyMap(item, "status")
+						deleteSubKeyIfValueIsEmptyMap(item, "spec", "strategy")
 
 						if spec, ok := item["spec"]; ok {
-							spec := spec.(map[string]interface{})
-							deleteKeyIfValueIsEmptyMap(spec, "strategy")
+							if spec := spec.(map[string]interface{}); len(spec) != 0 {
+								if template, ok := spec["template"]; ok {
+									if template := template.(map[string]interface{}); len(template) != 0 {
+										if spec, ok := template["spec"]; ok {
+											if spec := spec.(map[string]interface{}); len(spec) != 0 {
+												if containers, ok := spec["containers"]; ok {
+													if containers := containers.([]interface{}); len(containers) != 0 {
+														for _, container := range containers {
+															if container := container.(map[string]interface{}); len(container) != 0 {
+																deleteKeyIfValueIsEmptyMap(container, "resources")
+																deleteKeyIfValueIsEmptyMap(container, "securityContext")
+															}
+														}
+													}
+												}
+											}
+										}
+										deleteSubKeyIfValueIsNil(template, "metadata", "creationTimestamp")
+									}
+								}
+							}
 						}
 					}
 				}
