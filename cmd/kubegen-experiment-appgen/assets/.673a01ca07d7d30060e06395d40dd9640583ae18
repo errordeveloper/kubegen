@@ -4,7 +4,6 @@ items:
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: test
     name: test
@@ -13,7 +12,6 @@ items:
     selector:
       matchLabels:
         name: test
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -32,11 +30,9 @@ items:
           - containerPort: 4040
             name: test
           resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: test
     name: test
@@ -47,8 +43,5 @@ items:
       targetPort: test
     selector:
       name: test
-  status:
-    loadBalancer: {}
 kind: List
-metadata: {}
 

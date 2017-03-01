@@ -4,7 +4,6 @@ items:
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: foo
     name: foo
@@ -13,7 +12,6 @@ items:
     selector:
       matchLabels:
         name: foo
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -39,11 +37,9 @@ items:
             initialDelaySeconds: 180
             periodSeconds: 3
           resources: {}
-  status: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: foo
     name: foo
@@ -54,8 +50,5 @@ items:
       targetPort: foo
     selector:
       name: foo
-  status:
-    loadBalancer: {}
 kind: List
-metadata: {}
 

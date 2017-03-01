@@ -14,7 +14,6 @@ items:
   metadata:
     annotations:
       prometheus.io/path: /prometheus
-    creationTimestamp: null
     labels:
       name: cart
     name: cart
@@ -25,12 +24,9 @@ items:
       targetPort: http
     selector:
       name: cart
-  status:
-    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: cart-db
     name: cart-db
@@ -41,12 +37,9 @@ items:
       targetPort: mongo
     selector:
       name: cart-db
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: cart
     name: cart
@@ -55,7 +48,6 @@ items:
     selector:
       matchLabels:
         name: cart
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -86,11 +78,9 @@ items:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-  status: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: cart-db
     name: cart-db
@@ -99,7 +89,6 @@ items:
     selector:
       matchLabels:
         name: cart-db
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -118,9 +107,7 @@ items:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-  status: {}
 kind: List
-metadata: {}
 
 ---
 #
@@ -135,7 +122,6 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: catalogue
     name: catalogue
@@ -146,12 +132,9 @@ items:
       targetPort: http
     selector:
       name: catalogue
-  status:
-    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: catalogue-db
     name: catalogue-db
@@ -162,12 +145,9 @@ items:
       targetPort: mysql
     selector:
       name: catalogue-db
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: catalogue
     name: catalogue
@@ -176,7 +156,6 @@ items:
     selector:
       matchLabels:
         name: catalogue
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -206,11 +185,9 @@ items:
             periodSeconds: 3
           resources: {}
           securityContext: {}
-  status: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: catalogue-db
     name: catalogue-db
@@ -219,7 +196,6 @@ items:
     selector:
       matchLabels:
         name: catalogue-db
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -238,9 +214,7 @@ items:
           - containerPort: 3306
             name: mysql
           resources: {}
-  status: {}
 kind: List
-metadata: {}
 
 ---
 #
@@ -255,7 +229,6 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: front-end
     name: front-end
@@ -267,12 +240,9 @@ items:
     selector:
       name: front-end
     type: NodePort
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: front-end
     name: front-end
@@ -281,7 +251,6 @@ items:
     selector:
       matchLabels:
         name: front-end
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -311,9 +280,7 @@ items:
               cpu: 100m
               memory: 100Mi
           securityContext: {}
-  status: {}
 kind: List
-metadata: {}
 
 ---
 #
@@ -330,7 +297,6 @@ items:
   metadata:
     annotations:
       prometheus.io/path: /prometheus
-    creationTimestamp: null
     labels:
       name: orders
     name: orders
@@ -341,12 +307,9 @@ items:
       targetPort: http
     selector:
       name: orders
-  status:
-    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: orders-db
     name: orders-db
@@ -357,12 +320,9 @@ items:
       targetPort: mongo
     selector:
       name: orders-db
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: orders
     name: orders
@@ -371,7 +331,6 @@ items:
     selector:
       matchLabels:
         name: orders
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -402,11 +361,9 @@ items:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-  status: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: orders-db
     name: orders-db
@@ -415,7 +372,6 @@ items:
     selector:
       matchLabels:
         name: orders-db
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -434,9 +390,7 @@ items:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-  status: {}
 kind: List
-metadata: {}
 
 ---
 #
@@ -451,7 +405,6 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: payment
     name: payment
@@ -462,12 +415,9 @@ items:
       targetPort: http
     selector:
       name: payment
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: payment
     name: payment
@@ -476,7 +426,6 @@ items:
     selector:
       matchLabels:
         name: payment
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -506,9 +455,7 @@ items:
             periodSeconds: 3
           resources: {}
           securityContext: {}
-  status: {}
 kind: List
-metadata: {}
 
 ---
 #
@@ -523,7 +470,6 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: rabbitmq
     name: rabbitmq
@@ -534,14 +480,11 @@ items:
       targetPort: rabbitmq
     selector:
       name: rabbitmq
-  status:
-    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
     annotations:
       prometheus.io/path: /prometheus
-    creationTimestamp: null
     labels:
       name: queue-master
     name: queue-master
@@ -552,12 +495,9 @@ items:
       targetPort: http
     selector:
       name: queue-master
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: rabbitmq
     name: rabbitmq
@@ -566,7 +506,6 @@ items:
     selector:
       matchLabels:
         name: rabbitmq
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -581,11 +520,9 @@ items:
             name: rabbitmq
           resources: {}
           securityContext: {}
-  status: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: queue-master
     name: queue-master
@@ -594,7 +531,6 @@ items:
     selector:
       matchLabels:
         name: queue-master
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -620,9 +556,7 @@ items:
             initialDelaySeconds: 180
             periodSeconds: 3
           resources: {}
-  status: {}
 kind: List
-metadata: {}
 
 ---
 #
@@ -639,7 +573,6 @@ items:
   metadata:
     annotations:
       prometheus.io/path: /prometheus
-    creationTimestamp: null
     labels:
       name: shipping
     name: shipping
@@ -650,12 +583,9 @@ items:
       targetPort: http
     selector:
       name: shipping
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: shipping
     name: shipping
@@ -664,7 +594,6 @@ items:
     selector:
       matchLabels:
         name: shipping
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -695,9 +624,7 @@ items:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-  status: {}
 kind: List
-metadata: {}
 
 ---
 #
@@ -712,7 +639,6 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: user
     name: user
@@ -723,12 +649,9 @@ items:
       targetPort: http
     selector:
       name: user
-  status:
-    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: user-db
     name: user-db
@@ -739,12 +662,9 @@ items:
       targetPort: mongo
     selector:
       name: user-db
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: user
     name: user
@@ -753,7 +673,6 @@ items:
     selector:
       matchLabels:
         name: user
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -785,11 +704,9 @@ items:
             periodSeconds: 3
           resources: {}
           securityContext: {}
-  status: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: user-db
     name: user-db
@@ -798,7 +715,6 @@ items:
     selector:
       matchLabels:
         name: user-db
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -817,9 +733,7 @@ items:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-  status: {}
 kind: List
-metadata: {}
 
 ---
 #
@@ -834,7 +748,6 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: zipkin
     name: zipkin
@@ -847,12 +760,9 @@ items:
     selector:
       name: zipkin
     type: NodePort
-  status:
-    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
     labels:
       name: zipkin-mysql
     name: zipkin-mysql
@@ -863,12 +773,9 @@ items:
       targetPort: mysql
     selector:
       name: zipkin-mysql
-  status:
-    loadBalancer: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: zipkin
     name: zipkin
@@ -877,7 +784,6 @@ items:
     selector:
       matchLabels:
         name: zipkin
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -896,11 +802,9 @@ items:
           - containerPort: 9411
             name: zipkin
           resources: {}
-  status: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: zipkin-mysql
     name: zipkin-mysql
@@ -909,7 +813,6 @@ items:
     selector:
       matchLabels:
         name: zipkin-mysql
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -923,11 +826,9 @@ items:
           - containerPort: 3306
             name: mysql
           resources: {}
-  status: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
-    creationTimestamp: null
     labels:
       name: zipkin-cron
     name: zipkin-cron
@@ -936,7 +837,6 @@ items:
     selector:
       matchLabels:
         name: zipkin-cron
-    strategy: {}
     template:
       metadata:
         creationTimestamp: null
@@ -960,7 +860,5 @@ items:
           image: openzipkin/zipkin-dependencies:1.4.0
           name: zipkin-cron
           resources: {}
-  status: {}
 kind: List
-metadata: {}
 
