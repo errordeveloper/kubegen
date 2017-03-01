@@ -23,23 +23,23 @@ test "${TRAVIS_REPO_SLUG}" = 'errordeveloper/kubegen' || exit 1
 ##
 ## # To update, edit local copy of `release-secrets.sh` and run
 ## travis encrypt-file -r errordeveloper/kubegen release-secrets.sh
-## cat release-secrets.sh.enc | base64 -b 64
+## cat release-secrets.sh.enc | base64 -b 64 | pbcopy
 ## # Next, copy the output down below and update `.travis.yml`
 
 readonly secrets='/tmp/release-secrets.sh'
 openssl base64 -d << EOF \
   | openssl aes-256-cbc -d -K "${1}" -iv "${2}" \
     -out "${secrets}"
-DfTZCnjSRE5+b2o4B4ZDGKJDY5MQF7auWNEkLWzLbT+QALaSJ5hk7dlGQWSgw8Iy
-ZC2MGwrYogUBBEhG2VkjopHQ82xc90scRgryYQpOgKYB8CCpJMiYapTJ/z1ABxTE
-wauJVov+LjOycB9wA/ZDio1ldkyqBSSvBGDQxoi/eRe+EB37q8ky/L0vD6e4kJnH
-fjKWLv+/L8Z//kkbyafFaMMZziO+AKlpn/kODwTUAUOdlGhxDfqrcTkkZZ9Q/0Qk
-OuBQ7gsPGWvCnGz8PM4H50ViNRv7HNuJRo5VZ1Lu/eePP/GN6IefNe9qAoJngP43
-zYe2L8L0RqGnBFSfatW07xohWsSHyVLkSsHqBEQ1EBSGSHcwWJd/ftx5q6nrn+KE
-O9h85Hj1x11oajXs0ri2BMmBARM7FsM/F4RMduzJMNS0mIyMZ6zmZN2eFQv5LLy0
-NjvSZR8Dl5737je9v0pAKrmWOv9mWHcfuRNkXMS2gRse5hrG9AHfNnPy+6equQgl
-Pn+Ux5tYEE0bOWtDJSIQR83mLupiMaKyCMxeYqzA7Gk14R0rZvssjsdXBDRWbNVn
-8Z7aBu5efkN7xo3s9uLcqOHbiUWC0JF9UI9vpWeTqAaspAlIYe53wQUxhLslMmfT
+l3RPTYRyenkmXwXWx/Kv9jJq6pME2lBO34OALkAgx2aG1Gp1PV+/1FWKKEHaTIPC
+RDcXVJzQECm82wUtALMuQGGgCjUJAhSY9U2GWfiL2FqTxzatb99WzeVt9MUyxsSw
+P+CkDymYgtS8LrBMflX2lbGTTj0BqByYc6j1nE0R9Nv2oJ5AI/AT26aog+xWkLY3
+cWy4KqiKl8ANP0YIJ+wO+SDN0YZLvPQ/PeAy6Ec2Ox//5Hf/9kL2R/b3D3Mcjsf0
+5/xZoM8yxj1+NftqRVPs7EYCUkUkEqOXPmlZSeDTWGpR/pbWe34C6BBPTxWcPzvZ
+pdtLyRKpMMKzcYfBBddKqw/NyCJqC9mDnkiud0do5RVyGom1YvWuf3/s935wht8G
+155QbEBfnjEUoq3aaR7xl3yyA+4a2hVTCcNYJt3UhNToesVK86yJKFSoLxgWr5oT
+aHTdrm6x1CTiIYxzepVJgP7SousZqEGnhfEyvUWdsRGhIWw8TZ2rHAe/JZyo1R/o
+C8hH2MQOqX7H+gB+uoVH/8tH/Geuh9UNjsgC5//vGhRj0P9alxs+sKAICjEXZMep
+DAcDJVnZZn9TqjBxsK3u13QEe/Vg9ySczVlN2ruAJhjgXdfn0Ti4aw7dXJPsK8B5
 EOF
 
 source "${secrets}"
