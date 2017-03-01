@@ -14,6 +14,7 @@ import (
 	_ "k8s.io/client-go/pkg/apis/extensions/install"
 	extensionsv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
+	"github.com/ghodss/yaml"
 	"github.com/hashicorp/hcl"
 )
 
@@ -49,6 +50,72 @@ func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
 	return codec, nil
 }
 
+//type resourceList struct {
+//
+//}
+
+func deleteKeyIfValueIsNil(obj map[string]interface{}, key string) {
+	if v, ok := obj[key]; ok {
+		if v == nil {
+			delete(obj, key)
+		}
+	}
+}
+
+func deleteKeyIfValueIsEmptyMap(obj map[string]interface{}, key string) {
+	if v, ok := obj[key]; ok {
+		if v := v.(map[string]interface{}); len(v) == 0 {
+			delete(obj, key)
+		}
+	}
+}
+
+func cleanup(contentType string, input []byte) ([]byte, error) {
+	obj := make(map[string]interface{})
+	switch contentType {
+	case "application/yaml":
+		if err := yaml.Unmarshal(input, &obj); err != nil {
+			return nil, err
+		}
+
+		deleteKeyIfValueIsEmptyMap(obj, "metadata")
+		if items, ok := obj["items"]; ok {
+			if items := items.([]interface{}); len(items) != 0 {
+				for _, item := range items {
+					if item := item.(map[string]interface{}); len(item) != 0 {
+
+						deleteKeyIfValueIsEmptyMap(item, "status")
+
+						if meta, ok := item["metadata"]; ok {
+							meta := meta.(map[string]interface{})
+							deleteKeyIfValueIsNil(meta, "creationTimestamp")
+						}
+
+						if status, ok := item["status"]; ok {
+							status := status.(map[string]interface{})
+							deleteKeyIfValueIsEmptyMap(status, "loadBalancer")
+						}
+
+						if spec, ok := item["spec"]; ok {
+							spec := spec.(map[string]interface{})
+							deleteKeyIfValueIsEmptyMap(spec, "strategy")
+						}
+					}
+				}
+			}
+		}
+
+		output, err := yaml.Marshal(obj)
+		if err != nil {
+			return nil, err
+		}
+		return output, nil
+	default:
+		return input, nil
+	}
+
+}
+
 func Encode(object runtime.Object, contentType string, pretty bool) ([]byte, error) {
 	codec, err := makeCodec(contentType, pretty)
 	if err != nil {
@@ -60,7 +127,7 @@ func Encode(object runtime.Object, contentType string, pretty bool) ([]byte, err
 		return nil, fmt.Errorf("kubegen/util: error encoding object to %q – %v", contentType, err)
 	}
 
-	return data, nil
+	return cleanup(contentType, data)
 }
 
 func EncodeList(list *api.List, contentType string, pretty bool) ([]byte, error) {
@@ -79,7 +146,7 @@ func EncodeList(list *api.List, contentType string, pretty bool) ([]byte, error)
 		return nil, fmt.Errorf("kubegen/util: error encoding list to %q – %v", contentType, err)
 	}
 
-	return data, nil
+	return cleanup(contentType, data)
 }
 
 func DumpListToFiles(list *api.List, contentType string) ([]string, error) {
