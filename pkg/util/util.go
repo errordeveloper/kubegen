@@ -84,8 +84,6 @@ func cleanup(contentType string, input []byte) ([]byte, error) {
 				for _, item := range items {
 					if item := item.(map[string]interface{}); len(item) != 0 {
 
-						deleteKeyIfValueIsEmptyMap(item, "status")
-
 						if meta, ok := item["metadata"]; ok {
 							meta := meta.(map[string]interface{})
 							deleteKeyIfValueIsNil(meta, "creationTimestamp")
@@ -95,6 +93,7 @@ func cleanup(contentType string, input []byte) ([]byte, error) {
 							status := status.(map[string]interface{})
 							deleteKeyIfValueIsEmptyMap(status, "loadBalancer")
 						}
+						deleteKeyIfValueIsEmptyMap(item, "status")
 
 						if spec, ok := item["spec"]; ok {
 							spec := spec.(map[string]interface{})
