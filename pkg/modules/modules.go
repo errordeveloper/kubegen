@@ -406,7 +406,7 @@ func (m *Module) EncodeGroupsToJSON(instance ModuleInstance) (map[string][]byte,
 	}
 
 	for manifestPath, group := range groups {
-		data, err := group.EncodeListToJSON()
+		data, err := group.EncodeListToPrettyJSON()
 		if err != nil {
 			return nil, err
 		}
@@ -415,7 +415,7 @@ func (m *Module) EncodeGroupsToJSON(instance ModuleInstance) (map[string][]byte,
 			continue
 		}
 
-		output[manifestPath] = data
+		output[manifestPath] = append(data, byte('\n'))
 	}
 
 	return output, nil
