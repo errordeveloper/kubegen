@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"github.com/ghodss/yaml"
 )
 
@@ -82,6 +83,15 @@ func cleanupInnerSpec(item map[string]interface{}) {
 	}
 }
 
+func doCleanup(obj map[string]interface{}) {
+	cleanupInnerSpec(obj)
+	rangeOverNonEmptyMapsInSlice(obj, "items", func(item map[string]interface{}) {
+		if item, ok := toNonEmptyMap(item); ok {
+			cleanupInnerSpec(item)
+		}
+	})
+}
+
 func cleanup(contentType string, input []byte) ([]byte, error) {
 	obj := make(map[string]interface{})
 	switch contentType {
@@ -90,14 +100,21 @@ func cleanup(contentType string, input []byte) ([]byte, error) {
 			return nil, err
 		}
 
-		cleanupInnerSpec(obj)
-		rangeOverNonEmptyMapsInSlice(obj, "items", func(item map[string]interface{}) {
-			if item, ok := toNonEmptyMap(item); ok {
-				cleanupInnerSpec(item)
-			}
-		})
+		doCleanup(obj)
 
 		output, err := yaml.Marshal(obj)
+		if err != nil {
+			return nil, err
+		}
+		return output, nil
+	case "application/json":
+		if err := json.Unmarshal(input, &obj); err != nil {
+			return nil, err
+		}
+
+		doCleanup(obj)
+
+		output, err := json.Marshal(obj)
 		if err != nil {
 			return nil, err
 		}
@@ -105,5 +122,4 @@ func cleanup(contentType string, input []byte) ([]byte, error) {
 	default:
 		return input, nil
 	}
-
 }
