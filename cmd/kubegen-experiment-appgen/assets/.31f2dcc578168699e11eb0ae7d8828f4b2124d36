@@ -1,17 +1,14 @@
 {
-  "kind": "List",
   "apiVersion": "v1",
-  "metadata": {},
   "items": [
     {
-      "kind": "Deployment",
       "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
       "metadata": {
-        "name": "nginx",
-        "creationTimestamp": null,
         "labels": {
           "name": "nginx"
-        }
+        },
+        "name": "nginx"
       },
       "spec": {
         "replicas": 1,
@@ -22,7 +19,6 @@
         },
         "template": {
           "metadata": {
-            "creationTimestamp": null,
             "labels": {
               "name": "nginx"
             }
@@ -30,15 +26,7 @@
           "spec": {
             "containers": [
               {
-                "name": "nginx",
                 "image": "nginx",
-                "ports": [
-                  {
-                    "name": "nginx",
-                    "containerPort": 80
-                  }
-                ],
-                "resources": {},
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -47,6 +35,13 @@
                   "initialDelaySeconds": 300,
                   "periodSeconds": 3
                 },
+                "name": "nginx",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "name": "nginx"
+                  }
+                ],
                 "readinessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -58,20 +53,17 @@
               }
             ]
           }
-        },
-        "strategy": {}
-      },
-      "status": {}
+        }
+      }
     },
     {
-      "kind": "Service",
       "apiVersion": "v1",
+      "kind": "Service",
       "metadata": {
-        "name": "nginx",
-        "creationTimestamp": null,
         "labels": {
           "name": "nginx"
-        }
+        },
+        "name": "nginx"
       },
       "spec": {
         "ports": [
@@ -84,10 +76,8 @@
         "selector": {
           "name": "nginx"
         }
-      },
-      "status": {
-        "loadBalancer": {}
       }
     }
-  ]
+  ],
+  "kind": "List"
 }

@@ -1,17 +1,14 @@
 {
-  "kind": "List",
   "apiVersion": "v1",
-  "metadata": {},
   "items": [
     {
-      "kind": "Deployment",
       "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
       "metadata": {
-        "name": "test",
-        "creationTimestamp": null,
         "labels": {
           "name": "test"
-        }
+        },
+        "name": "test"
       },
       "spec": {
         "replicas": 100,
@@ -22,7 +19,6 @@
         },
         "template": {
           "metadata": {
-            "creationTimestamp": null,
             "labels": {
               "name": "test"
             }
@@ -30,32 +26,28 @@
           "spec": {
             "containers": [
               {
-                "name": "test",
                 "image": "foo/bar/test",
+                "name": "test",
                 "ports": [
                   {
-                    "name": "test",
-                    "containerPort": 80
+                    "containerPort": 80,
+                    "name": "test"
                   }
-                ],
-                "resources": {}
+                ]
               }
             ]
           }
-        },
-        "strategy": {}
-      },
-      "status": {}
+        }
+      }
     },
     {
-      "kind": "Service",
       "apiVersion": "v1",
+      "kind": "Service",
       "metadata": {
-        "name": "test",
-        "creationTimestamp": null,
         "labels": {
           "name": "test"
-        }
+        },
+        "name": "test"
       },
       "spec": {
         "ports": [
@@ -68,10 +60,8 @@
         "selector": {
           "name": "test"
         }
-      },
-      "status": {
-        "loadBalancer": {}
       }
     }
-  ]
+  ],
+  "kind": "List"
 }
