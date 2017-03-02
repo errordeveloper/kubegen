@@ -92,29 +92,36 @@ func doCleanup(obj map[string]interface{}) {
 	})
 }
 
-func cleanup(contentType string, input []byte) ([]byte, error) {
+func cleanup(contentType string, input []byte, pretty bool) ([]byte, error) {
 	obj := make(map[string]interface{})
+	var (
+		output []byte
+		err    error
+	)
 	switch contentType {
 	case "application/yaml":
-		if err := yaml.Unmarshal(input, &obj); err != nil {
+		if err = yaml.Unmarshal(input, &obj); err != nil {
 			return nil, err
 		}
 
 		doCleanup(obj)
 
-		output, err := yaml.Marshal(obj)
-		if err != nil {
+		if output, err = yaml.Marshal(obj); err != nil {
 			return nil, err
 		}
 		return output, nil
 	case "application/json":
-		if err := json.Unmarshal(input, &obj); err != nil {
+		if err = json.Unmarshal(input, &obj); err != nil {
 			return nil, err
 		}
 
 		doCleanup(obj)
 
-		output, err := json.Marshal(obj)
+		if pretty {
+			output, err = json.MarshalIndent(obj, "", "  ")
+		} else {
+			output, err = json.Marshal(obj)
+		}
 		if err != nil {
 			return nil, err
 		}

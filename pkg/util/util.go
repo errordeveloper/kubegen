@@ -60,10 +60,11 @@ func Encode(object runtime.Object, contentType string, pretty bool) ([]byte, err
 		return nil, fmt.Errorf("kubegen/util: error encoding object to %q – %v", contentType, err)
 	}
 
-	return cleanup(contentType, data)
+	return cleanup(contentType, data, pretty)
 }
 
 func EncodeList(list *api.List, contentType string, pretty bool) ([]byte, error) {
+	// TODO use JSON for the first pass
 	codec, err := makeCodec(contentType, pretty)
 	if err != nil {
 		return nil, fmt.Errorf("kubegen/util: error creating codec for %q – %v", contentType, err)
@@ -79,7 +80,7 @@ func EncodeList(list *api.List, contentType string, pretty bool) ([]byte, error)
 		return nil, fmt.Errorf("kubegen/util: error encoding list to %q – %v", contentType, err)
 	}
 
-	return cleanup(contentType, data)
+	return cleanup(contentType, data, pretty)
 }
 
 func DumpListToFiles(list *api.List, contentType string) ([]string, error) {
