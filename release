@@ -44,7 +44,7 @@ EOF
 
 source "${secrets}"
 
-version="${TRAVIS_BRANCH}-${TRAVIS_COMMIT:8}"
+version="${TRAVIS_BRANCH}-${TRAVIS_COMMIT:0:8}"
 channel='latest'
 
 if [ -n "${TRAVIS_TAG}" ]; then
@@ -65,7 +65,7 @@ case "${TRAVIS_OS_NAME}" in
     ;;
 esac
 
-curl --silent --location "${equinox}" | tar -vzx
+curl --silent --location "${equinox}" | tar -zx
 
 ./equinox release \
   --platforms="${platforms}" \
