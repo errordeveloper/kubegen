@@ -21,6 +21,13 @@ func init() {
 		{"bundle", "--stdout", ".examples/sockshop-prod.yml"},
 		{"bundle", "--stdout", ".examples/weavecloud.yml"},
 		{"bundle", "--stdout", ".examples/weavecloud.yml", ".examples/sockshop-prod.yml"},
+		{"module", "--output=json", "--stdout=true", ".examples/modules/sockshop"},
+		{"module", "--output=json", "-s", ".examples/modules/sockshop", "-v", "image_registry=gcr.io/sockshop"},
+		{"module", "--output=json", "-s", ".examples/modules/sockshop", "-v", "image_registry=quay.io/sockshop"},
+		{"module", "--output=json", "-s", ".examples/modules/weavecloud", "-v", "service_token=abc123"},
+		{"bundle", "--output=json", "--stdout", ".examples/sockshop-prod.yml"},
+		{"bundle", "--output=json", "--stdout", ".examples/weavecloud.yml"},
+		{"bundle", "--output=json", "--stdout", ".examples/weavecloud.yml", ".examples/sockshop-prod.yml"},
 	}
 
 	for _, command := range commands {
