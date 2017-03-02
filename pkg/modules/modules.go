@@ -163,8 +163,27 @@ func (b *Bundle) EncodeAllToYAML() ([]byte, error) {
 }
 
 func (b *Bundle) EncodeAllToJSON() ([]byte, error) {
-	// TODO figure out how are we gonna merge lists
-	return nil, nil
+	output := []byte{}
+
+	for n, i := range b.loadedModules {
+		groups, err := i.EncodeGroupsToJSON(b.Modules[n])
+		if err != nil {
+			return nil, err
+		}
+
+		sortedGroups := []string{}
+		for manifestPath, _ := range groups {
+			sortedGroups = append(sortedGroups, manifestPath)
+		}
+
+		sort.Strings(sortedGroups)
+
+		for _, manifestPath := range sortedGroups {
+			output = append(output, groups[manifestPath]...)
+		}
+	}
+
+	return output, nil
 }
 
 func NewModule(dir, instanceName string) (*Module, error) {
@@ -381,9 +400,22 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 
 func (m *Module) EncodeGroupsToJSON(instance ModuleInstance) (map[string][]byte, error) {
 	output := make(map[string][]byte)
-	_, err := m.MakeGroups(instance.Name, instance.Namespace)
+	groups, err := m.MakeGroups(instance.Name, instance.Namespace)
 	if err != nil {
 		return nil, err
+	}
+
+	for manifestPath, group := range groups {
+		data, err := group.EncodeListToJSON()
+		if err != nil {
+			return nil, err
+		}
+
+		if data == nil {
+			continue
+		}
+
+		output[manifestPath] = data
 	}
 
 	return output, nil
