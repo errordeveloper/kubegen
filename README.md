@@ -6,7 +6,8 @@ Writing good resource templates is hard, whether you are rolling your own or usi
 ***The aim of this project is to make it easier to write reusable Kubernetes resource definitions.***
 
 > It should be useful as is, but it's ambition is to drive the community towards an improvement
-upstream. However, please note that it is **WORK IN PROGRESS** rigth now.
+upstream (so I'd hope that Helm and other related project could make use of one standard format).
+However, please note that it is **WORK IN PROGRESS** rigth now.
 
 ## Motivation & High-level Goals
 
