@@ -8,7 +8,7 @@ ConfigMaps:
       name: "weave-cortex-agent-config"
       weave-cloud-component: "cortex"
       weave-cortex-component: "agent-config"
-    dataToYAML:
+    encodeAsYAML:
       prometheus.yml:
         global:
           scrape_interval: 15s

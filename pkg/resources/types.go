@@ -20,6 +20,7 @@ type Group struct {
 	DaemonSets   []DaemonSet   `yaml:"DaemonSets" hcl:"daemonset"`
 	StatefulSets []StatefulSet `yaml:"StatefulSet" hcl:"statefulset"`
 	ConfigMaps   []ConfigMap   `yaml:"ConfigMaps" hcl:"configmap"`
+	Secrets      []Secret      `yaml:"Secrets" hcl:"secret"`
 }
 
 type Metadata struct {
@@ -85,9 +86,20 @@ type ConfigMap struct {
 	Name          string `yaml:"name" hcl:",key" deepcopier:"skip"`
 	Metadata      `yaml:",inline" hcl:",squash" deepcopier:"skip"`
 	Data          map[string]string      `yaml:"data,omitempty" hcl:"data"`
-	DataFromFiles []string               `yaml:"dataFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
-	DataToJSON    map[string]interface{} `yaml:"dataToJSON,omitempty" hcl:"data_to_json" deepcopier:"skip"`
-	DataToYAML    map[string]interface{} `yaml:"dataToYAML,omitempty" hcl:"data_to_yaml" deepcopier:"skip"`
+	ReadFromFiles []string               `yaml:"readFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
+	EncodeAsJSON  map[string]interface{} `yaml:"encodeAsJSON,omitempty" hcl:"encode_as_json" deepcopier:"skip"`
+	EncodeAsYAML  map[string]interface{} `yaml:"encodeAsYAML,omitempty" hcl:"encode_as_yaml" deepcopier:"skip"`
+}
+
+type Secret struct {
+	Name          string `yaml:"name" hcl:",key" deepcopier:"skip"`
+	Metadata      `yaml:",inline" hcl:",squash" deepcopier:"skip"`
+	Data          map[string][]byte      `yaml:"data,omitempty" hcl:"data"`
+	StringData    map[string]string      `json:"stringData,omitempty" hcl:"string_data"`
+	ReadFromFiles []string               `yaml:"readFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
+	EncodeAsJSON  map[string]interface{} `yaml:"encodeAsJSON,omitempty" hcl:"encode_as_json" deepcopier:"skip"`
+	EncodeAsYAML  map[string]interface{} `yaml:"encodeAsYAML,omitempty" hcl:"encode_as_yaml" deepcopier:"skip"`
+	Type          v1.SecretType          `yaml:"type,omitempty" hcl:"type"`
 }
 
 type Pod struct {

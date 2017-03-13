@@ -14,7 +14,7 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
-func (i ConfigMap) ToObject(localGroup *Group) (runtime.Object, error) {
+func (i Secret) ToObject(localGroup *Group) (runtime.Object, error) {
 	obj, err := i.Convert(localGroup)
 	if err != nil {
 		return runtime.Object(nil), err
@@ -22,46 +22,46 @@ func (i ConfigMap) ToObject(localGroup *Group) (runtime.Object, error) {
 	return runtime.Object(obj), nil
 }
 
-func (i *ConfigMap) Convert(localGroup *Group) (*v1.ConfigMap, error) {
+func (i *Secret) Convert(localGroup *Group) (*v1.Secret, error) {
 	meta := i.Metadata.Convert(i.Name, localGroup)
 
-	configMap := v1.ConfigMap{
+	secret := v1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
+			Kind:       "Secret",
 			APIVersion: "v1",
 		},
 		ObjectMeta: meta,
 	}
 
-	deepcopier.Copy(i).To(&configMap)
+	deepcopier.Copy(i).To(&secret)
 
-	if len(configMap.Data) == 0 {
-		configMap.Data = make(map[string]string)
+	if len(secret.Data) == 0 {
+		secret.Data = make(map[string][]byte)
 	}
 
 	for _, v := range i.ReadFromFiles {
 		data, err := ioutil.ReadFile(v)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read ConfigMap %q data from file %q – %v", v, err)
+			return nil, fmt.Errorf("cannot read Secret %q data from file %q – %v", v, err)
 		}
-		configMap.Data[v] = string(data)
+		secret.Data[v] = data
 	}
 
 	for k, v := range i.EncodeAsJSON {
 		data, err := json.Marshal(v)
 		if err != nil {
-			return nil, fmt.Errorf("cannot convert ConfigMap %q data to JSON – %v", v, err)
+			return nil, fmt.Errorf("cannot convert Secret %q data to JSON – %v", v, err)
 		}
-		configMap.Data[k] = string(data)
+		secret.Data[k] = data
 	}
 
 	for k, v := range i.EncodeAsYAML {
 		data, err := yaml.Marshal(v)
 		if err != nil {
-			return nil, fmt.Errorf("cannot convert ConfigMap %q data to YAML – %v", v, err)
+			return nil, fmt.Errorf("cannot convert Secret %q data to YAML – %v", v, err)
 		}
-		configMap.Data[k] = string(data)
+		secret.Data[k] = data
 	}
 
-	return &configMap, nil
+	return &secret, nil
 }
