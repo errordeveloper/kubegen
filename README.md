@@ -9,6 +9,11 @@ Writing good resource templates is hard, whether you are rolling your own or usi
 upstream (so I'd hope that Helm and other related project could make use of one standard format).
 However, please note that it is **WORK IN PROGRESS** rigth now.
 
+## TL;DR
+
+- [***Download***][dl]
+- [***Usage***](#usage)
+
 ## Motivation & High-level Goals
 
 First of all, it should be simple to define a Kubernetes resource, users should be able to specify key fields required
@@ -118,7 +123,7 @@ as it is still in active development.
 
 You can build it from source, if you wish to hack on it, otherwise you can download [binaries from Equinox][dl].
 
-[dl]: (https://dl.equinox.io/errordeveloper/kubegen/latest).
+[dl]: https://dl.equinox.io/errordeveloper/kubegen/latest
 
 #### Sub-command: `kubegen bundle`
 
