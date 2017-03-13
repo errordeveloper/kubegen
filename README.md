@@ -120,19 +120,99 @@ You can build it from source, if you wish to hack on it, otherwise you can downl
 
 [dl]: (https://dl.equinox.io/errordeveloper/kubegen/latest).
 
-#### `kubegen module`
+#### Sub-command: `kubegen bundle`
 
-This command is designed for testing how individual modules render with different parameters supplied as command-line flags.
+This sub-command takes path to a module bundle and generates Kubernetes resources for modules included in the bundle.
+Any variables should be specified in in the bundle manifest. This command is the primary interface for day-to-day
+usage of `kubegen`.
 
-TODO: flags and usage with examples in the repo
 
-#### `kubegen bundle`
+***Usage: `kubegen bundle <bundleManifest> ... [flags]`***
 
-TODO: description
+***Flags***
+```
+  -m, --module stringSlice   Names of modules to process (all modules in each given bundle are processed by defult)
+```
 
-TODO: flags and usage with examples in the repo
+***Global Flags***
+```
+  -o, --output string   Output format ["yaml" or "json"] (default "yaml")
+  -s, --stdout          Output to stdout instead of creating files
+```
 
-#### `kubegen self-upgrade`
+***Examples***
+
+Render `sockshop` bundle that instantiates the `sockshop` module for two environments (`test` and `prod`):
+```console
+> kubegen bundle examples/sockshop.yml
+Wrote 18 files based on bundle manifest "examples/sockshop.yml":
+  – sockshop-test.d/cart.yaml
+  – sockshop-test.d/orders.yaml
+  – sockshop-test.d/payment.yaml
+  – sockshop-test.d/zipkin.yaml
+  – sockshop-test.d/rabbitmq.yaml
+  – sockshop-test.d/shipping.yaml
+  – sockshop-test.d/user.yaml
+  – sockshop-test.d/catalogue.yaml
+  – sockshop-test.d/front-end.yaml
+  – sockshop-prod.d/rabbitmq.yaml
+  – sockshop-prod.d/zipkin.yaml
+  – sockshop-prod.d/orders.yaml
+  – sockshop-prod.d/shipping.yaml
+  – sockshop-prod.d/catalogue.yaml
+  – sockshop-prod.d/front-end.yaml
+  – sockshop-prod.d/user.yaml
+  – sockshop-prod.d/cart.yaml
+  – sockshop-prod.d/payment.yaml
+```
+
+#### Sub-command: `kubegen module`
+
+This sub-command take path to a module and generates Kubernetes resources defined within that module. Any variables should
+be specified `--variables` flag. It is convenient for testing.
+
+***Usage: `kubegen module <moduleSourceDir> [flags]`***
+
+***Flags***
+```
+  -n, --name string             Name of the module instance (optional) (default "$(basename <source-dir>)")
+  -N, --namespace string        Namespace of the module instance (optional)
+  -O, --output-dir string       Output directory (default "./<name>")
+  -v, --variables stringSlice   Variables to set for the module instance
+```
+
+***Global Flags***
+```
+  -o, --output string   Output format ["yaml" or "json"] (default "yaml")
+  -s, --stdout          Output to stdout instead of creating files
+```
+
+***Examples***
+
+Render `sockshop` module and view the output:
+```
+> kubegen module examples/modules/sockshop --stdout | less
+```
+
+Render `sockshop` module to standard output and see what `kubectl apply` would do (dry-run mode):
+```
+> kubegen module examples/modules/sockshop --stdout --namespace sockshop-test-1 | kubectl apply --dry-run --filename -
+service "cart" created (dry run)
+service "cart-db" created (dry run)
+deployment "cart" created (dry run)
+deployment "cart-db" created (dry run)
+service "catalogue" created (dry run)
+service "catalogue-db" created (dry run)
+...
+deployment "user-db" created (dry run)
+service "zipkin" created (dry run)
+service "zipkin-mysql" created (dry run)
+deployment "zipkin" created (dry run)
+deployment "zipkin-mysql" created (dry run)
+deployment "zipkin-cron" created (dry run)
+```
+
+#### Sub-command `kubegen self-upgrade`
 
 This command allows you simply upgrade the binary you have downloaded to latest version.
 
