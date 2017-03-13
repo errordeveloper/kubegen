@@ -11,9 +11,13 @@ However, please note that it is **WORK IN PROGRESS** rigth now.
 
 ## Motivation & High-level Goals
 
-Motivation: it should be simple to define a Kubernetes resource,
+First of all, it should be simple to define a Kubernetes resource, users should be able to specify key fields required
+for a basic resource without refering to documentation.
 
-As a black box, it could be described as the following:
+Secondly, there should exist a simple model for defining collections of re-usable resources, let's call
+them modules.
+
+As a black box, a module could be described as the following:
 
 ***Given a set of input values, produce a set of Kubernetes resource that belong to one logical group.***
 
@@ -27,8 +31,10 @@ Additionally, it should have the following properties:
 
   - simple and contsrained type system for input parameters
   - simple rules of inheritance and scoping
+  - familiar syntax
   - all state is local
   - remote state can be obtain easily, but only to be used as input parameters
+  - few simple helpers for reading local files to store as data
   - absence of any module/package management features
   - absence of resource dependency management system
   - absence of dangerous toys
