@@ -17,10 +17,23 @@ bd2Ua3/c7IRUyPpqm/bn4PIIXEI4/VbrYKcxNbGj75xPEA1eEzPoSstN+0V/2SSX
 -----END ECDSA PUBLIC KEY-----
 `)
 
+var doUpgrade bool
+
 var selfUpgradeCmd = &cobra.Command{
-	Use:   "self-upgrade",
+	Use:   "self-upgrade [--yes]",
 	Short: "Upgrade kubegen to latest version",
 	RunE:  selfUpgradeFn,
+}
+
+func init() {
+	selfUpgradeCmd.Flags().BoolVarP(&doUpgrade, "yes", "y", false, "Confirm upgrade")
+	selfUpgradeCmd.SetUsageFunc(func(cmd *cobra.Command) error {
+		fmt.Printf("%s\n\nUsage:\n  kubegen %s\n", cmd.Short, cmd.Use)
+		return nil
+	})
+	selfUpgradeCmd.SetHelpFunc(func(cmd *cobra.Command, _ []string) {
+		cmd.Usage()
+	})
 }
 
 func selfUpgradeFn(cmd *cobra.Command, args []string) error {
@@ -33,18 +46,20 @@ func selfUpgradeFn(cmd *cobra.Command, args []string) error {
 	resp, err := equinox.Check(equinoxAppID, opts)
 	switch {
 	case err == equinox.NotAvailableErr:
-		fmt.Println("No update available, already at the latest version!")
-		return nil
+		return fmt.Errorf("No update available, already at the latest version!")
 	case err != nil:
 		return err
 	}
 
-	// TODO can ask user for confirmation and print binary path etc
-	err = resp.Apply()
-	if err != nil {
-		return err
-	}
+	if doUpgrade {
+		err = resp.Apply()
+		if err != nil {
+			return err
+		}
 
-	fmt.Printf("Updated to new version: %s!\n", resp.ReleaseVersion)
+		fmt.Printf("Upgraded to new version: %s!\n", resp.ReleaseVersion)
+	} else {
+		fmt.Println("New version available, please provide --yes to confirm upgrade.")
+	}
 	return nil
 }
