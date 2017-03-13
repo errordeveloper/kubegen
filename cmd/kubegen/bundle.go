@@ -20,11 +20,6 @@ var bundleCmd = &cobra.Command{
 }
 
 func init() {
-	bundleCmd.Flags().BoolVarP(&stdout, "stdout", "s", false,
-		"Output to stdout instead of creating files")
-	bundleCmd.Flags().StringVarP(&format, "output", "o", "yaml",
-		"Output format [\"yaml\" or \"json\"]")
-
 	bundleCmd.Flags().StringSliceVarP(&selectModules, "module", "m", []string{},
 		"Names of modules to process (all modules in each given bundle are processed by defult)")
 
