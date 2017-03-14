@@ -6,7 +6,7 @@ Writing good resource templates is hard, whether you are rolling your own or usi
 ***The aim of this project is to make it easier to write reusable Kubernetes resource definitions.***
 
 > It should be useful as is, but it's ambition is to drive the community towards an improvement
-upstream (so I'd hope that Helm and other related project could make use of one standard format).
+upstream (so I'd hope that Helm and other related project could make use of one standard format, see [issue #16](https://github.com/errordeveloper/kubegen/issues/16)).
 However, please note that it is **WORK IN PROGRESS** rigth now.
 
 ## TL;DR
