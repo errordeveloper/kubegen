@@ -21,11 +21,13 @@ type ModuleInstance struct {
 	SourceDir string                 `yaml:"SourceDir" json:"SourceDir" hcl:"source_dir"`
 	OutputDir string                 `yaml:"OutputDir" json:"OutputDir" hcl:"output_dir"`
 	Variables map[string]interface{} `yaml:"Variables,omitempty" json:"Variables,omitempty" hcl:"variables"`
+	Partials  map[string]interface{} `yaml:"Partials,omitempty" json:"Partials,omitempty" hcl:"partials"`
 }
 
 type Module struct {
 	Kind             string            `yaml:"Kind" json:"Kind" hcl:"kind"`
-	Variables        []ModuleVariable  `yaml:"Variables,omitempty" json:"Variables" hcl:"variable"`
+	Variables        []ModuleVariable  `yaml:"Variables,omitempty" json:"Variables,omitempty" hcl:"variable"`
+	Partials         []ModulePartial   `yaml:"Partials,omitempty" json:"Partials,omitempty" hcl:"partial"`
 	manifests        map[string][]byte `yaml:"-" json:"-" hcl:"-"`
 	path             string            `yaml:"-" json:"-" hcl:"-"`
 	IncludeManifests []RawResource     `yaml:"Include" json:"Include" hcl:"include"`
@@ -42,4 +44,9 @@ type ModuleVariable struct {
 	Type     string      `yaml:"type" json:"type" hcl:"type"`
 	Required bool        `yaml:"required" json:"required" hcl:"required"`
 	Default  interface{} `yaml:"default" json:"default" hcl:"default"`
+}
+
+type ModulePartial struct {
+	Name string `yaml:"name" json:"name" hcl:",key"`
+	Spec map[string]interface{}
 }
