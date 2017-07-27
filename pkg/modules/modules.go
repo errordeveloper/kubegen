@@ -21,7 +21,7 @@ import (
 // TODO report unknown keys in manifests
 // TODO bail on unknown variable keys
 
-func loadFromPath(obj interface{}, data []byte, sourcePath string, instanceName string) error {
+func loadObj(obj interface{}, data []byte, sourcePath string, instanceName string) error {
 	var errorFmt string
 	if instanceName != "" {
 		errorFmt = fmt.Sprintf("error loading module %q source", instanceName)
@@ -59,7 +59,7 @@ func NewBundle(bundlePath string) (*Bundle, error) {
 			bundlePath, err)
 	}
 
-	if err := loadFromPath(b, data, bundlePath, ""); err != nil {
+	if err := loadObj(b, data, bundlePath, ""); err != nil {
 		return nil, err
 	}
 	if b.Kind != BundleKind {
@@ -212,7 +212,7 @@ func NewModule(dir, instanceName string) (*Module, error) {
 				"error reading file %q in module %q – %v",
 				file.Name(), dir, err)
 		}
-		if err := loadFromPath(m, data, manifestPath, instanceName); err != nil {
+		if err := loadObj(m, data, manifestPath, instanceName); err != nil {
 			return nil, err
 		}
 		if m.Kind != ModuleKind {
@@ -369,7 +369,7 @@ func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resource
 	for manifestPath, data := range m.manifests {
 		// TODO also do something about multiple formats here
 		group := resources.Group{}
-		if err := loadFromPath(&group, data, manifestPath, instanceName); err != nil {
+		if err := loadObj(&group, data, manifestPath, instanceName); err != nil {
 			return nil, err
 		}
 
