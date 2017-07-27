@@ -1,3 +1,5 @@
+Kind: "kubegen.k8s.io/Module.v1alpha1"
+
 Deployments:
 
 - name: payment

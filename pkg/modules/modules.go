@@ -19,7 +19,6 @@ import (
 )
 
 // TODO report unknown keys in manifests
-// TODO require Type key to be set in manifests and bundles
 // TODO bail on unknown variable keys
 
 func loadFromPath(obj interface{}, data []byte, sourcePath string, instanceName string) error {
@@ -55,11 +54,18 @@ func NewBundle(bundlePath string) (*Bundle, error) {
 
 	data, err := ioutil.ReadFile(bundlePath)
 	if err != nil {
-		return nil, fmt.Errorf("error reading bundle manifest file %q – %v", bundlePath, err)
+		return nil, fmt.Errorf(
+			"error reading bundle manifest file %q – %v",
+			bundlePath, err)
 	}
 
 	if err := loadFromPath(b, data, bundlePath, ""); err != nil {
 		return nil, err
+	}
+	if b.Kind != BundleKind {
+		return nil, fmt.Errorf(
+			"error loading bundle manifest %q – unrecognised `Kind: %q`, must be %q",
+			bundlePath, b.Kind, BundleKind)
 	}
 
 	return b, nil
@@ -202,12 +208,21 @@ func NewModule(dir, instanceName string) (*Module, error) {
 		manifestPath := path.Join(dir, file.Name())
 		data, err := ioutil.ReadFile(manifestPath)
 		if err != nil {
-			return nil, fmt.Errorf("error reading file %q in module %q – %v", file.Name(), dir, err)
+			return nil, fmt.Errorf(
+				"error reading file %q in module %q – %v",
+				file.Name(), dir, err)
 		}
 		if err := loadFromPath(m, data, manifestPath, instanceName); err != nil {
 			return nil, err
 		}
+		if m.Kind != ModuleKind {
+			return nil, fmt.Errorf(
+				"error loading file %q in module %q – unrecognised `Kind: %q`, must be %q",
+				file.Name(), dir, m.Kind, ModuleKind)
+		}
+		// Variables are scoped globally, here we collect them
 		module.Variables = append(module.Variables, m.Variables...)
+		// The module itself isn't something we can parse 100% yet, so we only store it as a string
 		module.manifests[manifestPath] = data
 	}
 

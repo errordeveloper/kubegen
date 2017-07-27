@@ -1,3 +1,4 @@
+Kind: "kubegen.k8s.io/Module.v1alpha1"
 ## Mixed formats (HCL/YAML/JSON) are supported, we use YAML here as we are inlining
 ## a Prometeus config, and it's kind of much nicer this way... we could use `data_from_files`,
 ## but we cannot (yet) parse files as templates.

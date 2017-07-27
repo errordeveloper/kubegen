@@ -1,6 +1,12 @@
 package modules
 
+const (
+	ModuleKind = "kubegen.k8s.io/Module.v1alpha1"
+	BundleKind = "kubegen.k8s.io/Bundle.v1alpha1"
+)
+
 type Bundle struct {
+	Kind          string           `yaml:"Kind" json:"Kind" hcl:"kind"`
 	Name          string           `yaml:"Name" json:"Name" hcl:"name"`
 	Namespace     string           `yaml:"Namespace,omitempty" json:"Namespace,omitempty" hcl:"namespace"`
 	Description   string           `yaml:"Description,omitempty" json:"Description" hcl:"description"`
@@ -18,6 +24,7 @@ type ModuleInstance struct {
 }
 
 type Module struct {
+	Kind             string            `yaml:"Kind" json:"Kind" hcl:"kind"`
 	Variables        []ModuleVariable  `yaml:"Variables,omitempty" json:"Variables" hcl:"variable"`
 	manifests        map[string][]byte `yaml:"-" json:"-" hcl:"-"`
 	path             string            `yaml:"-" json:"-" hcl:"-"`

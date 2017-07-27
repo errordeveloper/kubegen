@@ -1,10 +1,14 @@
+Kind: kubegen.k8s.io/Bundle.v1alpha1
+
 Modules:
+
   - Name: "weavecloud"
     SourceDir: "modules/weavecloud"
     OutputDir: "prod/weavecloud"
     Variables:
       flux_replicas: 100
       service_token: "foobarbaz"
+
   - Name: "weavecloud"
     SourceDir: "modules/weavecloud"
     OutputDir: "dev/weavecloud"

@@ -1,3 +1,5 @@
+kind = "kubegen.k8s.io/Module.v1alpha1"
+
 namespace = "kube-system"
 
 deployment "weave-cortex-agent" {
