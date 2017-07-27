@@ -1,0 +1,11 @@
+Kind: kubegen.k8s.io/Module.v1alpha1
+
+Partials:
+  - Name: bar
+    Spec:
+      bar: foo
+      foo: [false, true]
+  - Name: foo
+    Spec:
+      foo: bar
+      bar: [true, false]
