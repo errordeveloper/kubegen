@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/d4l3k/go-highlight"
+	// TODO; take a good look at https://github.com/sourcegraph/syntaxhighlight
 	"github.com/docker/docker/pkg/term"
 )
 
