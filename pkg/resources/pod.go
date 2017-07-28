@@ -45,6 +45,14 @@ func (i *Container) Convert(volumes []v1.Volume) (*v1.Container, error) {
 
 	i.maybeAddEnvVars(&container)
 
+	// Ensure that any singleton unnamed port inherits the
+	// name from the container's name
+	if len(i.Ports) == 1 {
+		if i.Ports[0].Name == "" {
+			i.Ports[0].Name = container.Name
+		}
+	}
+
 	// you'd think the types could be simply converted,
 	// but it turns out they won't because tags are different...
 	// Fortunatelly, this has changed in Go1.8!
