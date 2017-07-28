@@ -1,23 +1,22 @@
 Kind: "kubegen.k8s.io/Module.v1alpha1"
 
 Partials:
-  - Name: "mongo"
+  - Name: mongo
     Spec:
       replicas: 1
       containers:
       - name: mongo
         image: mongo
         ports:
-        - name: mongo
-          containerPort: 27017
+        - containerPort: 27017
         securityContext:
           capabilities:
             drop:
-              - all
+            - all
             add:
-              - CHOWN
-              - SETGID
-              - SETUID
+            - CHOWN
+            - SETGID
+            - SETUID
           readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: /tmp

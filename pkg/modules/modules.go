@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/ghodss/yaml"
+	"github.com/imdario/mergo"
 	"github.com/mitchellh/reflectwalk"
 
 	"github.com/errordeveloper/kubegen/pkg/resources"
@@ -52,22 +53,41 @@ func loadObj(obj interface{}, data []byte, sourcePath string, instanceName strin
 	return nil
 }
 
-func loadObj2(obj interface{}, data []byte, sourcePath string, instanceName string) error {
+func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
 	tobj := new(interface{})
 
 	if err := loadObj(tobj, data, sourcePath, instanceName); err != nil {
 		return err
 	}
 
-	//fn := func(wd interface{}) (interface{}, error) {
-	//	//fmt.Printf("wd: %#v\n", wd)
-	//	return wd, nil
-	//}
-	w := &interpolationWalker{} //{F: fn, Replace: false}
+	w := &interpolationWalker{
+		FindKey: "kubegen.fromPartial",
+		Callback: func(m map[string]interface{}) (map[string]interface{}, error) {
+			partialName := m["kubegen.fromPartial"]
+			partialNotFound := true
+			for _, p := range moduleContext.Partials {
+				if p.Name == partialName {
+					partialNotFound = false
+					if err := mergo.Merge(&m, p.Spec); err != nil {
+						return nil, fmt.Errorf(
+							"error while merging partial %q for %q (%q)",
+							partialName, instanceName, sourcePath)
+					}
+				}
+			}
+			if partialNotFound {
+				return nil, fmt.Errorf(
+					"patial %q not found in module %q (%q)",
+					partialName, instanceName, sourcePath)
+			}
+			return m, nil
+		},
+	}
+
 	if err := reflectwalk.Walk(tobj, w); err != nil {
 		return fmt.Errorf(
 			"error while walking %q (%q): %v",
-			err, instanceName, sourcePath)
+			instanceName, sourcePath, err)
 	}
 
 	{
@@ -418,7 +438,7 @@ func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resource
 	for manifestPath, data := range m.manifests {
 		// TODO also do something about multiple formats here
 		group := resources.Group{}
-		if err := loadObj2(&group, data, manifestPath, instanceName); err != nil {
+		if err := loadObjWithModuleContext(&group, data, manifestPath, instanceName, m); err != nil {
 			return nil, err
 		}
 

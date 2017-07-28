@@ -38,7 +38,8 @@ Deployments:
       medium: Memory
 
 - name: cart-db
-  fromPartial: mongo
+  kubegen.fromPartial: mongo
+  replicas: 2
 
 Services:
 
@@ -48,6 +49,6 @@ Services:
   ports:
   - name: http
 
-  #- name: cart-db
-  #  ports:
-  #  - name: mongo
+- name: cart-db
+  ports:
+  - name: mongo
