@@ -5,7 +5,7 @@ Partials:
     Spec:
       replicas: 1
       containers:
-      - name: cart-db
+      - name: mongo
         image: mongo
         ports:
         - name: mongo

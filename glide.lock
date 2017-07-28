@@ -1,8 +1,8 @@
-hash: 8802a5d882ecb2d08ca87ff84832b897fcd25420bb3644a5e1431cef0186f179
-updated: 2017-02-24T14:06:39.52655332Z
+hash: d5fcff87f5966c54176779c3c32bf94a9c82a725b73f067d6be7ebffee59c2d0
+updated: 2017-07-28T10:47:05.697296148+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
-  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
+  version: 388960b655244e76e24c75f48631564eaefade62
   subpackages:
   - winterm
 - name: github.com/d4l3k/go-highlight
@@ -32,6 +32,12 @@ imports:
   - swagger
 - name: github.com/equinox-io/equinox
   version: 6f97d0d3970881d3e53dd6f547a41109eb055e54
+  subpackages:
+  - internal/go-update
+  - internal/go-update/internal/binarydist
+  - internal/go-update/internal/osext
+  - internal/osext
+  - proto
 - name: github.com/errordeveloper/testcli
   version: c3cf1050baf4b6f38358757401d041e83a758c8a
 - name: github.com/fatih/color
@@ -56,11 +62,11 @@ imports:
 - name: github.com/golang/glog
   version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/google/gofuzz
-  version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
+  version: bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5
 - name: github.com/guregu/null
   version: 41961cea0328defc5f95c1c473f89ebf0d1813f6
 - name: github.com/hashicorp/hcl
-  version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
+  version: 392dba7d905ed5d04a5794ba89f558b27e2ba1ca
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -77,7 +83,7 @@ imports:
 - name: github.com/jinzhu/copier
   version: 8bfca8a02a0ce12119cdc4974143c834ca589257
 - name: github.com/lib/pq
-  version: ba5d4f7a35561e22fbdf7a39aa0070f4d460cfc0
+  version: dd1fe2071026ce53f36a39112e645b4d4f5793a4
   subpackages:
   - oid
 - name: github.com/mailru/easyjson
@@ -90,22 +96,26 @@ imports:
   version: 6c903ff4aa50920ca86087a280590b36b3152b9c
 - name: github.com/mattn/go-isatty
   version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+- name: github.com/mitchellh/copystructure
+  version: d23ffcb85de31694d6ccaa23ccb4a03e55c1303f
+- name: github.com/mitchellh/reflectwalk
+  version: 63d60e9d0dbc60cf9164e6510889b0db6683d98c
 - name: github.com/oleiade/reflections
   version: 0e86b3c98b2ff33e30c85cfe97d9a63d439fe7eb
 - name: github.com/pkg/errors
-  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/PuerkitoBio/purell
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/Sirupsen/logrus
-  version: 55eb11d21d2a31a3cc93838241d04800f52e823d
+  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
 - name: github.com/spf13/cobra
-  version: 92ea23a837e66f46ac9e7d04fa826602b7b0a42d
+  version: f62e98d28ab7ad31d707ba837a966378465c7b57
 - name: github.com/spf13/pflag
   version: 5ccb023bc27df288a957c5e994cd44fd19619465
 - name: github.com/stretchr/testify
-  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
+  version: 05e8a0eda380579888eb53c394909df027f06991
   subpackages:
   - assert
 - name: github.com/ugorji/go

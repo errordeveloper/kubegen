@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/ghodss/yaml"
+	"github.com/mitchellh/reflectwalk"
 
 	"github.com/errordeveloper/kubegen/pkg/resources"
 	"github.com/errordeveloper/kubegen/pkg/util"
@@ -23,6 +24,7 @@ import (
 
 func loadObj(obj interface{}, data []byte, sourcePath string, instanceName string) error {
 	var errorFmt string
+
 	if instanceName != "" {
 		errorFmt = fmt.Sprintf("error loading module %q source", instanceName)
 	} else {
@@ -46,6 +48,43 @@ func loadObj(obj interface{}, data []byte, sourcePath string, instanceName strin
 	default:
 		return fmt.Errorf("%s %q – unknown file extension", errorFmt, sourcePath)
 	}
+
+	return nil
+}
+
+func loadObj2(obj interface{}, data []byte, sourcePath string, instanceName string) error {
+	tobj := new(interface{})
+
+	if err := loadObj(tobj, data, sourcePath, instanceName); err != nil {
+		return err
+	}
+
+	//fn := func(wd interface{}) (interface{}, error) {
+	//	//fmt.Printf("wd: %#v\n", wd)
+	//	return wd, nil
+	//}
+	w := &interpolationWalker{} //{F: fn, Replace: false}
+	if err := reflectwalk.Walk(tobj, w); err != nil {
+		return fmt.Errorf(
+			"error while walking %q (%q): %v",
+			err, instanceName, sourcePath)
+	}
+
+	{
+
+		data, err := json.Marshal(tobj)
+		if err != nil {
+			return fmt.Errorf(
+				"error while re-encoding %q (%q): %v",
+				err, instanceName, sourcePath)
+		}
+		if err := json.Unmarshal(data, obj); err != nil {
+			return fmt.Errorf(
+				"error while re-decoding %q (%q): %v",
+				err, instanceName, sourcePath)
+		}
+	}
+
 	return nil
 }
 
@@ -101,6 +140,16 @@ func (b *Bundle) LoadModules(selectNames []string) error {
 		if err := m.Load(i); err != nil {
 			return err
 		}
+
+		//fn := func(wd interface{}) (interface{}, error) {
+		//	fmt.Printf("wd: %#v\n", wd)
+		//	return wd, nil
+		//}
+		//w := &interpolationWalker{F: fn, Replace: false}
+		//err = reflectwalk.Walk(m, w)
+		//if err != nil {
+		//	return fmt.Errorf("error while walking a module: %v", err)
+		//}
 
 		b.loadedModules = append(b.loadedModules, *m)
 	}
@@ -369,7 +418,7 @@ func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resource
 	for manifestPath, data := range m.manifests {
 		// TODO also do something about multiple formats here
 		group := resources.Group{}
-		if err := loadObj(&group, data, manifestPath, instanceName); err != nil {
+		if err := loadObj2(&group, data, manifestPath, instanceName); err != nil {
 			return nil, err
 		}
 
