@@ -244,6 +244,13 @@ items:
           - containerPort: 9100
             name: agent
             protocol: TCP
+          securityContext:
+            capabilities: {}
+            privileged: true
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+            runAsUser: 0
+            seLinuxOptions: {}
   status:
     currentNumberScheduled: 0
     desiredNumberScheduled: 0
@@ -354,6 +361,13 @@ items:
           - --service-token=abc123
           image: weaveworks/scope:latest
           name: agent
+          securityContext:
+            capabilities: {}
+            privileged: true
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+            runAsUser: 0
+            seLinuxOptions: {}
           volumeMounts:
           - mountPath: /var/run/scope/plugins
             name: scope-plugins

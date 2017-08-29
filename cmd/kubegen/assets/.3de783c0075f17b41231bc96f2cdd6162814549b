@@ -166,7 +166,15 @@
                     "name": "agent",
                     "protocol": "TCP"
                   }
-                ]
+                ],
+                "securityContext": {
+                  "capabilities": {},
+                  "privileged": true,
+                  "readOnlyRootFilesystem": false,
+                  "runAsNonRoot": false,
+                  "runAsUser": 0,
+                  "seLinuxOptions": {}
+                }
               }
             ]
           }
@@ -302,6 +310,14 @@
                 ],
                 "image": "weaveworks/scope:latest",
                 "name": "agent",
+                "securityContext": {
+                  "capabilities": {},
+                  "privileged": true,
+                  "readOnlyRootFilesystem": false,
+                  "runAsNonRoot": false,
+                  "runAsUser": 0,
+                  "seLinuxOptions": {}
+                },
                 "volumeMounts": [
                   {
                     "mountPath": "/var/run/scope/plugins",
@@ -505,7 +521,15 @@
                     "name": "agent",
                     "protocol": "TCP"
                   }
-                ]
+                ],
+                "securityContext": {
+                  "capabilities": {},
+                  "privileged": true,
+                  "readOnlyRootFilesystem": false,
+                  "runAsNonRoot": false,
+                  "runAsUser": 0,
+                  "seLinuxOptions": {}
+                }
               }
             ]
           }
@@ -641,6 +665,14 @@
                 ],
                 "image": "weaveworks/scope:latest",
                 "name": "agent",
+                "securityContext": {
+                  "capabilities": {},
+                  "privileged": true,
+                  "readOnlyRootFilesystem": false,
+                  "runAsNonRoot": false,
+                  "runAsUser": 0,
+                  "seLinuxOptions": {}
+                },
                 "volumeMounts": [
                   {
                     "mountPath": "/var/run/scope/plugins",

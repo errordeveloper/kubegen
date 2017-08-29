@@ -96,6 +96,21 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
+                },
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "NET_BIND_SERVICE"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": true,
+                  "runAsUser": 10001,
+                  "seLinuxOptions": {}
                 }
               }
             ],
@@ -143,7 +158,24 @@
                     "containerPort": 27017,
                     "name": "mongo"
                   }
-                ]
+                ],
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "CHOWN",
+                      "SETGID",
+                      "SETUID"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": false,
+                  "runAsUser": 0,
+                  "seLinuxOptions": {}
+                }
               }
             ],
             "volumes": [
@@ -262,6 +294,21 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
+                },
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "NET_BIND_SERVICE"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": true,
+                  "runAsUser": 10001,
+                  "seLinuxOptions": {}
                 }
               }
             ]
@@ -401,6 +448,18 @@
                     "cpu": "100m",
                     "memory": "100Mi"
                   }
+                },
+                "securityContext": {
+                  "capabilities": {
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": true,
+                  "runAsUser": 10001,
+                  "seLinuxOptions": {}
                 }
               }
             ]
@@ -509,6 +568,21 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
+                },
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "NET_BIND_SERVICE"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": true,
+                  "runAsUser": 10001,
+                  "seLinuxOptions": {}
                 }
               }
             ],
@@ -556,7 +630,24 @@
                     "containerPort": 27017,
                     "name": "mongo"
                   }
-                ]
+                ],
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "CHOWN",
+                      "SETGID",
+                      "SETUID"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": false,
+                  "runAsUser": 0,
+                  "seLinuxOptions": {}
+                }
               }
             ],
             "volumes": [
@@ -653,6 +744,21 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
+                },
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "NET_BIND_SERVICE"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": true,
+                  "runAsUser": 10001,
+                  "seLinuxOptions": {}
                 }
               }
             ]
@@ -745,7 +851,25 @@
                     "containerPort": 5672,
                     "name": "rabbitmq"
                   }
-                ]
+                ],
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "CHOWN",
+                      "SETGID",
+                      "SETUID",
+                      "DAC_OVERRIDE"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": false,
+                  "runAsUser": 0,
+                  "seLinuxOptions": {}
+                }
               }
             ]
           }
@@ -886,6 +1010,21 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
+                },
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "NET_BIND_SERVICE"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": true,
+                  "runAsUser": 10001,
+                  "seLinuxOptions": {}
                 }
               }
             ],
@@ -1009,6 +1148,21 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
+                },
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "NET_BIND_SERVICE"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": true,
+                  "runAsUser": 10001,
+                  "seLinuxOptions": {}
                 }
               }
             ]
@@ -1048,7 +1202,24 @@
                     "containerPort": 27017,
                     "name": "mongo"
                   }
-                ]
+                ],
+                "securityContext": {
+                  "capabilities": {
+                    "add": [
+                      "CHOWN",
+                      "SETGID",
+                      "SETUID"
+                    ],
+                    "drop": [
+                      "all"
+                    ]
+                  },
+                  "privileged": false,
+                  "readOnlyRootFilesystem": true,
+                  "runAsNonRoot": false,
+                  "runAsUser": 0,
+                  "seLinuxOptions": {}
+                }
               }
             ],
             "volumes": [
