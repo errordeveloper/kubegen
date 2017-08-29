@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/pkg/api/v1"
 
+	"github.com/jinzhu/copier"
 	"github.com/ulule/deepcopier"
 )
 
@@ -80,7 +81,8 @@ func (i *Container) Convert(volumes []v1.Volume) (*v1.Container, error) {
 
 	if i.SecurityContext != nil {
 		container.SecurityContext = &v1.SecurityContext{}
-		deepcopier.Copy(i.SecurityContext).To(container.SecurityContext)
+		// deepcopier doesn't deal with pointers very well, so we use the other copier here
+		copier.Copy(&container.SecurityContext, i.SecurityContext)
 	}
 
 	resourceRequirements, err := i.Resources.Convert()
