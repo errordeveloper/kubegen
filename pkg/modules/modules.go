@@ -100,7 +100,7 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 		panic(err)
 	}
 
-	conv.DumpValues()
+	conv.Dump()
 	fmt.Printf("conv=%#v\n", conv.Value())
 
 	{
