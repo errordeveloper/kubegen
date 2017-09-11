@@ -13,9 +13,10 @@ import (
 	"text/template"
 
 	"github.com/ghodss/yaml"
-	"github.com/imdario/mergo"
-	"github.com/mitchellh/reflectwalk"
+	//"github.com/imdario/mergo"
+	//"github.com/mitchellh/reflectwalk"
 
+	"github.com/errordeveloper/kubegen/pkg/converter"
 	"github.com/errordeveloper/kubegen/pkg/resources"
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
@@ -60,35 +61,47 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 		return err
 	}
 
-	w := &interpolationWalker{
-		FindKey: "kubegen.fromPartial",
-		Callback: func(m map[string]interface{}) (map[string]interface{}, error) {
-			partialName := m["kubegen.fromPartial"]
-			partialNotFound := true
-			for _, p := range moduleContext.Partials {
-				if p.Name == partialName {
-					partialNotFound = false
-					if err := mergo.Merge(&m, p.Spec); err != nil {
-						return nil, fmt.Errorf(
-							"error while merging partial %q for %q (%q)",
-							partialName, instanceName, sourcePath)
+	/*
+
+		w := &interpolationWalker{
+			FindKey: "kubegen.fromPartial",
+			Callback: func(m map[string]interface{}) (map[string]interface{}, error) {
+				partialName := m["kubegen.fromPartial"]
+				partialNotFound := true
+				for _, p := range moduleContext.Partials {
+					if p.Name == partialName {
+						partialNotFound = false
+						if err := mergo.Merge(&m, p.Spec); err != nil {
+							return nil, fmt.Errorf(
+								"error while merging partial %q for %q (%q)",
+								partialName, instanceName, sourcePath)
+						}
 					}
 				}
-			}
-			if partialNotFound {
-				return nil, fmt.Errorf(
-					"patial %q not found in module %q (%q)",
-					partialName, instanceName, sourcePath)
-			}
-			return m, nil
-		},
+				if partialNotFound {
+					return nil, fmt.Errorf(
+						"patial %q not found in module %q (%q)",
+						partialName, instanceName, sourcePath)
+				}
+				return m, nil
+			},
+		}
+
+		if err := reflectwalk.Walk(tobj, w); err != nil {
+			return fmt.Errorf(
+				"error while walking %q (%q): %v",
+				instanceName, sourcePath, err)
+		}
+
+	*/
+
+	conv := converter.New()
+	if err := conv.Convert(tobj); err != nil {
+		panic(err)
 	}
 
-	if err := reflectwalk.Walk(tobj, w); err != nil {
-		return fmt.Errorf(
-			"error while walking %q (%q): %v",
-			instanceName, sourcePath, err)
-	}
+	conv.DumpValues()
+	fmt.Printf("conv=%#v\n", conv.Value())
 
 	{
 
