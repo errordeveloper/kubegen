@@ -9,7 +9,7 @@ import (
 )
 
 type converterBranch struct {
-	self   reflect.Value
+	self   *reflect.Value
 	parent *converterBranch // pointer to the parent, so we know where to go back once done
 	key    reflect.Value    // hash key to use for the current value (if it is in a hash)
 	value  *reflect.Value   // current value we are handling
@@ -17,10 +17,10 @@ type converterBranch struct {
 }
 
 type Converter struct {
-	branches    []converterBranch // list of tree branches – hashes and arrays
-	branchIndex int               // maps to the current position in the tree
-	values      []reflect.Value   // used to store all values we find
-	isRoot      bool              // idiates we are at the root of the tree
+	branches    []*converterBranch // list of tree branches – hashes and arrays
+	branchIndex int                // maps to the current position in the tree
+	values      []*reflect.Value   // used to store all values we find
+	isRoot      bool               // idiates we are at the root of the tree
 }
 
 func New() *Converter {
@@ -49,30 +49,30 @@ func (c *Converter) Convert(obj interface{}) error {
 
 func (c *Converter) Value() reflect.Value {
 	if len(c.values) > 0 {
-		return c.values[0]
+		return *c.values[0]
 	}
 	panic("Value: uninitialised converter cannot be used to obtain a value!")
 }
 
 func (c *Converter) Dump() {
 	for k, v := range c.values {
-		fmt.Printf("value %d: %#v\n", k, v)
+		fmt.Printf("value %d: %#v\n", k, *v)
 	}
 	for k, v := range c.branches {
-		fmt.Printf("branch %d: (itself) %#v\n", k, v.self)
+		fmt.Printf("branch %d: (itself) %#v\n", k, *v.self)
 		if v.parent != nil {
-			fmt.Printf("branch %d: (parent) %#v\n", k, v.parent.self)
+			fmt.Printf("branch %d: (parent) %#v\n", k, *v.parent.self)
 		}
 	}
 }
 
-func (c *Converter) appendSimpleValue(v reflect.Value) {
+func (c *Converter) appendSimpleValue(v *reflect.Value) {
 	if c.isRoot {
 		c.values = append(c.values, v)
 		return
 	}
 	c.values = append(c.values, v) // keep this for consistency
-	c.thisBranch().value = &v
+	c.thisBranch().value = v
 }
 
 func (c *Converter) appendBranch(newBranch *converterBranch) {
@@ -85,27 +85,25 @@ func (c *Converter) appendBranch(newBranch *converterBranch) {
 		fmt.Printf("appendBranch: parent index %d\n", newBranch.parent.index)
 		switch newBranch.parent.self.Kind() {
 		case reflect.Map:
-			if newBranch.parent.key != reflect.ValueOf(nil) {
-				fmt.Println("have parent key!")
-				newBranch.parent.self.SetMapIndex(newBranch.parent.key, newBranch.self)
-				fmt.Printf("appendBranch: set %q to %#v in %#v [branch index %d]...\n", newBranch.parent.key, newBranch.self, newBranch.parent.self, newBranch.parent.index)
-			}
+			newBranch.parent.self.SetMapIndex(newBranch.parent.key, *newBranch.self)
+			fmt.Printf("appendBranch: set %q to %#v in %#v [branch index %d]...\n", newBranch.parent.key, *newBranch.self, *newBranch.parent.self, newBranch.parent.index)
 		case reflect.Slice:
-			newBranch.parent.self = reflect.Append(newBranch.parent.self, newBranch.self)
-			fmt.Printf("appendBranch: appended %q to parent slice (%#v) [branch index %d]...\n", newBranch.self, newBranch.parent.self, newBranch.parent.index)
+			s := reflect.Append(*c.branches[newBranch.parent.index].self, *newBranch.self)
+			newBranch.parent.self = &s
+			fmt.Printf("appendBranch: appended %q to parent slice (%#v) [branch index %d]...\n", *newBranch.self, *newBranch.parent.self, newBranch.parent.index)
 		default:
 			panic("appendBranch: unknown kind of parent!")
 		}
 	}
 	c.values = append(c.values, newBranch.self)
-	c.branches = append(c.branches, *newBranch)
+	c.branches = append(c.branches, newBranch)
 	i := len(c.branches) - 1
 	fmt.Printf("appendBranch: new index %d\n", i)
 	c.branchIndex, newBranch.index = i, i
 }
 
 func (c *Converter) thisBranch() *converterBranch {
-	return &c.branches[c.branchIndex]
+	return c.branches[c.branchIndex]
 }
 
 func (c *Converter) flipBranch() {
@@ -126,13 +124,15 @@ func (c *Converter) walkTree(v interface{}) {
 		fmt.Printf("sliceBranch=%#v\n", vv)
 		c.convertSliceBranch(vv)
 	default:
-		c.appendSimpleValue(reflect.ValueOf(v))
+		x := reflect.ValueOf(v)
+		c.appendSimpleValue(&x)
 	}
 }
 
 func (c *Converter) newMapBranch() *converterBranch {
 	newBranch := &converterBranch{}
-	newBranch.self = reflect.ValueOf(make(map[string]interface{}))
+	v := reflect.ValueOf(make(map[string]interface{}))
+	newBranch.self = &v
 	c.appendBranch(newBranch)
 	return newBranch
 }
@@ -147,7 +147,7 @@ func (c *Converter) convertMapBranch(x map[string]interface{}) {
 			switch thisBranch.self.Kind() {
 			case reflect.Map:
 				thisBranch.self.SetMapIndex(thisBranch.key, *thisBranch.value)
-				fmt.Printf("convertMapBranch: set %q to %#v in (%#v)...\n", thisBranch.key, *thisBranch.value, thisBranch.self)
+				fmt.Printf("convertMapBranch: set %q to %#v in (%#v)...\n", thisBranch.key, *thisBranch.value, *thisBranch.self)
 			default:
 				panic(fmt.Sprintf("convertMapBranch: unknown kind %s (%v)!\n", thisBranch.value.Kind(), *thisBranch.value))
 			}
@@ -158,7 +158,8 @@ func (c *Converter) convertMapBranch(x map[string]interface{}) {
 
 func (c *Converter) newSliceBranch() *converterBranch {
 	newBranch := &converterBranch{}
-	newBranch.self = reflect.ValueOf(make([]interface{}, 0))
+	v := reflect.ValueOf(make([]interface{}, 0))
+	newBranch.self = &v
 	c.appendBranch(newBranch)
 	return newBranch
 }
@@ -171,8 +172,9 @@ func (c *Converter) convertSliceBranch(x []interface{}) {
 		if thisBranch.value != nil {
 			fmt.Printf("convertSliceBranch: thisBranch=%#v\n", *thisBranch.value)
 			if thisBranch.self.Kind() == reflect.Slice {
-				thisBranch.self = reflect.Append(thisBranch.self, *thisBranch.value)
-				fmt.Printf("convertSliceBranch: appended %q to slice (%#v)...\n", *thisBranch.value, thisBranch.self)
+				s := reflect.Append(*thisBranch.self, *thisBranch.value)
+				thisBranch.self = &s
+				fmt.Printf("convertSliceBranch: appended %q to slice (%#v)...\n", *thisBranch.value, *thisBranch.self)
 			} else {
 				panic(fmt.Sprintf("convertSliceBranch: unknown kind %s (%v)!\n", thisBranch.value.Kind(), *thisBranch.value))
 			}
