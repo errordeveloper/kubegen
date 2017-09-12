@@ -49,6 +49,9 @@ func (c *Converter) Convert(obj interface{}) error {
 
 func (c *Converter) Value() reflect.Value {
 	if len(c.values) > 0 {
+		if c.values[0] == nil {
+			return reflect.ValueOf(nil)
+		}
 		return *c.values[0]
 	}
 	panic("Value: uninitialised converter cannot be used to obtain a value!")
@@ -56,13 +59,38 @@ func (c *Converter) Value() reflect.Value {
 
 func (c *Converter) Dump() {
 	for k, v := range c.values {
-		fmt.Printf("value %d: %#v\n", k, *v)
+		if v != nil {
+			fmt.Printf("value %d: %#v\n", k, *v)
+		}
 	}
 	for k, v := range c.branches {
-		fmt.Printf("branch %d: (itself) %#v\n", k, *v.self)
-		if v.parent != nil {
-			fmt.Printf("branch %d: (parent) %#v\n", k, *v.parent.self)
+		fmt.Printf("branch %d: %#v\n", k, v)
+		if v != nil {
+			if v.self != nil {
+				fmt.Printf("branch %d: (itself) %#v\n", k, *v.self)
+			}
+			if v.parent != nil {
+				if v.parent.self != nil {
+					fmt.Printf("branch %d: (parent) %#v\n", k, *v.parent.self)
+				}
+			}
 		}
+	}
+}
+
+func (c *Converter) walkTree(v interface{}) {
+	fmt.Printf("walkTree: v=%#v\n", v)
+	switch vv := v.(type) {
+	case map[string]interface{}:
+		//fmt.Printf("walkTree: mapBranch=%#v\n", vv)
+		c.convertMapBranch(vv)
+	case []interface{}:
+		//fmt.Printf("walkTree: sliceBranch=%#v\n", vv)
+		c.convertSliceBranch(vv)
+	default:
+		x := reflect.ValueOf(v)
+		//fmt.Printf("walkTree: x.Kind=%s\n", x.Kind())
+		c.appendSimpleValue(&x)
 	}
 }
 
@@ -72,112 +100,125 @@ func (c *Converter) appendSimpleValue(v *reflect.Value) {
 		return
 	}
 	c.values = append(c.values, v) // keep this for consistency
-	c.thisBranch().value = v
+	c.curentBranch().value = v
 }
 
-func (c *Converter) appendBranch(newBranch *converterBranch) {
-	if c.isRoot {
-		c.isRoot = false
-	} else {
-		newBranch.parent = c.thisBranch()
-	}
-	if newBranch.parent != nil {
-		fmt.Printf("appendBranch: parent index %d\n", newBranch.parent.index)
-		switch newBranch.parent.self.Kind() {
-		case reflect.Map:
-			newBranch.parent.self.SetMapIndex(newBranch.parent.key, *newBranch.self)
-			fmt.Printf("appendBranch: set %q to %#v in %#v [branch index %d]...\n", newBranch.parent.key, *newBranch.self, *newBranch.parent.self, newBranch.parent.index)
-		case reflect.Slice:
-			s := reflect.Append(*c.branches[newBranch.parent.index].self, *newBranch.self)
-			newBranch.parent.self = &s
-			fmt.Printf("appendBranch: appended %q to parent slice (%#v) [branch index %d]...\n", *newBranch.self, *newBranch.parent.self, newBranch.parent.index)
-		default:
-			panic("appendBranch: unknown kind of parent!")
-		}
-	}
-	c.values = append(c.values, newBranch.self)
-	c.branches = append(c.branches, newBranch)
-	i := len(c.branches) - 1
-	fmt.Printf("appendBranch: new index %d\n", i)
-	c.branchIndex, newBranch.index = i, i
-}
-
-func (c *Converter) thisBranch() *converterBranch {
+func (c *Converter) curentBranch() *converterBranch {
 	return c.branches[c.branchIndex]
 }
 
 func (c *Converter) flipBranch() {
-	if c.thisBranch().parent != nil {
-		fmt.Printf("c.branchIndex = (%d => %d)\n", c.branchIndex, c.thisBranch().parent.index)
-		c.branchIndex = c.thisBranch().parent.index
-		c.thisBranch().value = nil // reset the value, so we don't inherit it unitentionally
+	if c.curentBranch().parent != nil {
+		fmt.Printf("c.branchIndex = (%d => %d)\n", c.branchIndex, c.curentBranch().parent.index)
+		c.branchIndex = c.curentBranch().parent.index
+		c.curentBranch().value = nil // reset the value, so we don't inherit it unitentionally
 	}
 }
 
-func (c *Converter) walkTree(v interface{}) {
-	fmt.Printf("v=%#v\n", v)
-	switch vv := v.(type) {
-	case map[string]interface{}:
-		fmt.Printf("mapBranch=%#v\n", vv)
-		c.convertMapBranch(vv)
-	case []interface{}:
-		fmt.Printf("sliceBranch=%#v\n", vv)
-		c.convertSliceBranch(vv)
+func (b *converterBranch) setValueInParent(v reflect.Value) {
+	fmt.Printf("setValueInParent: parent index %d\n", b.parent.index)
+	fmt.Printf("setValueInParent: v=%#v\n", v)
+	var n reflect.Value
+	switch b.parent.self.Kind() {
+	case reflect.Map:
+		b.parent.self.SetMapIndex(b.parent.key, v)
+		n = b.parent.self.MapIndex(b.parent.key)
+		b.self = &n
+		fmt.Printf("setValueInParent: set %q to %#v in %#v [branch index %d]...\n", b.parent.key, *b.self, *b.parent.self, b.parent.index)
+	case reflect.Interface:
+		switch b.parent.self.Elem().Kind() {
+		case reflect.Slice:
+			n = b.parent.self.Elem()
+			b.parent.self = &n
+		default:
+			fmt.Sprintf("setValueInParent: unknown interface kind of parent %q (%#v)!\n", b.parent.self.Elem().Kind(), *b.parent.self)
+		}
+		fallthrough
+	case reflect.Slice:
+		switch v.Kind() {
+		case reflect.Interface:
+			fmt.Println("OMG!\n")
+			n = reflect.Append(*b.parent.self, v)
+		default:
+			n = reflect.Append(*b.parent.self, v)
+		}
+		b.parent.self = &n
+		x := n.Index(n.Len() - 1)
+		b.self = &x
+		fmt.Printf("setValueInParent: appended %q to parent slice (%#v) [length %d] [branch index %d]...\n", *b.self, *b.parent.self, n.Len(), b.parent.index)
 	default:
-		x := reflect.ValueOf(v)
-		c.appendSimpleValue(&x)
+		panic(fmt.Sprintf("setValueInParent: unknown kind of parent %q (%#v)!\n", b.parent.self.Kind(), *b.parent.self))
 	}
 }
 
-func (c *Converter) newMapBranch() *converterBranch {
-	newBranch := &converterBranch{}
-	v := reflect.ValueOf(make(map[string]interface{}))
-	newBranch.self = &v
-	c.appendBranch(newBranch)
-	return newBranch
+func (c *Converter) appendNewBranch(v reflect.Value) *converterBranch {
+	newBranch := converterBranch{parent: nil}
+	if c.isRoot {
+		c.isRoot = false
+		fmt.Println("isRoot!")
+	} else {
+		newBranch.parent = c.curentBranch()
+		fmt.Println("thisBranch!")
+	}
+	if newBranch.parent != nil {
+		fmt.Printf("appendNewBranch: parent=%#v\n", newBranch.parent)
+		if newBranch.parent.self != nil {
+			newBranch.setValueInParent(v)
+		}
+	} else {
+		newBranch.self = &v
+		newBranch.parent = &newBranch
+	}
+	c.values = append(c.values, newBranch.self)
+	c.branches = append(c.branches, &newBranch)
+	i := len(c.branches) - 1
+	fmt.Printf("appendNewBranch: new index %d\n", i)
+	c.branchIndex, newBranch.index = i, i
+	return &newBranch
 }
 
 func (c *Converter) convertMapBranch(x map[string]interface{}) {
-	thisBranch := c.newMapBranch()
+	thisBranch := c.appendNewBranch(reflect.ValueOf(make(map[string]interface{})))
 	for k, v := range x {
 		thisBranch.key = reflect.ValueOf(k)
 		c.walkTree(v)
-		if thisBranch.value != nil {
+		if thisBranch.value != nil && thisBranch.parent != nil && thisBranch.parent.self != nil {
 			fmt.Printf("convertMapBranch: thisBranch.value=%#v\n", *thisBranch.value)
-			switch thisBranch.self.Kind() {
-			case reflect.Map:
-				thisBranch.self.SetMapIndex(thisBranch.key, *thisBranch.value)
-				fmt.Printf("convertMapBranch: set %q to %#v in (%#v)...\n", thisBranch.key, *thisBranch.value, *thisBranch.self)
-			default:
-				panic(fmt.Sprintf("convertMapBranch: unknown kind %s (%v)!\n", thisBranch.value.Kind(), *thisBranch.value))
+			thisBranch.setValueInParent(*thisBranch.value)
+			//} else if thisBranch.self != nil && thisBranch.value != nil {
+			//	fmt.Println("NEVER?")
+			//	fmt.Printf("convertMapBranch: thisBranch.value=%#v\n", *thisBranch.value)
+			//	switch thisBranch.self.Kind() {
+			//	case reflect.Map:
+			//		thisBranch.self.SetMapIndex(thisBranch.key, *thisBranch.value)
+			//		fmt.Printf("convertMapBranch: set %q to %#v in parent (%#v)...\n", thisBranch.key, *thisBranch.value, *thisBranch.self)
+			//	default:
+			//		panic(fmt.Sprintf("convertMapBranch: unknown kind of parent %q (%#v)!\n", thisBranch.self.Kind(), *thisBranch.self))
+			//	}
+		} else {
+			fmt.Printf("convertMapBranch: unknown code path thisBranch=%#v\n", thisBranch)
+			fmt.Printf("convertMapBranch: unknown code path thisBranch.key=%#v\n", thisBranch.key)
+			if thisBranch.value != nil {
+				fmt.Printf("convertMapBranch: unknown code path thisBranch.value=%#v\n", *thisBranch.value)
+			}
+			if thisBranch.parent == nil {
+				panic("PARENT IS NIL")
 			}
 		}
 	}
 	c.flipBranch()
 }
 
-func (c *Converter) newSliceBranch() *converterBranch {
-	newBranch := &converterBranch{}
-	v := reflect.ValueOf(make([]interface{}, 0))
-	newBranch.self = &v
-	c.appendBranch(newBranch)
-	return newBranch
-}
-
 func (c *Converter) convertSliceBranch(x []interface{}) {
-	thisBranch := c.newSliceBranch()
+	thisBranch := c.appendNewBranch(reflect.ValueOf(make([]interface{}, 0)))
 	for k, v := range x {
 		thisBranch.key = reflect.ValueOf(k)
 		c.walkTree(v)
-		if thisBranch.value != nil {
+		if thisBranch.value != nil && thisBranch.self != nil && thisBranch.parent != nil && thisBranch.parent.self != nil {
 			fmt.Printf("convertSliceBranch: thisBranch=%#v\n", *thisBranch.value)
-			if thisBranch.self.Kind() == reflect.Slice {
-				s := reflect.Append(*thisBranch.self, *thisBranch.value)
-				thisBranch.self = &s
-				fmt.Printf("convertSliceBranch: appended %q to slice (%#v)...\n", *thisBranch.value, *thisBranch.self)
-			} else {
-				panic(fmt.Sprintf("convertSliceBranch: unknown kind %s (%v)!\n", thisBranch.value.Kind(), *thisBranch.value))
-			}
+			thisBranch.setValueInParent(*thisBranch.value)
+		} else {
+			fmt.Printf("convertSliceBranch: self=%#v value=%#v\n", thisBranch.self, thisBranch.value)
 		}
 	}
 	c.flipBranch()
