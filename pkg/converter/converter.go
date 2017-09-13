@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-
-	_ "github.com/buger/jsonparser"
 )
 
 type converterBranch struct {
@@ -118,34 +116,35 @@ func (c *Converter) flipBranch() {
 func (b *converterBranch) setValueInParent(v reflect.Value) {
 	fmt.Printf("setValueInParent: parent index %d\n", b.parent.index)
 	fmt.Printf("setValueInParent: v=%#v\n", v)
-	var n reflect.Value
 	switch b.parent.self.Kind() {
 	case reflect.Map:
 		b.parent.self.SetMapIndex(b.parent.key, v)
-		n = b.parent.self.MapIndex(b.parent.key)
+		n := b.parent.self.MapIndex(b.parent.key)
 		b.self = &n
 		fmt.Printf("setValueInParent: set %q to %#v in %#v [branch index %d]...\n", b.parent.key, *b.self, *b.parent.self, b.parent.index)
 	case reflect.Interface:
+		break
 		switch b.parent.self.Elem().Kind() {
 		case reflect.Slice:
-			n = b.parent.self.Elem()
+			n := b.parent.self.Elem()
 			b.parent.self = &n
 		default:
-			fmt.Sprintf("setValueInParent: unknown interface kind of parent %q (%#v)!\n", b.parent.self.Elem().Kind(), *b.parent.self)
+			panic(fmt.Sprintf("setValueInParent: unknown interface kind of parent %q (%#v) [v=%#v]!\n", b.parent.self.Elem().Kind(), *b.parent.self, v))
 		}
 		fallthrough
 	case reflect.Slice:
 		switch v.Kind() {
-		case reflect.Interface:
-			fmt.Println("OMG!\n")
-			n = reflect.Append(*b.parent.self, v)
+		case reflect.Slice:
+			panic(fmt.Sprintf("setValueInParent: trying to append slice value..."))
+			//return //n = reflect.AppendSlice(*b.parent.self, v)
 		default:
-			n = reflect.Append(*b.parent.self, v)
+			fmt.Printf("setValueInParent: trying to append %s (non-slice) value...\n", v.Kind())
+			n := reflect.Append(*b.parent.self, v)
+			b.parent.self = &n
+			x := n.Index(n.Len() - 1)
+			b.self = &x
+			fmt.Printf("setValueInParent: appended %q to parent slice (%#v) [length %d] [branch index %d]...\n", *b.self, *b.parent.self, n.Len(), b.parent.index)
 		}
-		b.parent.self = &n
-		x := n.Index(n.Len() - 1)
-		b.self = &x
-		fmt.Printf("setValueInParent: appended %q to parent slice (%#v) [length %d] [branch index %d]...\n", *b.self, *b.parent.self, n.Len(), b.parent.index)
 	default:
 		panic(fmt.Sprintf("setValueInParent: unknown kind of parent %q (%#v)!\n", b.parent.self.Kind(), *b.parent.self))
 	}
@@ -185,8 +184,8 @@ func (c *Converter) convertMapBranch(x map[string]interface{}) {
 		if thisBranch.value != nil && thisBranch.parent != nil && thisBranch.parent.self != nil {
 			fmt.Printf("convertMapBranch: thisBranch.value=%#v\n", *thisBranch.value)
 			thisBranch.setValueInParent(*thisBranch.value)
-			//} else if thisBranch.self != nil && thisBranch.value != nil {
-			//	fmt.Println("NEVER?")
+		} else if thisBranch.self != nil && thisBranch.value != nil {
+			fmt.Println("NEVER?")
 			//	fmt.Printf("convertMapBranch: thisBranch.value=%#v\n", *thisBranch.value)
 			//	switch thisBranch.self.Kind() {
 			//	case reflect.Map:
@@ -194,7 +193,7 @@ func (c *Converter) convertMapBranch(x map[string]interface{}) {
 			//		fmt.Printf("convertMapBranch: set %q to %#v in parent (%#v)...\n", thisBranch.key, *thisBranch.value, *thisBranch.self)
 			//	default:
 			//		panic(fmt.Sprintf("convertMapBranch: unknown kind of parent %q (%#v)!\n", thisBranch.self.Kind(), *thisBranch.self))
-			//	}
+			//}
 		} else {
 			fmt.Printf("convertMapBranch: unknown code path thisBranch=%#v\n", thisBranch)
 			fmt.Printf("convertMapBranch: unknown code path thisBranch.key=%#v\n", thisBranch.key)
