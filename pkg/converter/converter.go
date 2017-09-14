@@ -54,30 +54,34 @@ func (c *Converter) LoadStrict(data []byte) error {
 	return nil
 }
 
+func (c *Converter) makeIterator(parentBranch *branchInfo, key string, value []byte, dataType jsonparser.ValueType) {
+	newBranch := branchInfo{
+		parent: &parentBranch.self,
+		kind:   dataType,
+		self:   make(branch),
+	}
+
+	parentBranch.self[key] = newBranch
+
+	switch dataType {
+	case jsonparser.Object:
+		handler := c.makeObjectIterator(&newBranch)
+
+		if err := jsonparser.ObjectEach(value, handler); err != nil {
+			panic(err)
+		}
+	case jsonparser.Array:
+		handler := c.makeArrayIterator(&newBranch)
+
+		jsonparser.ArrayEach(value, handler)
+	}
+}
+
 type objectIterator func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error
 
 func (c *Converter) makeObjectIterator(parentBranch *branchInfo) objectIterator {
 	callback := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		newBranch := branchInfo{
-			parent: &parentBranch.self,
-			kind:   dataType,
-			self:   make(branch),
-		}
-
-		parentBranch.self[string(key)] = newBranch
-
-		switch dataType {
-		case jsonparser.Object:
-			handler := c.makeObjectIterator(&newBranch)
-
-			if err := jsonparser.ObjectEach(value, handler); err != nil {
-				panic(err)
-			}
-		case jsonparser.Array:
-			handler := c.makeArrayIterator(&newBranch)
-
-			jsonparser.ArrayEach(value, handler)
-		}
+		c.makeIterator(parentBranch, string(key), value, dataType)
 		return nil
 	}
 	return callback
@@ -87,22 +91,8 @@ type arrayIterator func(value []byte, dataType jsonparser.ValueType, offset int,
 
 func (c *Converter) makeArrayIterator(parentBranch *branchInfo) arrayIterator {
 	callback := func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		newBranch := branchInfo{
-			parent: &parentBranch.self,
-			kind:   dataType,
-			self:   make(branch),
-		}
-
-		parentBranch.self[fmt.Sprintf("[[%d]]", offset)] = newBranch
-
-		switch dataType {
-		case jsonparser.Object:
-			if err := jsonparser.ObjectEach(value, c.makeObjectIterator(&newBranch)); err != nil {
-				panic(err)
-			}
-		case jsonparser.Array:
-			jsonparser.ArrayEach(value, c.makeArrayIterator(&newBranch))
-		}
+		key := fmt.Sprintf("[[%d]]", offset)
+		c.makeIterator(parentBranch, key, value, dataType)
 	}
 	return callback
 }

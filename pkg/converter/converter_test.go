@@ -3,6 +3,7 @@ package converter
 import (
 	"testing"
 
+	"github.com/buger/jsonparser"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,6 +67,9 @@ func TestCoverterBasic(t *testing.T) {
 }
 
 func TestBasicKubegenAsset(t *testing.T) {
+
+	assert := assert.New(t)
+
 	tobj := []byte(`{
 		"Kind": "kubegen.k8s.io/Module.v1alpha1",
 		"Deployments": [
@@ -168,4 +172,18 @@ func TestBasicKubegenAsset(t *testing.T) {
 	for _, v := range conv.Dump() {
 		t.Log(v)
 	}
+
+	assert.Equal(2, len(conv.tree.self["Deployments"].self),
+		"there are two Deployments")
+	assert.Equal(jsonparser.String, conv.tree.self["Deployments"].self["[[0]]"].self["name"].kind,
+		"there should be name in a Deployments")
+	assert.Equal(jsonparser.String, conv.tree.self["Deployments"].self["[[1]]"].self["name"].kind,
+		"there should be name in a Deployments")
+
+	assert.Equal(2, len(conv.tree.self["Services"].self),
+		"there are two Services")
+	assert.Equal(jsonparser.String, conv.tree.self["Services"].self["[[0]]"].self["name"].kind,
+		"there should be cart in Services")
+	assert.Equal(jsonparser.String, conv.tree.self["Services"].self["[[1]]"].self["name"].kind,
+		"there should be cart in Services")
 }
