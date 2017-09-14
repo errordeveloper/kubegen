@@ -54,13 +54,13 @@ func (c *Converter) LoadStrict(data []byte) error {
 	return nil
 }
 
-func (c *Converter) makeIterator(parentBranch *branchInfo, key string, value []byte, dataType jsonparser.ValueType) {
+func (c *Converter) makeIterator(parentBranch *branchInfo, key string, value []byte, dataType jsonparser.ValueType, index *int) {
 	newBranch := branchInfo{
 		parent: &parentBranch.self,
 		kind:   dataType,
 		self:   make(branch),
 	}
-
+	*index = *index + 1
 	parentBranch.self[key] = newBranch
 
 	switch dataType {
@@ -80,8 +80,9 @@ func (c *Converter) makeIterator(parentBranch *branchInfo, key string, value []b
 type objectIterator func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error
 
 func (c *Converter) makeObjectIterator(parentBranch *branchInfo) objectIterator {
+	index := 0
 	callback := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		c.makeIterator(parentBranch, string(key), value, dataType)
+		c.makeIterator(parentBranch, string(key), value, dataType, &index)
 		return nil
 	}
 	return callback
@@ -90,9 +91,10 @@ func (c *Converter) makeObjectIterator(parentBranch *branchInfo) objectIterator 
 type arrayIterator func(value []byte, dataType jsonparser.ValueType, offset int, err error)
 
 func (c *Converter) makeArrayIterator(parentBranch *branchInfo) arrayIterator {
+	index := 0
 	callback := func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		key := fmt.Sprintf("[[%d]]", offset)
-		c.makeIterator(parentBranch, key, value, dataType)
+		key := fmt.Sprintf("[[%d]]", index)
+		c.makeIterator(parentBranch, key, value, dataType, &index)
 	}
 	return callback
 }
