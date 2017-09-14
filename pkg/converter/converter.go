@@ -17,6 +17,7 @@ import (
 type branchInfo struct {
 	kind   jsonparser.ValueType
 	self   branch
+	value  *[]byte
 	parent *branch
 }
 
@@ -58,6 +59,7 @@ func (c *Converter) makeIterator(parentBranch *branchInfo, key string, value []b
 	newBranch := branchInfo{
 		parent: &parentBranch.self,
 		kind:   dataType,
+		value:  &value,
 		self:   make(branch),
 	}
 	*index = *index + 1
@@ -111,39 +113,12 @@ func (c *Converter) Run() error {
 	c.tree = branchInfo{
 		parent: nil,
 		kind:   jsonparser.Object,
+		value:  &c.data,
 		self:   make(branch),
 	}
 
 	if err := jsonparser.ObjectEach(c.data, c.makeObjectIterator(&c.tree)); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (c *Converter) Dump() []string {
-	s := []string{}
-	dumpBranchInfo(c.tree, &s)
-	return s
-}
-
-func dumpBranchInfo(b branchInfo, s *[]string) {
-	for k, v := range b.self {
-		switch v.kind {
-		case jsonparser.Object:
-			dumpBranchInfo(v, s)
-		case jsonparser.Array:
-			dumpBranchInfo(v, s)
-		default:
-			*s = append(*s, fmt.Sprintf("k=%#v v=%#v\n", k, v))
-		}
-	}
-}
-
-func (c *Converter) helperLoader(obj interface{}) error {
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return err
-	}
-	c.data = data
 	return nil
 }

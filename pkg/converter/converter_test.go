@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/buger/jsonparser"
+	_ "github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,12 +59,17 @@ func TestCoverterBasic(t *testing.T) {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
-	assert.Equal(7, len(conv.tree.self), "converter should have a tree of length 7")
-	assert.Equal(6, len(conv.tree.self["and more"].self), "converter should have `and more` subtree of length 6")
-	for _, v := range conv.Dump() {
-		t.Log(v)
-	}
+	assert.Equal(7, len(conv.tree.self),
+		"converter should have a tree of length 7")
+	assert.Equal(6, len(conv.tree.self["and more"].self),
+		"converter should have `and more` subtree of length 6")
 
+	//t.Log(spew.Sdump(conv.tree))
+
+	assert.Equal(jsonparser.Object, conv.tree.self["other"].self["moreThings"].self["[[0]]"].kind)
+	assert.Equal(jsonparser.Object, conv.tree.self["other"].self["moreThings"].self["[[1]]"].kind)
+	assert.Equal(jsonparser.Object, conv.tree.self["other"].self["moreThings"].self["[[2]]"].kind)
+	assert.Equal(jsonparser.ValueType(0), conv.tree.self["other"].self["moreThings"].self["[[9]]"].kind)
 }
 
 func TestBasicKubegenAsset(t *testing.T) {
@@ -169,9 +175,7 @@ func TestBasicKubegenAsset(t *testing.T) {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
-	for _, v := range conv.Dump() {
-		t.Log(v)
-	}
+	//t.Log(spew.Sdump(conv.tree))
 
 	assert.Equal(2, len(conv.tree.self["Deployments"].self),
 		"there are two Deployments")
