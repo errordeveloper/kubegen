@@ -24,6 +24,24 @@ func TestCoverter(t *testing.T) {
 			],
 			"number": 1.0,
 			"string": "foobar"
+		},
+		"and more": {
+			"Kind": "Some",
+			"this":  true,
+			"that":  false,
+			"things": [
+				{ "a": 1, "b": 2, "c": 3 }
+			],
+			"nothing": { "empty1": [], "empty2": [] },
+			"other": {
+				"moreThings": [
+					{ "a": 1, "b": 2, "c": 3 },
+					{ "a": 1, "b": 2, "c": 3 },
+					{ "a": 1, "b": 2, "c": 3 }
+				],
+				"number": 1.0,
+				"string": "foobar"
+			}
 		}
 	}`)
 	conv := New()
@@ -36,7 +54,7 @@ func TestCoverter(t *testing.T) {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
-	for _, v := range conv.Dumps() {
+	for _, v := range conv.Dump() {
 		t.Log(v)
 	}
 }

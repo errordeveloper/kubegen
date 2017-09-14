@@ -125,12 +125,23 @@ func (c *Converter) Run() error {
 	return nil
 }
 
-func (c *Converter) Dumps() []string {
+func (c *Converter) Dump() []string {
 	s := []string{}
-	for k, v := range c.tree.selfInfo {
-		s = append(s, fmt.Sprintf("k=%#v v=%#v\n", k, v))
-	}
+	dumpBranchInfo(c.tree, &s)
 	return s
+}
+
+func dumpBranchInfo(b branchInfo, s *[]string) {
+	for k, v := range b.selfInfo {
+		switch v.selfType {
+		case jsonparser.Object:
+			dumpBranchInfo(v, s)
+		case jsonparser.Array:
+			dumpBranchInfo(v, s)
+		default:
+			*s = append(*s, fmt.Sprintf("k=%#v v=%#v\n", k, v))
+		}
+	}
 }
 
 func (c *Converter) helperLoader(obj interface{}) error {
