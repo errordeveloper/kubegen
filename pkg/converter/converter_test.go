@@ -3,11 +3,13 @@ package converter
 import (
 	"testing"
 
-	_ "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestCoverter(t *testing.T) {
-	//tobj := map[string]map[string][]map[string]bool{
+func TestCoverterBasic(t *testing.T) {
+
+	assert := assert.New(t)
+
 	tobj := []byte(`{
 		"Kind": "Some",		
 		"this":  true,
@@ -44,6 +46,115 @@ func TestCoverter(t *testing.T) {
 			}
 		}
 	}`)
+
+	conv := New()
+
+	if err := conv.LoadStrict(tobj); err != nil {
+		t.Fatalf("failed to laod – %v", err)
+	}
+
+	if err := conv.Run(); err != nil {
+		t.Fatalf("failed to covert – %v", err)
+	}
+
+	assert.Equal(7, len(conv.tree.self), "converter should have a tree of length 7")
+	assert.Equal(6, len(conv.tree.self["and more"].self), "converter should have `and more` subtree of length 6")
+	for _, v := range conv.Dump() {
+		t.Log(v)
+	}
+
+}
+
+func TestBasicKubegenAsset(t *testing.T) {
+	tobj := []byte(`{
+		"Kind": "kubegen.k8s.io/Module.v1alpha1",
+		"Deployments": [
+			{
+				"name": "cart",
+				"replicas": 1,
+				"containers": [
+					{
+						"name": "cart",
+						"image": "<image_registry>/cart:0.4.0",
+						"ports": [
+							{
+								"name": "http",
+								"containerPort": 80
+							}
+						],
+						"securityContext": {
+							"runAsNonRoot": true,
+							"runAsUser": 10001,
+							"capabilities": {
+								"drop": [
+									"all"
+								],
+								"add": [
+									"NET_BIND_SERVICE"
+								]
+							},
+							"readOnlyRootFilesystem": true
+						},
+						"volumeMounts": [
+							{
+								"mountPath": "/tmp",
+								"name": "tmp-volume"
+							}
+						],
+						"livenessProbe": {
+							"httpGet": {
+								"path": "/health"
+							},
+							"initialDelaySeconds": 300,
+							"periodSeconds": 3
+						},
+						"readinessProbe": {
+							"httpGet": {
+								"path": "/health"
+							},
+							"initialDelaySeconds": 180,
+							"periodSeconds": 3
+						}
+					}
+				],
+				"volumes": [
+					{
+						"name": "tmp-volume",
+						"emptyDir": {
+							"medium": "Memory"
+						}
+					}
+				]
+			},
+			{
+				"name": "cart-db",
+				"kubegen.fromPartial": "mongo",
+				"replicas": 2
+			}
+		],
+		"Services": [
+			{
+				"name": "cart",
+				"annotations": {
+					"prometheus.io/path": "/prometheus"
+				},
+				"ports": [
+					{
+						"name": "http"
+					}
+				]
+			},
+			{
+				"name": "cart-db",
+				"ports": [
+					{
+						"name": "mongo"
+					}
+				]
+			}
+		]
+	}`)
+
 	conv := New()
 
 	if err := conv.LoadStrict(tobj); err != nil {

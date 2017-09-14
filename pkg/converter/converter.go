@@ -3,6 +3,9 @@ package converter
 // TODO try using jsonparser, assume that root is a map
 // build a nested map without values to track the location
 // try to write some tests first
+// TODO also consider https://godoc.org/github.com/json-iterator/go
+// it should have similar methods, it'd better cause it's what
+// Kubernetes uses, and Tim has contributed a ton of tests etc :)
 
 import (
 	"encoding/json"
@@ -12,12 +15,12 @@ import (
 )
 
 type branchInfo struct {
-	selfType jsonparser.ValueType
-	selfInfo branchData
-	myParent *branchData
+	kind   jsonparser.ValueType
+	self   branch
+	parent *branch
 }
 
-type branchData = map[string]branchInfo
+type branch = map[string]branchInfo
 
 type Converter struct {
 	tree branchInfo
@@ -56,12 +59,12 @@ type objectIterator func(key []byte, value []byte, dataType jsonparser.ValueType
 func (c *Converter) makeObjectIterator(parentBranch *branchInfo) objectIterator {
 	callback := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		newBranch := branchInfo{
-			myParent: &parentBranch.selfInfo,
-			selfType: dataType,
-			selfInfo: make(branchData),
+			parent: &parentBranch.self,
+			kind:   dataType,
+			self:   make(branch),
 		}
 
-		parentBranch.selfInfo[string(key)] = newBranch
+		parentBranch.self[string(key)] = newBranch
 
 		switch dataType {
 		case jsonparser.Object:
@@ -85,12 +88,12 @@ type arrayIterator func(value []byte, dataType jsonparser.ValueType, offset int,
 func (c *Converter) makeArrayIterator(parentBranch *branchInfo) arrayIterator {
 	callback := func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		newBranch := branchInfo{
-			myParent: &parentBranch.selfInfo,
-			selfType: dataType,
-			selfInfo: make(branchData),
+			parent: &parentBranch.self,
+			kind:   dataType,
+			self:   make(branch),
 		}
 
-		parentBranch.selfInfo[fmt.Sprintf("[[%d]]", offset)] = newBranch
+		parentBranch.self[fmt.Sprintf("[[%d]]", offset)] = newBranch
 
 		switch dataType {
 		case jsonparser.Object:
@@ -114,9 +117,9 @@ func (c *Converter) Run() error {
 	}
 
 	c.tree = branchInfo{
-		myParent: nil,
-		selfType: jsonparser.Object,
-		selfInfo: make(branchData),
+		parent: nil,
+		kind:   jsonparser.Object,
+		self:   make(branch),
 	}
 
 	if err := jsonparser.ObjectEach(c.data, c.makeObjectIterator(&c.tree)); err != nil {
@@ -132,8 +135,8 @@ func (c *Converter) Dump() []string {
 }
 
 func dumpBranchInfo(b branchInfo, s *[]string) {
-	for k, v := range b.selfInfo {
-		switch v.selfType {
+	for k, v := range b.self {
+		switch v.kind {
 		case jsonparser.Object:
 			dumpBranchInfo(v, s)
 		case jsonparser.Array:
