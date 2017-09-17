@@ -144,7 +144,7 @@ func TestConverterOnlyObjects(t *testing.T) {
 	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "1").kind)
 	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "2").kind)
 	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "3").kind)
-	//assert.Nil(conv.get("other", "moreThings", "0"))
+	assert.Nil(conv.get("other", "moreThings", "0"))
 
 	pathKeys := [][]string{
 		{"things"},
@@ -325,9 +325,6 @@ func TestBasicKubegenAsset(t *testing.T) {
 
 	assertPathKeys(pathKeys, conv, t)
 
-	t.Log(string(conv.get("Deployments", "[[0]]").value))
-	t.Log(string(conv.get("Deployments", "[[0]]", "name").value))
-
 	//t.Log(string(conv.data))
 
 }
@@ -360,11 +357,6 @@ func TestConverterGet(t *testing.T) {
 		{"order", "potatoe", "mash"},
 		{"order", "potatoe", "chips"},
 	}
+
 	assertPathKeys(pathKeys, conv, t)
-	t.Log(conv.tree.self["order"].self["potatoe"].self["mash"].path)
-	t.Log(string(conv.tree.self["order"].self["potatoe"].self["mash"].value))
-
-	t.Log(conv.tree.self["order"].self["potatoe"].self["chips"].path)
-	t.Log(string(conv.tree.self["order"].self["potatoe"].self["chips"].value))
-
 }

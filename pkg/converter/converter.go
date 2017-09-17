@@ -10,7 +10,6 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/buger/jsonparser"
 )
@@ -83,20 +82,15 @@ func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte
 		self:   make(branch),
 		path:   make(branchPath, pathLen),
 	}
+
+	// we have to copy the slice explicitly, as it turns append doesn't make a copy
 	copy(newBranch.path, parentBranch.path)
 	newBranch.path[pathLen-1] = key
 
-	log.Printf("this key=%v path=%v parent=%p", key, newBranch.path, parentBranch)
 	if _, ok := parentBranch.self[key]; ok {
 		panic(fmt.Sprintf("key %q is already set in parent", key))
 	}
 	parentBranch.self[key] = &newBranch
-
-	keys := []string{}
-	for i := range parentBranch.self {
-		keys = append(keys, i)
-	}
-	log.Printf("parent path=%v keys=%v", parentBranch.path, keys)
 
 	//if handler, ok := c.keywords[key]; ok {
 	//	handler(&newBranch)
@@ -121,7 +115,6 @@ type objectIterator func(key []byte, value []byte, dataType jsonparser.ValueType
 
 func (c *Converter) makeObjectIterator(parentBranch *branchInfo) objectIterator {
 	callback := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		log.Printf("calling doIterate parentBranch=%p key=%s", parentBranch, string(key))
 		c.doIterate(parentBranch, string(key), value, dataType)
 		keys := []string{}
 		paths := [][]string{}
@@ -129,8 +122,6 @@ func (c *Converter) makeObjectIterator(parentBranch *branchInfo) objectIterator 
 			keys = append(keys, i)
 			paths = append(paths, parentBranch.self[i].path)
 		}
-		log.Printf("returned from doIterate parent=%p key=%s path=%v keys=%v", parentBranch, string(key), parentBranch.path, keys)
-		log.Printf("paths=%v", paths)
 		return nil
 	}
 	return callback
@@ -179,21 +170,12 @@ func (b *branchInfo) get(key string) *branchInfo {
 
 func (c *Converter) get(path ...string) *branchInfo {
 	branch := branchInfo{self: c.tree.self}
-	log.Println(path)
 	for x := range path {
-		//func(p string) {
 		if next := branch.get(path[x]); next != nil {
 			branch = *next
-			log.Println(path[x])
-
-			if len(branch.path[1:]) == len(path) {
-				log.Printf("%v (%v) Vs %v", branch.path[1:], branch.parent.path[1:], path)
-			}
 		} else {
-			//branch = branchInfo{}
 			return nil
 		}
-		//}(path[x])
 	}
 	return &branch
 }
