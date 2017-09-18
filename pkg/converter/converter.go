@@ -26,8 +26,9 @@ type branch = map[string]*branchInfo
 type branchPath = []string
 
 type Converter struct {
-	tree     branchInfo
-	data     []byte
+	tree branchInfo
+	data []byte
+	// TODO add module context, cause we want to be able to lookup variables etc
 	keywords map[string]keywordHandler
 }
 
@@ -63,6 +64,17 @@ func (c *Converter) LoadStrict(data []byte) error {
 			"error while re-decoding %q (%q): %v",
 			"<TODO:instanceName>", "<TODO:sourcePath", err)
 	}
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return fmt.Errorf(
+			"error while re-encoding %q (%q): %v",
+			"<TODO:instanceName>", "<TODO:sourcePath>", err)
+	}
+	c.data = data
+	return nil
+}
+
+func (c *Converter) LoadParsed(obj interface{}) error {
 	data, err := json.Marshal(obj)
 	if err != nil {
 		return fmt.Errorf(
@@ -144,6 +156,8 @@ func (c *Converter) Run() error {
 		return err
 	}
 	if kind == "" {
+		// it is okay to check this here, so we fail early,
+		// however we should abstract deep checks more specifically
 		return fmt.Errorf("kind is blank")
 	}
 

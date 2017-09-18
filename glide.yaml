@@ -38,4 +38,3 @@ import:
 - package: "github.com/lib/pq"
 - package: "github.com/oleiade/reflections"
 - package: "github.com/equinox-io/equinox"
-- package: "github.com/mitchellh/reflectwalk"

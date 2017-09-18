@@ -23,6 +23,7 @@ func assertPathKeys(pks [][]string, conv *Converter, t *testing.T) {
 		}
 	}
 }
+
 func TestConverterBasic(t *testing.T) {
 
 	assert := assert.New(t)

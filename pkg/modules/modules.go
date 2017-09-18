@@ -13,8 +13,6 @@ import (
 	"text/template"
 
 	"github.com/ghodss/yaml"
-	//"github.com/imdario/mergo"
-	//"github.com/mitchellh/reflectwalk"
 
 	"github.com/errordeveloper/kubegen/pkg/converter"
 	"github.com/errordeveloper/kubegen/pkg/resources"
@@ -96,25 +94,22 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 	*/
 
 	conv := converter.New()
-	if err := conv.Convert(tobj); err != nil {
+	if err := conv.LoadParsed(tobj); err != nil {
 		panic(err)
 	}
 
-	conv.Dump()
-	fmt.Printf("conv=%#v\n", conv.Value())
-
+	// TODO refactor this, the whole loading code is a mess right now
 	{
-
 		data, err := json.Marshal(tobj)
 		if err != nil {
 			return fmt.Errorf(
 				"error while re-encoding %q (%q): %v",
-				err, instanceName, sourcePath)
+				instanceName, sourcePath, err)
 		}
 		if err := json.Unmarshal(data, obj); err != nil {
 			return fmt.Errorf(
 				"error while re-decoding %q (%q): %v",
-				err, instanceName, sourcePath)
+				instanceName, sourcePath, err)
 		}
 	}
 
