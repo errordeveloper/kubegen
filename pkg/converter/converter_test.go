@@ -82,10 +82,10 @@ func TestConverterBasic(t *testing.T) {
 
 	//t.Log(spew.Sdump(conv.tree))
 
-	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "[[0]]").kind)
-	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "[[1]]").kind)
-	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "[[2]]").kind)
-	assert.Nil(conv.get("other", "moreThings", "[[9]]"))
+	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "[0]").kind)
+	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "[1]").kind)
+	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "[2]").kind)
+	assert.Nil(conv.get("other", "moreThings", "[9]"))
 }
 
 func TestConverterOnlyObjects(t *testing.T) {
@@ -285,43 +285,43 @@ func TestBasicKubegenAsset(t *testing.T) {
 
 	assert.Equal(2, len(conv.tree.self["Deployments"].self),
 		"there are two Deployments")
-	assert.Equal(jsonparser.String, conv.tree.self["Deployments"].self["[[0]]"].self["name"].kind,
+	assert.Equal(jsonparser.String, conv.tree.self["Deployments"].self["[0]"].self["name"].kind,
 		"there should be name in a Deployments")
-	assert.Equal(jsonparser.String, conv.tree.self["Deployments"].self["[[1]]"].self["name"].kind,
+	assert.Equal(jsonparser.String, conv.tree.self["Deployments"].self["[1]"].self["name"].kind,
 		"there should be name in a Deployments")
 
 	assert.Equal(2, len(conv.tree.self["Services"].self),
 		"there are two Services")
-	assert.Equal(jsonparser.String, conv.tree.self["Services"].self["[[0]]"].self["name"].kind,
+	assert.Equal(jsonparser.String, conv.tree.self["Services"].self["[0]"].self["name"].kind,
 		"there should be cart in Services")
-	assert.Equal(jsonparser.String, conv.tree.self["Services"].self["[[1]]"].self["name"].kind,
+	assert.Equal(jsonparser.String, conv.tree.self["Services"].self["[1]"].self["name"].kind,
 		"there should be cart in Services")
 
 	pathKeys := [][]string{
 		{"Deployments"},
 
-		{"Deployments", "[[0]]"},
-		{"Deployments", "[[0]]", "name"},
-		{"Deployments", "[[0]]", "replicas"},
+		{"Deployments", "[0]"},
+		{"Deployments", "[0]", "name"},
+		{"Deployments", "[0]", "replicas"},
 
-		{"Deployments", "[[0]]", "containers"},
-		{"Deployments", "[[0]]", "containers", "[[0]]"},
-		{"Deployments", "[[0]]", "volumes"},
-		{"Deployments", "[[0]]", "volumes", "[[0]]"},
+		{"Deployments", "[0]", "containers"},
+		{"Deployments", "[0]", "containers", "[0]"},
+		{"Deployments", "[0]", "volumes"},
+		{"Deployments", "[0]", "volumes", "[0]"},
 
-		{"Deployments", "[[1]]"},
-		{"Deployments", "[[1]]", "name"},
-		{"Deployments", "[[1]]", "replicas"},
+		{"Deployments", "[1]"},
+		{"Deployments", "[1]", "name"},
+		{"Deployments", "[1]", "replicas"},
 
 		{"Services"},
 
-		{"Services", "[[0]]", "ports"},
-		{"Services", "[[0]]", "ports", "[[0]]", "name"},
-		{"Services", "[[0]]", "annotations"},
-		{"Services", "[[0]]", "annotations", "prometheus.io/path"},
+		{"Services", "[0]", "ports"},
+		{"Services", "[0]", "ports", "[0]", "name"},
+		{"Services", "[0]", "annotations"},
+		{"Services", "[0]", "annotations", "prometheus.io/path"},
 
-		{"Services", "[[1]]", "ports"},
-		{"Services", "[[1]]", "ports", "[[0]]", "name"},
+		{"Services", "[1]", "ports"},
+		{"Services", "[1]", "ports", "[0]", "name"},
 	}
 
 	assertPathKeys(pathKeys, conv, t)
@@ -345,6 +345,7 @@ func TestConverterGet(t *testing.T) {
 	for _, x := range []string{"1", "2", "3"} {
 		conv.doIterate(&conv.tree, x, tobj, jsonparser.Object)
 	}
+
 	conv.doIterate(&conv.tree, "order", []byte(`{}`), jsonparser.Object)
 	conv.doIterate(conv.get("order"), "potatoe",
 		[]byte(`{ "mash": { "count": 1 }, "chips": { "count": 2 }, "sausages": true, "gravy": { "beef": 1, "chicken": 0 }  }`),
@@ -360,4 +361,113 @@ func TestConverterGet(t *testing.T) {
 	}
 
 	assertPathKeys(pathKeys, conv, t)
+}
+
+func TestHandlers(t *testing.T) {
+	conv := New()
+	tobj := []byte(`{
+		"Kind": "some",
+		"kubegen.TestDeletion": { "aFoodOrder": "YES" },
+		"order": {
+			"potatoe": {
+				"mash": { "count": 1 },
+				"chips": { "count": 2 },
+				"sausages": true,
+				"gravy": {
+					"beef": 1,
+					"chicken": 0,
+					"other": [
+						{
+							"kind": "sweetAndSour",
+							"kubegen.TestDeletion": "someOfThatMayBe"
+						},
+						{
+							"kind": "sourCream",
+							"kubegen.TestDeletion": "yesExtraOfThatPleaseThankYou"
+						}
+					]
+				}
+			}
+		}
+	}`)
+
+	umobj := []byte(`{
+		"Kind": "some",
+		"order": {
+			"potatoe": {
+				"mash": { "count": 1 },
+				"chips": { "count": 2 },
+				"sausages": true,
+				"gravy": {
+					"beef": 1,
+					"chicken": 0,
+					"other": [
+						{
+							"kind": "sweetAndSour"
+						},
+						{
+							"kind": "sourCream"
+						}
+					]
+				}
+			}
+		}
+	}`)
+
+	assert := assert.New(t)
+
+	assert.NotEqual(tobj, umobj,
+		"object without modifier keywords should be different")
+	assert.True(len(tobj) > len(umobj),
+		"object without modifier keywords should be larger")
+
+	conv.keywords["kubegen.TestDeletion"] = func(c *Converter, branch *branchInfo) error {
+		switch branch.kind {
+		case jsonparser.String:
+			fallthrough
+		case jsonparser.Object:
+			p := strings.Join(branch.path, ".")
+			// TODO panic if key exists or find a way to have unique keys
+			conv.callbacks[p] = func(c *Converter) error {
+				c.data = jsonparser.Delete(c.data, branch.path[1:]...)
+				return nil
+			}
+		}
+		return nil
+	}
+
+	if err := conv.LoadStrict(tobj); err != nil {
+		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
+	}
+
+	if err := conv.Run(); err != nil {
+		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
+	}
+
+	for p, fn := range conv.callbacks {
+		if err := fn(conv); err != nil {
+			t.Fatalf("callback on %q failed to modify the tree – %v", p, err)
+		}
+	}
+
+	unmodified := New()
+	if err := unmodified.LoadStrict(umobj); err != nil {
+		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(unmodified.data))
+	}
+
+	assert.Equal(len(unmodified.data), len(conv.data),
+		"new object should be the same len as one without modifier keywords")
+
+	assert.Equal(unmodified.data, conv.data,
+		"new object should be exactly the same as one without modifier keywords")
+
+	assert.Equal(0, len(unmodified.keywords),
+		"object without modifier keywords has no keyword handlers")
+	assert.Equal(0, len(unmodified.callbacks),
+		"object without modifier keywords has no keyword callbacks")
+
+	reloaded := New()
+	if err := unmodified.LoadStrict(conv.data); err != nil {
+		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(reloaded.data))
+	}
 }

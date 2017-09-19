@@ -29,26 +29,18 @@ type Converter struct {
 	tree branchInfo
 	data []byte
 	// TODO add module context, cause we want to be able to lookup variables etc
-	keywords map[string]keywordHandler
+	keywords  map[string]keywordHandler
+	callbacks map[string]keywordCallback
 }
 
-type keywordHandler func(branch *branchInfo) error
+type keywordHandler func(*Converter, *branchInfo) error
+type keywordCallback func(*Converter) error
 
 func New() *Converter {
-	c := &Converter{
-		keywords: map[string]keywordHandler{
-			"kubegen.MapMerge.Lookup": func(branch *branchInfo) error {
-				switch branch.kind {
-				case jsonparser.String:
-					// evidently using Delete on this segment corrupts the rest of the data
-					// we need to track our path and operate on the top-level c.data
-					branch.parent.value = jsonparser.Delete(branch.parent.value, "kubegen.MapMerge.Lookup")
-				}
-				return nil
-			},
-		},
+	return &Converter{
+		keywords:  make(map[string]keywordHandler),
+		callbacks: make(map[string]keywordCallback),
 	}
-	return c
 }
 
 func (c *Converter) Load(data []byte) {
@@ -104,10 +96,10 @@ func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte
 	}
 	parentBranch.self[key] = &newBranch
 
-	//if handler, ok := c.keywords[key]; ok {
-	//	handler(&newBranch)
-	//	return
-	//}
+	if handler, ok := c.keywords[key]; ok {
+		handler(c, &newBranch)
+		return
+	}
 
 	switch dataType {
 	case jsonparser.Object:
@@ -144,7 +136,7 @@ type arrayIterator func(value []byte, dataType jsonparser.ValueType, offset int,
 func (c *Converter) makeArrayIterator(parentBranch *branchInfo) arrayIterator {
 	index := 0
 	callback := func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		c.doIterate(parentBranch, fmt.Sprintf("[[%d]]", index), value, dataType)
+		c.doIterate(parentBranch, fmt.Sprintf("[%d]", index), value, dataType)
 		index = index + 1
 	}
 	return callback
