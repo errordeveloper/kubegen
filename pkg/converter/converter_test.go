@@ -499,7 +499,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 			"kubegen.Number.Lookup": "test3val"
 		},
 		"test4n": {
-			"kubegen.Nuber.Lookup": "test4val"
+			"kubegen.Number.Lookup": "test4val"
 		}
 	}`)
 
@@ -522,6 +522,11 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 			switch branch.kind {
 			case jsonparser.String:
 				c.modifiers[p] = func(c *Converter) error {
+					v, err := jsonparser.Set(c.data, []byte("\"TEST\""), branch.parent.path[1:]...)
+					if err != nil {
+						return err
+					}
+					c.data = v
 					return nil
 				}
 			default:
@@ -537,6 +542,11 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 			switch branch.kind {
 			case jsonparser.String:
 				c.modifiers[p] = func(c *Converter) error {
+					v, err := jsonparser.Set(c.data, []byte("0"), branch.parent.path[1:]...)
+					if err != nil {
+						return err
+					}
+					c.data = v
 					return nil
 				}
 			default:
@@ -573,5 +583,29 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 
 	if err := conv.CallModifiers(); err != nil {
 		t.Fatalf("failed to run modifiers – %v", err)
+	}
+
+	{
+		v, err := jsonparser.GetString(conv.data, "test1s")
+		assert.Nil(err)
+		assert.Equal("TEST", v)
+	}
+
+	{
+		v, err := jsonparser.GetString(conv.data, "test2s")
+		assert.Nil(err)
+		assert.Equal("TEST", v)
+	}
+
+	{
+		v, err := jsonparser.GetInt(conv.data, "test3n")
+		assert.Nil(err)
+		assert.Equal(int64(0), v)
+	}
+
+	{
+		v, err := jsonparser.GetInt(conv.data, "test4n")
+		assert.Nil(err)
+		assert.Equal(int64(0), v)
 	}
 }
