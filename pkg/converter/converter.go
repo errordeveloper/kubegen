@@ -10,6 +10,7 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/buger/jsonparser"
 )
@@ -29,17 +30,25 @@ type Converter struct {
 	tree branchInfo
 	data []byte
 	// TODO add module context, cause we want to be able to lookup variables etc
-	keywords  map[string]keywordHandler
-	callbacks map[string]keywordCallback
+	// when we encouter a keyword, we construct a callback to do modifications
+	// as it's unsafe to do it right on the spot (that may be just because of
+	// how our parser works)
+	// TODO we will have to use regex matchers here actually, we can keep keys
+	// as string and use compiledRegexp.String()
+	keywords map[string]keywordCallbackMaker
+	// modifiers are actual modifiers mapped by dot-joined path
+	// TODO we probably want to do something better here, as dot-joined path
+	// doesn't guarantee uniqueness
+	modifiers map[string]keywordCallback
 }
 
-type keywordHandler func(*Converter, *branchInfo) error
+type keywordCallbackMaker func(*Converter, *branchInfo) error
 type keywordCallback func(*Converter) error
 
 func New() *Converter {
 	return &Converter{
-		keywords:  make(map[string]keywordHandler),
-		callbacks: make(map[string]keywordCallback),
+		keywords:  make(map[string]keywordCallbackMaker),
+		modifiers: make(map[string]keywordCallback),
 	}
 }
 
@@ -77,6 +86,20 @@ func (c *Converter) LoadParsed(obj interface{}) error {
 	return nil
 }
 
+func (c *Converter) DefineKeyword(keyword string, modifier keywordCallbackMaker) {
+	// TODO compile regex here and use compiledRegexp.String() to get the key back?
+	c.keywords[keyword] = modifier
+}
+
+func (c *Converter) CallModifiers() error {
+	for p, fn := range c.modifiers {
+		if err := fn(c); err != nil {
+			return fmt.Errorf("callback on %q failed to modify the tree – %v", p, err)
+		}
+	}
+	return nil
+}
+
 func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte, dataType jsonparser.ValueType) {
 	pathLen := len(parentBranch.path) + 1
 	newBranch := branchInfo{
@@ -96,9 +119,10 @@ func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte
 	}
 	parentBranch.self[key] = &newBranch
 
-	if handler, ok := c.keywords[key]; ok {
-		handler(c, &newBranch)
-		return
+	if makeModifier, ok := c.keywords[key]; ok {
+		if err := makeModifier(c, &newBranch); err != nil {
+			panic(fmt.Errorf("failed to register modifier for keyword %q – %v", key, err))
+		}
 	}
 
 	switch dataType {
@@ -184,4 +208,8 @@ func (c *Converter) get(path ...string) *branchInfo {
 		}
 	}
 	return &branch
+}
+
+func (b *branchInfo) PathToString() string {
+	return strings.Join(b.path, ".")
 }

@@ -363,8 +363,9 @@ func TestConverterGet(t *testing.T) {
 	assertPathKeys(pathKeys, conv, t)
 }
 
-func TestHandlers(t *testing.T) {
+func TestKeywordModifiersDeletion(t *testing.T) {
 	conv := New()
+
 	tobj := []byte(`{
 		"Kind": "some",
 		"kubegen.TestDeletion": { "aFoodOrder": "YES" },
@@ -421,20 +422,21 @@ func TestHandlers(t *testing.T) {
 	assert.True(len(tobj) > len(umobj),
 		"object without modifier keywords should be larger")
 
-	conv.keywords["kubegen.TestDeletion"] = func(c *Converter, branch *branchInfo) error {
-		switch branch.kind {
-		case jsonparser.String:
-			fallthrough
-		case jsonparser.Object:
-			p := strings.Join(branch.path, ".")
-			// TODO panic if key exists or find a way to have unique keys
-			conv.callbacks[p] = func(c *Converter) error {
-				c.data = jsonparser.Delete(c.data, branch.path[1:]...)
-				return nil
+	conv.DefineKeyword("kubegen.TestDeletion",
+		func(c *Converter, branch *branchInfo) error {
+			p := branch.PathToString()
+			switch branch.kind {
+			case jsonparser.String:
+				fallthrough
+			case jsonparser.Object:
+				// TODO panic if key exists or find a way to have unique keys
+				c.modifiers[p] = func(c *Converter) error {
+					c.data = jsonparser.Delete(c.data, branch.path[1:]...)
+					return nil
+				}
 			}
-		}
-		return nil
-	}
+			return nil
+		})
 
 	if err := conv.LoadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
@@ -444,10 +446,8 @@ func TestHandlers(t *testing.T) {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
-	for p, fn := range conv.callbacks {
-		if err := fn(conv); err != nil {
-			t.Fatalf("callback on %q failed to modify the tree – %v", p, err)
-		}
+	if err := conv.CallModifiers(); err != nil {
+		t.Fatalf("failed to run modifiers – %v", err)
 	}
 
 	unmodified := New()
@@ -463,11 +463,84 @@ func TestHandlers(t *testing.T) {
 
 	assert.Equal(0, len(unmodified.keywords),
 		"object without modifier keywords has no keyword handlers")
-	assert.Equal(0, len(unmodified.callbacks),
+	assert.Equal(0, len(unmodified.modifiers),
 		"object without modifier keywords has no keyword callbacks")
 
 	reloaded := New()
 	if err := unmodified.LoadStrict(conv.data); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(reloaded.data))
+	}
+}
+
+func TestKeywordModifiersLookup(t *testing.T) {
+	conv := New()
+
+	//assert := assert.New(t)
+
+	tobj := []byte(`{
+		"Kind": "Some",
+		"test1s": {
+			"kubegen.String.Lookup": "test1val"
+		},
+		"test2s": {
+			"kubegen.String.Lookup": "test2val"
+		},
+		"test3n": {
+			"kubegen.Number.Lookup": "test3val"
+		},
+		"test4n": {
+			"kubegen.Nuber.Lookup": "test4val"
+		},
+		"test5sf": {
+			"kubegen.String.Lookup.DISABLE": []
+		},
+		"test6nf": {
+			"kubegen.Number.Lookup.DISABLE": {}
+		}
+	}`)
+
+	conv.DefineKeyword("kubegen.String.Lookup",
+		func(c *Converter, branch *branchInfo) error {
+			p := branch.PathToString()
+
+			switch branch.kind {
+			case jsonparser.String:
+				c.modifiers[p] = func(c *Converter) error {
+					return nil
+				}
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+			}
+			return nil
+		})
+
+	/*
+		conv.DefineKeyword("kubegen.Number.Lookup",
+			func(c *Converter, branch *branchInfo) error {
+				switch branch.kind {
+				case jsonparser.String:
+					fallthrough
+				case jsonparser.Object:
+					p := strings.Join(branch.path, ".")
+					// TODO panic if key exists or find a way to have unique keys
+					conv.modifiers[p] = func(c *Converter) error {
+						c.data = jsonparser.Delete(c.data, branch.path[1:]...)
+						return nil
+					}
+				}
+				return nil
+			})
+	*/
+
+	if err := conv.LoadStrict(tobj); err != nil {
+		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
+	}
+
+	if err := conv.Run(); err != nil {
+		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
+	}
+
+	if err := conv.CallModifiers(); err != nil {
+		t.Fatalf("failed to run modifiers – %v", err)
 	}
 }
