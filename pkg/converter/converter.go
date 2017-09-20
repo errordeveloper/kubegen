@@ -100,7 +100,7 @@ func (c *Converter) CallModifiers() error {
 	return nil
 }
 
-func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte, dataType jsonparser.ValueType) {
+func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte, dataType jsonparser.ValueType, errors chan error) {
 	pathLen := len(parentBranch.path) + 1
 	newBranch := branchInfo{
 		parent: parentBranch,
@@ -115,25 +115,28 @@ func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte
 	newBranch.path[pathLen-1] = key
 
 	if _, ok := parentBranch.self[key]; ok {
-		panic(fmt.Sprintf("key %q is already set in parent", key))
+		errors <- fmt.Errorf("key %q is already set in parent", key)
+		return
 	}
 	parentBranch.self[key] = &newBranch
 
 	if makeModifier, ok := c.keywords[key]; ok {
 		if err := makeModifier(c, &newBranch); err != nil {
-			panic(fmt.Errorf("failed to register modifier for keyword %q – %v", key, err))
+			errors <- fmt.Errorf("failed to register modifier for keyword %q – %v", key, err)
+			return
 		}
 	}
 
 	switch dataType {
 	case jsonparser.Object:
-		handler := c.makeObjectIterator(&newBranch)
+		handler := c.makeObjectIterator(&newBranch, errors)
 
 		if err := jsonparser.ObjectEach(value, handler); err != nil {
-			panic(err)
+			errors <- (err)
+			return
 		}
 	case jsonparser.Array:
-		handler := c.makeArrayIterator(&newBranch)
+		handler := c.makeArrayIterator(&newBranch, errors)
 
 		jsonparser.ArrayEach(value, handler)
 	}
@@ -141,9 +144,9 @@ func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte
 
 type objectIterator func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error
 
-func (c *Converter) makeObjectIterator(parentBranch *branchInfo) objectIterator {
+func (c *Converter) makeObjectIterator(parentBranch *branchInfo, errors chan error) objectIterator {
 	callback := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		c.doIterate(parentBranch, string(key), value, dataType)
+		c.doIterate(parentBranch, string(key), value, dataType, errors)
 		keys := []string{}
 		paths := [][]string{}
 		for i := range parentBranch.self {
@@ -157,13 +160,21 @@ func (c *Converter) makeObjectIterator(parentBranch *branchInfo) objectIterator 
 
 type arrayIterator func(value []byte, dataType jsonparser.ValueType, offset int, err error)
 
-func (c *Converter) makeArrayIterator(parentBranch *branchInfo) arrayIterator {
+func (c *Converter) makeArrayIterator(parentBranch *branchInfo, errors chan error) arrayIterator {
 	index := 0
 	callback := func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		c.doIterate(parentBranch, fmt.Sprintf("[%d]", index), value, dataType)
+		c.doIterate(parentBranch, fmt.Sprintf("[%d]", index), value, dataType, errors)
 		index = index + 1
 	}
 	return callback
+}
+
+func (c *Converter) interate(errors chan error) {
+	if err := jsonparser.ObjectEach(c.data, c.makeObjectIterator(&c.tree, errors)); err != nil {
+		errors <- (err)
+		return
+	}
+	errors <- nil
 }
 
 func (c *Converter) Run() error {
@@ -185,9 +196,17 @@ func (c *Converter) Run() error {
 		path:   []string{""},
 	}
 
-	if err := jsonparser.ObjectEach(c.data, c.makeObjectIterator(&c.tree)); err != nil {
-		return err
+	{
+		errors := make(chan error)
+
+		go c.interate(errors)
+
+		err := <-errors
+		if err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 

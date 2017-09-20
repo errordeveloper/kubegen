@@ -342,14 +342,24 @@ func TestConverterGet(t *testing.T) {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
-	for _, x := range []string{"1", "2", "3"} {
-		conv.doIterate(&conv.tree, x, tobj, jsonparser.Object)
-	}
+	errors := make(chan error)
+	go func() {
+		for _, x := range []string{"1", "2", "3"} {
+			conv.doIterate(&conv.tree, x, tobj, jsonparser.Object, errors)
+		}
 
-	conv.doIterate(&conv.tree, "order", []byte(`{}`), jsonparser.Object)
-	conv.doIterate(conv.get("order"), "potatoe",
-		[]byte(`{ "mash": { "count": 1 }, "chips": { "count": 2 }, "sausages": true, "gravy": { "beef": 1, "chicken": 0 }  }`),
-		jsonparser.Object)
+		conv.doIterate(&conv.tree, "order", []byte(`{}`), jsonparser.Object, errors)
+
+		conv.doIterate(conv.get("order"), "potatoe",
+			[]byte(`{ "mash": { "count": 1 }, "chips": { "count": 2 }, "sausages": true, "gravy": { "beef": 1, "chicken": 0 }  }`),
+			jsonparser.Object, errors)
+
+		errors <- nil
+	}()
+
+	if err := <-errors; err != nil {
+		t.Fatalf("%v", err)
+	}
 
 	pathKeys := [][]string{
 		{"1", "Kind"},
