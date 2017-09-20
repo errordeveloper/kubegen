@@ -38,7 +38,7 @@ type Converter struct {
 	keywords map[string]keywordCallbackMaker
 	// modifiers are actual modifiers mapped by dot-joined path
 	// TODO we probably want to do something better here, as dot-joined path
-	// doesn't guarantee uniqueness
+	// doesn't guarantee uniqueness (TBD, also cosider escaping literal dots)
 	modifiers map[string]keywordCallback
 }
 
@@ -230,5 +230,7 @@ func (c *Converter) get(path ...string) *branchInfo {
 }
 
 func (b *branchInfo) PathToString() string {
+	// TODO escape literal dots with something or find another join character
+	// TODO look into what JSONPath does about this, also check jq too
 	return strings.Join(b.path, ".")
 }

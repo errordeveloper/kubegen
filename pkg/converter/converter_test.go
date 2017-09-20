@@ -482,10 +482,10 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 	}
 }
 
-func TestKeywordModifiersLookup(t *testing.T) {
+func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 	conv := New()
 
-	//assert := assert.New(t)
+	assert := assert.New(t)
 
 	tobj := []byte(`{
 		"Kind": "Some",
@@ -500,14 +500,20 @@ func TestKeywordModifiersLookup(t *testing.T) {
 		},
 		"test4n": {
 			"kubegen.Nuber.Lookup": "test4val"
-		},
-		"test5sf": {
-			"kubegen.String.Lookup.DISABLE": []
-		},
-		"test6nf": {
-			"kubegen.Number.Lookup.DISABLE": {}
 		}
 	}`)
+
+	badSyntax := [][]byte{
+		[]byte(`{ { "kubegen.String.Lookup": []`),
+		[]byte(`foo: {}`),
+		[]byte(`{ "Kind" "SOME" }`),
+	}
+
+	badModfiersOrObjecs := [][]byte{
+		[]byte(`{ "Something": null }`),
+		[]byte(`{ "Kind": "Some", "test5sf": { "kubegen.String.Lookup": [] } }`),
+		[]byte(`{ "Kind": "Some", "test6nf": { "kubegen.Number.Lookup": {} } }`),
+	}
 
 	conv.DefineKeyword("kubegen.String.Lookup",
 		func(c *Converter, branch *branchInfo) error {
@@ -524,23 +530,38 @@ func TestKeywordModifiersLookup(t *testing.T) {
 			return nil
 		})
 
-	/*
-		conv.DefineKeyword("kubegen.Number.Lookup",
-			func(c *Converter, branch *branchInfo) error {
-				switch branch.kind {
-				case jsonparser.String:
-					fallthrough
-				case jsonparser.Object:
-					p := strings.Join(branch.path, ".")
-					// TODO panic if key exists or find a way to have unique keys
-					conv.modifiers[p] = func(c *Converter) error {
-						c.data = jsonparser.Delete(c.data, branch.path[1:]...)
-						return nil
-					}
+	conv.DefineKeyword("kubegen.Number.Lookup",
+		func(c *Converter, branch *branchInfo) error {
+			p := branch.PathToString()
+
+			switch branch.kind {
+			case jsonparser.String:
+				c.modifiers[p] = func(c *Converter) error {
+					return nil
 				}
-				return nil
-			})
-	*/
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+			}
+			return nil
+		})
+
+	for _, v := range badSyntax {
+		conv2 := New()
+		conv2.keywords = conv.keywords
+		var err error
+		err = conv2.LoadStrict(v)
+		assert.NotNil(err)
+	}
+
+	for _, v := range badModfiersOrObjecs {
+		conv2 := New()
+		conv2.keywords = conv.keywords
+		var err error
+		err = conv2.LoadStrict(v)
+		assert.Nil(err)
+		err = conv2.Run()
+		assert.NotNil(err)
+	}
 
 	if err := conv.LoadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
