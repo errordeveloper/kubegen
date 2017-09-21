@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/template"
 
+	// "github.com/buger/jsonparser"
 	"github.com/ghodss/yaml"
 
 	"github.com/errordeveloper/kubegen/pkg/converter"
@@ -19,9 +20,7 @@ import (
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-// TODO report unknown keys in manifests
-// TODO bail on unknown variable keys
-
+// TODO just converter everwhere this is used, but probably avoid keywords at toplevel
 func loadObj(obj interface{}, data []byte, sourcePath string, instanceName string) error {
 	var errorFmt string
 
@@ -53,12 +52,6 @@ func loadObj(obj interface{}, data []byte, sourcePath string, instanceName strin
 }
 
 func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
-	tobj := new(interface{})
-
-	if err := loadObj(tobj, data, sourcePath, instanceName); err != nil {
-		return err
-	}
-
 	/*
 
 		w := &interpolationWalker{
@@ -94,23 +87,79 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 	*/
 
 	conv := converter.New()
-	if err := conv.LoadParsed(tobj); err != nil {
-		panic(err)
+
+	conv.DefineKeyword("kubegen.String.Lookup",
+		func(c *converter.Converter, branch *converter.BranchInfo) error {
+			p := branch.PathToString()
+			x := []byte("\"TEST_STRING\"")
+			switch branch.Kind() {
+			case converter.String:
+				c.AddModifier(branch, func(c *converter.Converter) error {
+					if err := c.Replace(branch, x); err != nil {
+						return err
+					}
+					return nil
+				})
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.Kind())
+			}
+			return nil
+		})
+
+	conv.DefineKeyword("kubegen.Number.Lookup",
+		func(c *converter.Converter, branch *converter.BranchInfo) error {
+			p := branch.PathToString()
+			x := []byte("12345")
+			switch branch.Kind() {
+			case converter.String:
+				c.AddModifier(branch, func(c *converter.Converter) error {
+					if err := c.Replace(branch, x); err != nil {
+						return err
+					}
+					return nil
+				})
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.Kind())
+			}
+			return nil
+		})
+
+	conv.DefineKeyword("kubegen.Object.Lookup",
+		func(c *converter.Converter, branch *converter.BranchInfo) error {
+			p := branch.PathToString()
+			var x []byte
+			//if v, ok := objs[string(branch.value)]; ok {
+			//	x = v
+			//} else {
+			x = []byte("{ }")
+			//}
+			switch branch.Kind() {
+			case converter.String:
+				c.AddModifier(branch, func(c *converter.Converter) error {
+					if err := c.Replace(branch, x); err != nil {
+						return err
+					}
+					return nil
+				})
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.Kind())
+			}
+			return nil
+		})
+
+	if err := conv.LoadObj(data, sourcePath, instanceName); err != nil {
+		return err
 	}
 
-	// TODO refactor this, the whole loading code is a mess right now
-	{
-		data, err := json.Marshal(tobj)
-		if err != nil {
-			return fmt.Errorf(
-				"error while re-encoding %q (%q): %v",
-				instanceName, sourcePath, err)
-		}
-		if err := json.Unmarshal(data, obj); err != nil {
-			return fmt.Errorf(
-				"error while re-decoding %q (%q): %v",
-				instanceName, sourcePath, err)
-		}
+	// TODO define keywords for variable look here
+	// (we might move them later, but seems okay now)
+
+	if err := conv.Run(); err != nil {
+		return err
+	}
+
+	if err := conv.Unmarshal(obj); err != nil {
+		return err
 	}
 
 	return nil

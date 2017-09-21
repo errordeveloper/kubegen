@@ -67,7 +67,7 @@ func TestConverterBasic(t *testing.T) {
 
 	conv := New()
 
-	if err := conv.LoadStrict(tobj); err != nil {
+	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
@@ -127,7 +127,7 @@ func TestConverterOnlyObjects(t *testing.T) {
 
 	conv := New()
 
-	if err := conv.LoadStrict(tobj); err != nil {
+	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
@@ -273,7 +273,7 @@ func TestBasicKubegenAsset(t *testing.T) {
 
 	conv := New()
 
-	if err := conv.LoadStrict(tobj); err != nil {
+	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
@@ -334,7 +334,7 @@ func TestConverterGet(t *testing.T) {
 	conv := New()
 	tobj := []byte(`{ "Kind": "some" }`)
 
-	if err := conv.LoadStrict(tobj); err != nil {
+	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
@@ -433,7 +433,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 		"object without modifier keywords should be larger")
 
 	conv.DefineKeyword("kubegen.TestDeletion",
-		func(c *Converter, branch *branchInfo) error {
+		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
 			switch branch.kind {
 			case jsonparser.String:
@@ -448,7 +448,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 			return nil
 		})
 
-	if err := conv.LoadStrict(tobj); err != nil {
+	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
 	}
 
@@ -461,7 +461,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 	}
 
 	unmodified := New()
-	if err := unmodified.LoadStrict(umobj); err != nil {
+	if err := unmodified.loadStrict(umobj); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(unmodified.data))
 	}
 
@@ -477,7 +477,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 		"object without modifier keywords has no keyword callbacks")
 
 	reloaded := New()
-	if err := unmodified.LoadStrict(conv.data); err != nil {
+	if err := unmodified.loadStrict(conv.data); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(reloaded.data))
 	}
 }
@@ -516,7 +516,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 	}
 
 	conv.DefineKeyword("kubegen.String.Lookup",
-		func(c *Converter, branch *branchInfo) error {
+		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
 
 			switch branch.kind {
@@ -536,7 +536,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		})
 
 	conv.DefineKeyword("kubegen.Number.Lookup",
-		func(c *Converter, branch *branchInfo) error {
+		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
 
 			switch branch.kind {
@@ -559,7 +559,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		conv2 := New()
 		conv2.keywords = conv.keywords
 		var err error
-		err = conv2.LoadStrict(v)
+		err = conv2.loadStrict(v)
 		assert.NotNil(err)
 	}
 
@@ -567,13 +567,13 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		conv2 := New()
 		conv2.keywords = conv.keywords
 		var err error
-		err = conv2.LoadStrict(v)
+		err = conv2.loadStrict(v)
 		assert.Nil(err)
 		err = conv2.run()
 		assert.NotNil(err)
 	}
 
-	if err := conv.LoadStrict(tobj); err != nil {
+	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
 	}
 
@@ -653,7 +653,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 	}
 
 	conv.DefineKeyword("kubegen.String.Lookup",
-		func(c *Converter, branch *branchInfo) error {
+		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
 
 			switch branch.kind {
@@ -673,7 +673,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 		})
 
 	conv.DefineKeyword("kubegen.Number.Lookup",
-		func(c *Converter, branch *branchInfo) error {
+		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
 
 			switch branch.kind {
@@ -694,7 +694,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 		})
 
 	conv.DefineKeyword("kubegen.Object.Lookup",
-		func(c *Converter, branch *branchInfo) error {
+		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
 			var x []byte
 			if v, ok := objs[string(branch.value)]; ok {
@@ -718,7 +718,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 			return nil
 		})
 
-	if err := conv.LoadStrict(tobj); err != nil {
+	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
 	}
 
@@ -875,7 +875,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 	assert.Equal(0, len(conv.modifiers))
 
 	// now do the same with exported run method
-	if err := conv.LoadStrict(tobj); err != nil {
+	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
 	}
 

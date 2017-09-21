@@ -10,24 +10,39 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/buger/jsonparser"
+	"github.com/ghodss/yaml"
+
+	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-type branchInfo struct {
-	kind   jsonparser.ValueType
+type BranchInfo struct {
+	kind   ValueType
 	self   branch
 	value  []byte
-	parent *branchInfo
+	parent *BranchInfo
 	path   branchPath
 }
 
-type branch = map[string]*branchInfo
-type branchPath = []string
+type (
+	ValueType = jsonparser.ValueType
+
+	branch     = map[string]*BranchInfo
+	branchPath = []string
+)
+
+const (
+	String = jsonparser.String
+	Object = jsonparser.Object
+	Array  = jsonparser.Array
+	Number = jsonparser.Number
+)
 
 type Converter struct {
-	tree branchInfo
+	tree BranchInfo
 	data []byte
 	// TODO add module context, cause we want to be able to lookup variables etc
 	// when we encouter a keyword, we construct a callback to do modifications
@@ -42,7 +57,7 @@ type Converter struct {
 	modifiers map[string]keywordCallback
 }
 
-type keywordCallbackMaker func(*Converter, *branchInfo) error
+type keywordCallbackMaker func(*Converter, *BranchInfo) error
 type keywordCallback func(*Converter) error
 
 func New() *Converter {
@@ -52,43 +67,61 @@ func New() *Converter {
 	}
 }
 
-func (c *Converter) Load(data []byte) {
-	c.data = data
-}
+func (c *Converter) load(data []byte) { c.data = data }
 
-// LoadStrict ensure we validate the data, as out jsonparser doesn't produce very helpful errors,
-// namely it doesn't indicate line numbers and seems to tolerate leading commas etc
-func (c *Converter) LoadStrict(data []byte) error {
+func (c *Converter) loadStrict(data []byte) error {
 	obj := new(interface{})
 	if err := json.Unmarshal(data, obj); err != nil {
-		return fmt.Errorf(
-			"error while re-decoding %q (%q): %v",
-			"<TODO:instanceName>", "<TODO:sourcePath", err)
+		return fmt.Errorf("error while re-decoding – %v", err)
 	}
 	data, err := json.Marshal(obj)
 	if err != nil {
-		return fmt.Errorf(
-			"error while re-encoding %q (%q): %v",
-			"<TODO:instanceName>", "<TODO:sourcePath>", err)
+		return fmt.Errorf("error while re-encoding – %v", err)
 	}
-	c.data = data
+	c.load(data)
 	return nil
 }
 
-func (c *Converter) LoadParsed(obj interface{}) error {
-	data, err := json.Marshal(obj)
+func (c *Converter) LoadObj(data []byte, sourcePath string, instanceName string) error {
+	var errorFmt string
+
+	if instanceName != "" {
+		errorFmt = fmt.Sprintf("error loading module %q source", instanceName)
+	} else {
+		errorFmt = "error loading manifest file"
+	}
+
+	obj := new(interface{})
+
+	ext := path.Ext(sourcePath)
+	switch {
+	case ext == ".json":
+		if err := json.Unmarshal(data, obj); err != nil {
+			return fmt.Errorf("%s as JSON (%q) – %v", errorFmt, sourcePath, err)
+		}
+	case ext == ".yaml" || ext == ".yml":
+		if err := yaml.Unmarshal(data, obj); err != nil {
+			return fmt.Errorf("%s as YAML (%q) – %v", errorFmt, sourcePath, err)
+		}
+	case ext == ".kg" || ext == ".hcl":
+		if err := util.NewFromHCL(obj, data); err != nil {
+			return fmt.Errorf("%s as HCL (%q) – %v", errorFmt, sourcePath, err)
+		}
+	default:
+		return fmt.Errorf("%s %q – unknown file extension", errorFmt, sourcePath)
+	}
+
+	jsonData, err := json.Marshal(obj)
 	if err != nil {
-		return fmt.Errorf(
-			"error while re-encoding %q (%q): %v",
-			"<TODO:instanceName>", "<TODO:sourcePath>", err)
+		return fmt.Errorf("%s while re-encoding (%q): %v", errorFmt, sourcePath, err)
 	}
-	c.data = data
+	c.load(jsonData)
 	return nil
 }
 
-func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte, dataType jsonparser.ValueType, errors chan error) {
+func (c *Converter) doIterate(parentBranch *BranchInfo, key string, value []byte, dataType ValueType, errors chan error) {
 	pathLen := len(parentBranch.path) + 1
-	newBranch := branchInfo{
+	newBranch := BranchInfo{
 		parent: parentBranch,
 		kind:   dataType,
 		value:  value,
@@ -128,10 +161,10 @@ func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte
 	}
 }
 
-type objectIterator func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error
+type objectIterator func(key []byte, value []byte, dataType ValueType, offset int) error
 
-func (c *Converter) makeObjectIterator(parentBranch *branchInfo, errors chan error) objectIterator {
-	callback := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+func (c *Converter) makeObjectIterator(parentBranch *BranchInfo, errors chan error) objectIterator {
+	callback := func(key []byte, value []byte, dataType ValueType, offset int) error {
 		c.doIterate(parentBranch, string(key), value, dataType, errors)
 		keys := []string{}
 		paths := [][]string{}
@@ -144,11 +177,11 @@ func (c *Converter) makeObjectIterator(parentBranch *branchInfo, errors chan err
 	return callback
 }
 
-type arrayIterator func(value []byte, dataType jsonparser.ValueType, offset int, err error)
+type arrayIterator func(value []byte, dataType ValueType, offset int, err error)
 
-func (c *Converter) makeArrayIterator(parentBranch *branchInfo, errors chan error) arrayIterator {
+func (c *Converter) makeArrayIterator(parentBranch *BranchInfo, errors chan error) arrayIterator {
 	index := 0
-	callback := func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+	callback := func(value []byte, dataType ValueType, offset int, err error) {
 		c.doIterate(parentBranch, fmt.Sprintf("[%d]", index), value, dataType, errors)
 		index = index + 1
 	}
@@ -163,18 +196,27 @@ func (c *Converter) interate(errors chan error) {
 	errors <- nil
 }
 
-func (c *Converter) run() error {
-	kind, err := jsonparser.GetString(c.data, "Kind")
-	if err != nil {
-		return err
-	}
-	if kind == "" {
-		// it is okay to check this here, so we fail early,
-		// however we should abstract deep checks more specifically
-		return fmt.Errorf("kind is blank")
+func (c *Converter) checkKind() (err error) {
+	kindUpper, errUpper := jsonparser.GetString(c.data, "Kind")
+	kindLower, errLower := jsonparser.GetString(c.data, "kind")
+	if errUpper != nil && errLower != nil {
+		err = fmt.Errorf("unknown kind of object (kind unspecified)")
 	}
 
-	c.tree = branchInfo{
+	if kindUpper == "" && kindLower == "" {
+		err = fmt.Errorf("unknown kind of object (empty string)")
+	}
+	return
+}
+
+func (c *Converter) run() error {
+	// it is okay to check this here, so we fail early,
+	// however we should abstract deep checks more specifically
+	if err := c.checkKind(); err != nil {
+		return err
+	}
+
+	c.tree = BranchInfo{
 		parent: nil,
 		kind:   jsonparser.Object,
 		value:  c.data,
@@ -210,9 +252,13 @@ func (c *Converter) Run() error {
 	}
 }
 
-func (c *Converter) DefineKeyword(keyword string, modifier keywordCallbackMaker) {
+func (c *Converter) DefineKeyword(keyword string, fn keywordCallbackMaker) {
 	// TODO compile regex here and use compiledRegexp.String() to get the key back?
-	c.keywords[keyword] = modifier
+	c.keywords[keyword] = fn
+}
+
+func (c *Converter) AddModifier(branch *BranchInfo, fn keywordCallback) {
+	c.modifiers[branch.PathToString()] = fn
 }
 
 func (c *Converter) callModifiersOnce() error {
@@ -225,15 +271,24 @@ func (c *Converter) callModifiersOnce() error {
 	return nil
 }
 
-func (b *branchInfo) get(key string) *branchInfo {
+func (c *Converter) Unmarshal(obj interface{}) error {
+	if err := json.Unmarshal(c.data, obj); err != nil {
+		return fmt.Errorf(
+			"error while re-decoding %q (%q): %v",
+			"<TODO:instanceName>", "<TODO:sourcePath>", err)
+	}
+	return nil
+}
+
+func (b *BranchInfo) get(key string) *BranchInfo {
 	if next := b.self[key]; next != nil {
 		return next
 	}
 	return nil
 }
 
-func (c *Converter) get(path ...string) *branchInfo {
-	branch := branchInfo{self: c.tree.self}
+func (c *Converter) get(path ...string) *BranchInfo {
+	branch := BranchInfo{self: c.tree.self}
 	for x := range path {
 		if next := branch.get(path[x]); next != nil {
 			branch = *next
@@ -244,8 +299,21 @@ func (c *Converter) get(path ...string) *branchInfo {
 	return &branch
 }
 
-func (b *branchInfo) PathToString() string {
+func (b *BranchInfo) Kind() ValueType { return b.kind }
+
+func (b *BranchInfo) Value() []byte { return b.value }
+
+func (b *BranchInfo) PathToString() string {
 	// TODO escape literal dots with something or find another join character
 	// TODO look into what JSONPath does about this, also check jq too
 	return strings.Join(b.path, ".")
+}
+
+func (c *Converter) Replace(branch *BranchInfo, value []byte) error {
+	x, err := jsonparser.Set(c.data, value, branch.parent.path[1:]...)
+	if err != nil {
+		return err
+	}
+	c.load(x)
+	return nil
 }
