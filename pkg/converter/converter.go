@@ -96,6 +96,7 @@ func (c *Converter) CallModifiers() error {
 		if err := fn(c); err != nil {
 			return fmt.Errorf("callback on %q failed to modify the tree – %v", p, err)
 		}
+		delete(c.modifiers, p)
 	}
 	return nil
 }

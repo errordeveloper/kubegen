@@ -609,3 +609,268 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		assert.Equal(int64(0), v)
 	}
 }
+
+func TestKeywordLookupRecursive(t *testing.T) {
+	conv := New()
+
+	assert := assert.New(t)
+
+	tobj := []byte(`{
+		"Kind": "Some",
+		"test1s": {
+			"kubegen.String.Lookup": "test1val"
+		},
+		"test2n": {
+			"kubegen.Number.Lookup": "test2val"
+		},
+		"test3m": [
+			{ "kubegen.Number.Lookup": "test3val" },
+			{ "kubegen.String.Lookup": "test3val" },
+			{ "kubegen.Object.Lookup": "testInsertObj2" }
+		],
+		"test4o": {
+			"kubegen.Object.Lookup": "testInsertObj1"
+		},
+		"test5o": {
+			"kubegen.Object.Lookup": "testInsertObj9"
+		}
+	}`)
+
+	objs := map[string][]byte{
+		"testInsertObj1": []byte(`{
+			"foo": [
+				{ "kubegen.Number.Lookup": "test4val" },
+				{ "kubegen.String.Lookup": "test4val" },
+				{ "kubegen.Object.Lookup": "testInsertObj2" }
+			],
+			"bar": [
+				{ "kubegen.Object.Lookup": "testInsertObj3" }
+			]
+		}`),
+		"testInsertObj2": []byte(`{ "bar": "TEST_VAL4" }`),
+		"testInsertObj3": []byte(`{ "kubegen.Object.Lookup": "testInsertObj4" }`),
+		// "testInsertObj4": []byte(`{}`),
+	}
+
+	conv.DefineKeyword("kubegen.String.Lookup",
+		func(c *Converter, branch *branchInfo) error {
+			p := branch.PathToString()
+
+			switch branch.kind {
+			case jsonparser.String:
+				c.modifiers[p] = func(c *Converter) error {
+					v, err := jsonparser.Set(c.data, []byte("\"TEST_STRING\""), branch.parent.path[1:]...)
+					if err != nil {
+						return err
+					}
+					c.data = v
+					return nil
+				}
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+			}
+			return nil
+		})
+
+	conv.DefineKeyword("kubegen.Number.Lookup",
+		func(c *Converter, branch *branchInfo) error {
+			p := branch.PathToString()
+
+			switch branch.kind {
+			case jsonparser.String:
+
+				c.modifiers[p] = func(c *Converter) error {
+					v, err := jsonparser.Set(c.data, []byte("12345"), branch.parent.path[1:]...)
+					if err != nil {
+						return err
+					}
+					c.data = v
+					return nil
+				}
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+			}
+			return nil
+		})
+
+	conv.DefineKeyword("kubegen.Object.Lookup",
+		func(c *Converter, branch *branchInfo) error {
+			p := branch.PathToString()
+			var x []byte
+			if v, ok := objs[string(branch.value)]; ok {
+				x = v
+			} else {
+				x = []byte("{ }")
+			}
+			switch branch.kind {
+			case jsonparser.String:
+				c.modifiers[p] = func(c *Converter) error {
+					v, err := jsonparser.Set(c.data, x, branch.parent.path[1:]...)
+					if err != nil {
+						return err
+					}
+					c.data = v
+					return nil
+				}
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+			}
+			return nil
+		})
+
+	if err := conv.LoadStrict(tobj); err != nil {
+		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
+	}
+
+	// first pass
+
+	if err := conv.Run(); err != nil {
+		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
+	}
+
+	if err := conv.CallModifiers(); err != nil {
+		t.Fatalf("failed to run modifiers – %v", err)
+	}
+
+	{
+		v, err := jsonparser.GetString(conv.data, "test1s")
+		assert.Nil(err)
+		assert.Equal("TEST_STRING", v)
+	}
+
+	{
+		v, err := jsonparser.GetInt(conv.data, "test2n")
+		assert.Nil(err)
+		assert.Equal(int64(12345), v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test3m")
+		a := []byte(fmt.Sprintf(`[12345,"TEST_STRING",%s]`, objs["testInsertObj2"]))
+		assert.Nil(err)
+		assert.Equal(jsonparser.Array, t)
+		assert.Equal(a, v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test4o")
+		a := []byte(objs["testInsertObj1"])
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.Equal(a, v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test5o")
+		a := []byte("{ }")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.Equal(a, v)
+	}
+
+	assert.Equal(0, len(conv.modifiers))
+
+	// second pass
+
+	if err := conv.Run(); err != nil {
+		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
+	}
+
+	assert.Equal(4, len(conv.modifiers))
+
+	if err := conv.CallModifiers(); err != nil {
+		t.Fatalf("failed to run modifiers – %v", err)
+	}
+
+	{
+		v, err := jsonparser.GetString(conv.data, "test1s")
+		assert.Nil(err)
+		assert.Equal("TEST_STRING", v)
+	}
+
+	{
+		v, err := jsonparser.GetInt(conv.data, "test2n")
+		assert.Nil(err)
+		assert.Equal(int64(12345), v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test3m")
+		a := []byte(fmt.Sprintf(`[12345,"TEST_STRING",%s]`, objs["testInsertObj2"]))
+		assert.Nil(err)
+		assert.Equal(jsonparser.Array, t)
+		assert.Equal(a, v)
+	}
+
+	{
+		_, t, _, err := jsonparser.Get(conv.data, "test4o")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+	}
+
+	{
+		v, err := jsonparser.GetInt(conv.data, "test4o", "foo", "[0]")
+		assert.Nil(err)
+		assert.Equal(int64(12345), v)
+	}
+
+	{
+		v, err := jsonparser.GetString(conv.data, "test4o", "foo", "[1]")
+		assert.Nil(err)
+		assert.Equal("TEST_STRING", v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test4o", "foo", "[2]")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.Equal(v, objs["testInsertObj2"])
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test4o", "bar", "[0]")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.Equal(v, objs["testInsertObj3"])
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test5o")
+		a := []byte("{ }")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.Equal(a, v)
+	}
+
+	assert.Equal(0, len(conv.modifiers))
+
+	// third pass
+
+	if err := conv.Run(); err != nil {
+		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
+	}
+
+	assert.Equal(1, len(conv.modifiers))
+
+	if err := conv.CallModifiers(); err != nil {
+		t.Fatalf("failed to run modifiers – %v", err)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test4o", "bar", "[0]")
+		a := []byte("{ }")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.Equal(a, v)
+	}
+
+	assert.Equal(0, len(conv.modifiers))
+
+	// final pass
+
+	if err := conv.Run(); err != nil {
+		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
+	}
+
+	assert.Equal(0, len(conv.modifiers))
+}
