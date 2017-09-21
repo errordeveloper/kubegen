@@ -86,21 +86,6 @@ func (c *Converter) LoadParsed(obj interface{}) error {
 	return nil
 }
 
-func (c *Converter) DefineKeyword(keyword string, modifier keywordCallbackMaker) {
-	// TODO compile regex here and use compiledRegexp.String() to get the key back?
-	c.keywords[keyword] = modifier
-}
-
-func (c *Converter) CallModifiers() error {
-	for p, fn := range c.modifiers {
-		if err := fn(c); err != nil {
-			return fmt.Errorf("callback on %q failed to modify the tree – %v", p, err)
-		}
-		delete(c.modifiers, p)
-	}
-	return nil
-}
-
 func (c *Converter) doIterate(parentBranch *branchInfo, key string, value []byte, dataType jsonparser.ValueType, errors chan error) {
 	pathLen := len(parentBranch.path) + 1
 	newBranch := branchInfo{
@@ -178,7 +163,7 @@ func (c *Converter) interate(errors chan error) {
 	errors <- nil
 }
 
-func (c *Converter) Run() error {
+func (c *Converter) run() error {
 	kind, err := jsonparser.GetString(c.data, "Kind")
 	if err != nil {
 		return err
@@ -208,6 +193,35 @@ func (c *Converter) Run() error {
 		}
 	}
 
+	return nil
+}
+
+func (c *Converter) Run() error {
+	for {
+		if err := c.run(); err != nil {
+			return err
+		}
+		if len(c.modifiers) == 0 {
+			return nil
+		}
+		if err := c.callModifiersOnce(); err != nil {
+			return err
+		}
+	}
+}
+
+func (c *Converter) DefineKeyword(keyword string, modifier keywordCallbackMaker) {
+	// TODO compile regex here and use compiledRegexp.String() to get the key back?
+	c.keywords[keyword] = modifier
+}
+
+func (c *Converter) callModifiersOnce() error {
+	for p, fn := range c.modifiers {
+		if err := fn(c); err != nil {
+			return fmt.Errorf("callback on %q failed to modify the tree – %v", p, err)
+		}
+		delete(c.modifiers, p)
+	}
 	return nil
 }
 

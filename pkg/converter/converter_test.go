@@ -71,7 +71,7 @@ func TestConverterBasic(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.Run(); err != nil {
+	if err := conv.run(); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -131,7 +131,7 @@ func TestConverterOnlyObjects(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.Run(); err != nil {
+	if err := conv.run(); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -277,7 +277,7 @@ func TestBasicKubegenAsset(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.Run(); err != nil {
+	if err := conv.run(); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -338,7 +338,7 @@ func TestConverterGet(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.Run(); err != nil {
+	if err := conv.run(); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -452,11 +452,11 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
 	}
 
-	if err := conv.Run(); err != nil {
+	if err := conv.run(); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
-	if err := conv.CallModifiers(); err != nil {
+	if err := conv.callModifiersOnce(); err != nil {
 		t.Fatalf("failed to run modifiers – %v", err)
 	}
 
@@ -569,7 +569,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		var err error
 		err = conv2.LoadStrict(v)
 		assert.Nil(err)
-		err = conv2.Run()
+		err = conv2.run()
 		assert.NotNil(err)
 	}
 
@@ -577,11 +577,11 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
 	}
 
-	if err := conv.Run(); err != nil {
+	if err := conv.run(); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
-	if err := conv.CallModifiers(); err != nil {
+	if err := conv.callModifiersOnce(); err != nil {
 		t.Fatalf("failed to run modifiers – %v", err)
 	}
 
@@ -724,11 +724,11 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	// first pass
 
-	if err := conv.Run(); err != nil {
+	if err := conv.run(); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
-	if err := conv.CallModifiers(); err != nil {
+	if err := conv.callModifiersOnce(); err != nil {
 		t.Fatalf("failed to run modifiers – %v", err)
 	}
 
@@ -772,13 +772,13 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	// second pass
 
-	if err := conv.Run(); err != nil {
+	if err := conv.run(); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
 	assert.Equal(4, len(conv.modifiers))
 
-	if err := conv.CallModifiers(); err != nil {
+	if err := conv.callModifiersOnce(); err != nil {
 		t.Fatalf("failed to run modifiers – %v", err)
 	}
 
@@ -846,13 +846,13 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	// third pass
 
-	if err := conv.Run(); err != nil {
+	if err := conv.run(); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
 	assert.Equal(1, len(conv.modifiers))
 
-	if err := conv.CallModifiers(); err != nil {
+	if err := conv.callModifiersOnce(); err != nil {
 		t.Fatalf("failed to run modifiers – %v", err)
 	}
 
@@ -868,9 +868,55 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	// final pass
 
+	if err := conv.run(); err != nil {
+		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
+	}
+
+	assert.Equal(0, len(conv.modifiers))
+
+	// now do the same with exported run method
+	if err := conv.LoadStrict(tobj); err != nil {
+		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
+	}
+
 	if err := conv.Run(); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
 	assert.Equal(0, len(conv.modifiers))
+
+	{
+		v, err := jsonparser.GetInt(conv.data, "test4o", "foo", "[0]")
+		assert.Nil(err)
+		assert.Equal(int64(12345), v)
+	}
+
+	{
+		v, err := jsonparser.GetString(conv.data, "test4o", "foo", "[1]")
+		assert.Nil(err)
+		assert.Equal("TEST_STRING", v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test4o", "foo", "[2]")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.Equal(v, objs["testInsertObj2"])
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test5o")
+		a := []byte("{ }")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.Equal(a, v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "test4o", "bar", "[0]")
+		a := []byte("{ }")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.Equal(a, v)
+	}
 }
