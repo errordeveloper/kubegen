@@ -1,0 +1,110 @@
+## The kubegen extension language in kubegen allows for basic typed operation on structured
+## data while keeping the semantics of JSON and YAML formats, and without levereging
+## uncommon features (such as YAML tags), so that formats can be converated automatically
+## and mapping is one-to-one. It also doesn't overload string value with a non-transparent
+## mini-languages.
+##
+## The extension language is very simple, and intended to be least surprising.
+## There are no loops or user-defined functions, there are only lookups, combinatory operations
+## for arrays and objects, string joins and conditional statements.
+##
+## First of all, there two types of documents – bundle and modules.
+## A module contains one or more documets that have none or some number number of
+## parameters. Parameters may have default values, or otherwise are required to be
+## set be set by the user.
+## Parameter types are the basic JSON types, i.e. strings, numbers, booleans, arrays
+## and objects.
+## The way to test a module is to use `kubegen module [-v paramKey=paramValue] -s ./myModule/`.
+## The user can create a bundle and reference a set of one or more modules which.
+## When user runs `kubegen bundle myBundle.yml`, all modules reference in `myBundle.yml`
+## will be evaluated based on what parameters the user has defined.
+## 
+## Basic Rules & Assumptions:
+##
+## 1. root of the document is always an object (as in Kubernetes API)
+## 2. parent of `kubegen.<type>.Lookup` must be a element of an array or an object
+## 3. undefined parameters or any ambiguity results in an error
+## 4. on success the output will always adhere to JSON or YAML spec
+## 5. more generally, the output will alway result in valid Kubernetes API object
+##
+## See usage examples below.
+
+## Lookup Strings
+---
+kubegen.String.Lookup: "stringParameter"
+
+## will result in
+
+---
+"<value>"
+
+## Lookup Object
+
+--- 
+kubegen.Object.Lookup: "objectParameter"
+
+## will result in
+
+---
+{ <value> }
+
+## Lookup Array
+
+kubegen.Array.Lookup: "arrayParameter"
+
+# will result in
+
+[ <value> ]
+
+## Array Operations - concatenation
+
+foo:
+  - kubegen.Array.Lookup: "arrayParameter1"
+  - kubegen.Array.Lookup: "arrayParameter2"
+
+## will result in concatenated values of two array parameters
+
+## given `arrayParameter1=[1,2,3]` and `arrayParameter2=[3,4,5]`, we will get
+foo:
+  - 1
+  - 2
+  - 3
+  - 3
+  - 4
+  - 5
+
+## Array Operations - nesting
+
+foo:
+  - [ kubegen.Array.Lookup: "arrayParameter1" ]
+  - [ kubegen.Array.Lookup: "arrayParameter2" ]
+
+## will result in two arrays being nested in parent array
+
+## given `arrayParameter1=[1,2,3]` and `arrayParameter2=[3,4,5]`, we will get
+
+foo:
+  - [ 1, 2, 3 ]
+  - [ 3, 4, 5 ]
+
+## Array Operations – mixing with objects and other types
+
+foo:
+  - kubegen.Array.Lookup: "arrayParameter1"
+  - [ kubegen.Array.Lookup: "arrayParameter2" ]
+  - kubegen.Object.Lookup: "objectParameter2"
+  - kubegen.String.Lookup: "stringParameter1"
+
+## will result in one arrays being concatenated with the parent, one nested array,
+## one nested object object, and one string being appended to the parent array
+
+## given `arrayParameter1=[1,2,3]` and `arrayParameter2=[3,4,5]`, `objectParameter2={}`
+## and `stringParameter1="bar"`, we will get
+
+foo:
+  - 1
+  - 2
+  - 3
+  - [ 3, 4, 5 ]
+  - { }
+  - "bar"
