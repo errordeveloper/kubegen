@@ -1,0 +1,203 @@
+### There two levels of reusability that kubegen provides.
+### 
+### First of all, each module may define a set of simple variables.
+### Currently kubegen implements two types: "string" and "number".
+### Variables can be substitude as values anywhere.
+### 
+### If in any object a key `kubegen.extendWith` is encoun
+
+## In this document we explore various options for extending functionality of flat JSON and YAML
+## documents that would allow for fair degree of configuration reusability.
+
+## Our aim is to make Kubernetes configuration files easier to manage,
+
+
+## Problems:
+# - no re-usability framework within Kubernetes is a good thing, but it's a bad thing that there
+#   very few things in the ecosystem for users to choose from (given the ecosystem is fairly big)
+# - no variable that user can define, even for some of the simplest cases (one has to use sed or something)
+# - too much verbosity, and that's on top of all the overhead that Kubernetes brings already
+# - some things in a kubernetes object can be ommited, but it's not always very clear
+#   and things aren't some of the shortcuts aren't quite as use-full as you'd think;
+#   and the overall complexity doesn't help an ordinary user to get the grips of inner
+#   works of defaulting, additionally there is not enough tribal knowledge, namely:
+#     - label selector can be infered from metadata of the parent, but people don't seem to be aware of it
+#     - ports can be referd to by name, but people seem to not use this and explicitly state same port
+#       number over and over (is it done in use-ful way?) 
+# - more broadly: there is too little of an opinion, user has to figure out a lot for themeselves
+
+## Helm...
+
+## As Jsonnet documentation states, general-purpose plain-text temlating engines are probably
+## the poorest way of managing configuration, especially as such tools are not equiped with
+## syntactic context awareness and user has to do work at multiple layers just to get their
+## configuration template right, let alone any original context of the system for which the
+## configuration is meant. 
+
+## Some argue that a collection of builder methods is a better way to make it easier 
+#
+## The simples configuration
+
+{ "foo": { "kubegen.stringValueFromVariable": "aFoo" } }
+
+{ "foo": { "kubegen.numbericValueFromVariable": "aBar" } }
+{ "foo": { "kubegen.numbericValueFromExpresision": "5*appScaleX" } }
+
+{ "foo": { "kubegen.stringValueFromFile": "./aFoo.txt" } }
+
+{ "foo": { "kubegen.stringTemplateInline": "{{aFoo}}" } }
+{ "foo": { "kubegen.stringTemplateFile": "aFoo.txt" } }
+
+{ "foo.kubegen.stringTemplateFromFile": "aFoo.txt" }
+
+{ "foo": [
+    {
+      "kubegen.If":
+      [
+        "debugContainerExists",
+        { "image": "{{imageName}}:debug", "kubegen.mergeWith": "debugContainerSidecarDefinition" }
+      ]
+    },
+    "bar",
+    "baz"
+  ]
+}
+
+foo:
+  kubegen.stringValueFromVariable: aFoo
+
+foo:
+  kubegen.stringTemplateInline: "{{aFoo}}"
+
+foo:
+  - kubegen.condition: [ debugContainerExists, { foo: true, kubegen.mergeWith: "debugContainerSidecarDefinition" } ]
+
+
+## A more rigid syntax with key and function that have `kubegen.*` prefix,
+## where the key contains the type, and the value contains a function that
+## should return the value. This is more explicit, i.e. less ambigious
+## and also less magic.
+## To make users type less, we can consider using `kg.*`, or even `.*` in
+## sub-expressions.
+
+## Also, we should consider `valueFrom` and word value(s), as that's somewhat
+## familiar to Kubernetes/Helm users.
+#
+foo:
+  kubegen.Number:
+    kubegen.Lookup: "foo"
+foo:
+  kubegen.Number:
+    kubegen.If: "foo == bar"
+    kubegen.Then:
+      kubegen.Lookup: "bar"
+
+bar:
+  kubegen.String:
+    kubegen.FromFileTemplate: "./bar.tmpl"
+    kubegen.TemplateParameters: [ "foo", "bar" ]
+
+bar:
+  kubegen.String:
+    kubegen.If: "barConfig" ## lookup barConfig, and if set try to load it as file
+    kubegen.Then:
+      kubegen.ReadFile: # consider `kubegen.ReadFile: $barConfig` shortcut
+        kubegen.Lookup: barConfig
+    kubegen.Else:
+      kubegen.FromInlineTemplate: "{{1}}:{{2}}"
+      kubegen.TemplateParameters: [ "foo", "bar" ]
+
+baz:
+  - "foo1"
+  - "bar1"
+  - kubegen.ArrayAppend:
+      kubegen.If: "foo == bar"
+      kubegen.Then: [ "foo2", "bar2" ]
+      kubegen.Else: [ "foo3", "bar3" ]
+  - kubegen.Array:
+      kubegen.If: "foo == bar"
+      kubegen.Then: [ "foo2", "bar2" ]
+      kubegen.Else: [ "foo3", "bar3" ]
+
+boom:
+  foo: 1
+  kubegen.MapMerge:
+    kubegen.Lookup: "boom"
+
+## We will need to conver exitsing pseudo macros first, e.g. the configmap helpers
+
+## So instead of
+encodeAsYAML:
+  prometheus.yml:
+    global:
+      scrape_interval: 15s
+
+## which actually operates on values of child keys and populates data at the level above
+## and is a bit odd that way, so we get
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+
+## we will have
+data:
+  prometheus.yml:
+    kubegen.String:
+      kubegen.EncodeAsYAML:
+        global:
+          scrape_interval: 15s
+
+
+## This would be also useful for encoding annotations, althought the following example
+## shows an init container which no longer has to be defined as an annotation, there is
+## a likelihood of similar use-cases emerging in the future, e.g. user may have their
+## own annotation-driven controllers
+
+annotations:
+  alpha.istio.io/sidecar: injected
+  alpha.istio.io/version: jenkins@ubuntu-16-04-build-12ac793f80be71-0.1.6-dab2033
+  pod.beta.kubernetes.io/init-containers:
+    kubegen.String:
+      kubegen.EncodeAsYAML:
+        - args: ["-p","15001","-u","1337"]
+          image: "docker.io/istio/init:0.1"
+          imagePullPolicy: "Always"
+          name: "init"
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+        - args: ["-c","sysctl -w kernel.core_pattern=/tmp/core.%e.%p.%t \u0026\u0026 ulimit -c unlimited"]
+          command: ["/bin/sh"]
+          image: "alpine"
+          imagePullPolicy: "Always"
+          name: "enable-core-dump"
+          securityContext:
+            privileged: true
+
+## We should allow recursive evaluate, it will be needed sooner or later and it's better
+## to have it from the start
+
+## Also, we should consider shorter 2-level expressions, e.g.
+data:
+  prometheus.yml:
+    kubegen.String.EncodeAsYAML:
+        global:
+          scrape_interval:
+            kubegen.String.Lookup: "scrape_interval"
+
+# And having done this, it seems natural to eliminate `kubegen` prefix from children, e.g.
+data:
+  prometheus.yml:
+    kubegen.String.EncodeAsYAML:
+        global:
+          scrape_interval:
+            .String.Lookup: "scrape_interval"
+          .MapMerge:
+            .If: do_remote_write
+            .Then:
+              remote_write:
+                url: 'https://cloud.weave.works/api/prom/push'
+                basic_auth:
+                  password:
+                    .String.Lookup: 'service_token'
+
