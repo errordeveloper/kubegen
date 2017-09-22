@@ -3,49 +3,132 @@ package modules
 import (
 	"fmt"
 
-	"bytes"
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path"
 	"sort"
 	"strings"
-	"text/template"
 
-	"github.com/ghodss/yaml"
+	// "github.com/buger/jsonparser"
 
+	"github.com/errordeveloper/kubegen/pkg/converter"
 	"github.com/errordeveloper/kubegen/pkg/resources"
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-// TODO report unknown keys in manifests
-// TODO bail on unknown variable keys
+func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo, kind string) error {
+	funcs := make(map[string]valueLookupFunc, 3)
 
-func loadFromPath(obj interface{}, data []byte, sourcePath string, instanceName string) error {
-	var errorFmt string
-	if instanceName != "" {
-		errorFmt = fmt.Sprintf("error loading module %q source", instanceName)
-	} else {
-		errorFmt = "error loading manifest file"
+	if _, ok := m.lookupFuncs[string(branch.Value())]; !ok {
+		return fmt.Errorf("undeclared variable %q", string(branch.Value()))
 	}
 
-	ext := path.Ext(sourcePath)
-	switch {
-	case ext == ".json":
-		if err := json.Unmarshal(data, obj); err != nil {
-			return fmt.Errorf("%s as JSON (%q) – %v", errorFmt, sourcePath, err)
-		}
-	case ext == ".yaml" || ext == ".yml":
-		if err := yaml.Unmarshal(data, obj); err != nil {
-			return fmt.Errorf("%s as YAML (%q) – %v", errorFmt, sourcePath, err)
-		}
-	case ext == ".kg" || ext == ".hcl":
-		if err := util.NewFromHCL(obj, data); err != nil {
-			return fmt.Errorf("%s as HCL (%q) – %v", errorFmt, sourcePath, err)
-		}
+	// TODO this is pretty raw right now, we should refactor it, types are actually ignored
+
+	funcs["String"] = func() []byte {
+		return m.lookupFuncs[string(branch.Value())]()
+	}
+
+	funcs["Number"] = func() []byte {
+		return m.lookupFuncs[string(branch.Value())]()
+	}
+
+	funcs["Object"] = func() []byte {
+		return m.lookupFuncs[string(branch.Value())]()
+	}
+
+	switch branch.Kind() {
+	case converter.String:
+		x := funcs[kind]()
+
+		c.AddModifier(branch, func(c *converter.Converter) error {
+			if err := c.Replace(branch, x); err != nil {
+				return err
+			}
+			return nil
+		})
 	default:
-		return fmt.Errorf("%s %q – unknown file extension", errorFmt, sourcePath)
+		return fmt.Errorf("in %q value is a %s, but must be a string", branch.PathToString(), branch.Kind())
 	}
+	return nil
+}
+
+func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
+	/*
+
+		w := &interpolationWalker{
+			FindKey: "kubegen.fromPartial",
+			Callback: func(m map[string]interface{}) (map[string]interface{}, error) {
+				partialName := m["kubegen.fromPartial"]
+				partialNotFound := true
+				for _, p := range moduleContext.Partials {
+					if p.Name == partialName {
+						partialNotFound = false
+						if err := mergo.Merge(&m, p.Spec); err != nil {
+							return nil, fmt.Errorf(
+								"error while merging partial %q for %q (%q)",
+								partialName, instanceName, sourcePath)
+						}
+					}
+				}
+				if partialNotFound {
+					return nil, fmt.Errorf(
+						"patial %q not found in module %q (%q)",
+						partialName, instanceName, sourcePath)
+				}
+				return m, nil
+			},
+		}
+
+		if err := reflectwalk.Walk(tobj, w); err != nil {
+			return fmt.Errorf(
+				"error while walking %q (%q): %v",
+				instanceName, sourcePath, err)
+		}
+
+	*/
+
+	conv := converter.New()
+
+	conv.DefineKeyword("kubegen.String.Lookup",
+		func(c *converter.Converter, branch *converter.BranchInfo) error {
+			if err := moduleContext.doLookup(c, branch, "String"); err != nil {
+				return err
+			}
+			return nil
+		})
+
+	conv.DefineKeyword("kubegen.Number.Lookup",
+		func(c *converter.Converter, branch *converter.BranchInfo) error {
+			if err := moduleContext.doLookup(c, branch, "Number"); err != nil {
+				return err
+			}
+			return nil
+		})
+
+	conv.DefineKeyword("kubegen.Object.Lookup",
+		func(c *converter.Converter, branch *converter.BranchInfo) error {
+			if err := moduleContext.doLookup(c, branch, "Object"); err != nil {
+				return err
+			}
+			return nil
+		})
+
+	if err := conv.LoadObj(data, sourcePath, instanceName); err != nil {
+		return err
+	}
+
+	// TODO define keywords for variable look here
+	// (we might move them later, but seems okay now)
+
+	if err := conv.Run(); err != nil {
+		return err
+	}
+
+	if err := conv.Unmarshal(obj, sourcePath, instanceName); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -59,7 +142,7 @@ func NewBundle(bundlePath string) (*Bundle, error) {
 			bundlePath, err)
 	}
 
-	if err := loadFromPath(b, data, bundlePath, ""); err != nil {
+	if err := util.LoadObj(b, data, bundlePath, ""); err != nil {
 		return nil, err
 	}
 	if b.Kind != BundleKind {
@@ -98,11 +181,12 @@ func (b *Bundle) LoadModules(selectNames []string) error {
 			b.Modules[n].Namespace = b.Namespace
 		}
 
-		if err := m.Load(i); err != nil {
+		if err := m.LoadVariables(i); err != nil {
 			return err
 		}
 
 		b.loadedModules = append(b.loadedModules, *m)
+		//log.Printf("Added module with %d manifests", len(m.manifests))
 	}
 
 	return nil
@@ -212,7 +296,7 @@ func NewModule(dir, instanceName string) (*Module, error) {
 				"error reading file %q in module %q – %v",
 				file.Name(), dir, err)
 		}
-		if err := loadFromPath(m, data, manifestPath, instanceName); err != nil {
+		if err := util.LoadObj(m, data, manifestPath, instanceName); err != nil {
 			return nil, err
 		}
 		if m.Kind != ModuleKind {
@@ -220,8 +304,9 @@ func NewModule(dir, instanceName string) (*Module, error) {
 				"error loading file %q in module %q – unrecognised `Kind: %q`, must be %q",
 				file.Name(), dir, m.Kind, ModuleKind)
 		}
-		// Variables are scoped globally, here we collect them
+		// Variables and partials are scoped globally, here we collect them
 		module.Variables = append(module.Variables, m.Variables...)
+		module.Partials = append(module.Partials, m.Partials...)
 		// The module itself isn't something we can parse 100% yet, so we only store it as a string
 		module.manifests[manifestPath] = data
 	}
@@ -229,13 +314,13 @@ func NewModule(dir, instanceName string) (*Module, error) {
 	return module, nil
 }
 
-func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, error) {
+func (i *ModuleVariable) makeValueLookupFunc(instance ModuleInstance) (func() []byte, error) {
 	undefinedNonOptionalVariableError := fmt.Errorf(
 		"module %q must set variable %q (of type %s)",
 		instance.Name, i.Name, i.Type)
 
 	unknownVariableTypeError := fmt.Errorf(
-		"variable %q in module %q of unknown type %q, only types \"string\" and \"number\" are supported",
+		"variable %q in module %q of unknown type %q, only types \"String\" and \"Number\" are supported",
 		i.Name, instance.Name, i.Type)
 
 	wrongVariableTypeError := func(v interface{}) error {
@@ -249,7 +334,7 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 		i.Name, instance.Name, i.Type)
 
 	switch i.Type {
-	case "number":
+	case "Number":
 		// all numeric values from YAML are parsed as float64, but Kubernetes API mostly wants int32
 		var value int32
 		v, isSet := instance.Variables[i.Name]
@@ -289,8 +374,8 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 				}
 			}
 		}
-		return func() int32 { return value }, nil
-	case "string":
+		return func() []byte { return []byte(fmt.Sprintf("%d", value)) }, nil
+	case "String":
 		var value string
 		v, isSet := instance.Variables[i.Name]
 		if i.Required {
@@ -325,50 +410,31 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 				}
 			}
 		}
-		return func() string { return value }, nil
+		return func() []byte { return []byte(fmt.Sprintf("%q", value)) }, nil
 	default:
 		return nil, unknownVariableTypeError
 	}
 }
 
-func (m *Module) Load(instance ModuleInstance) error {
-	// TODO we shuld probably use, as has sane and widely-used syntax,
-	// it is also fairly restrictive https://github.com/hoisie/mustache
-	funcMap := template.FuncMap{}
+func (m *Module) LoadVariables(instance ModuleInstance) error {
+	m.lookupFuncs = make(map[string]valueLookupFunc, len(m.Variables))
 	for _, variable := range m.Variables {
-		valFunc, err := variable.makeValFunc(instance)
+		valFunc, err := variable.makeValueLookupFunc(instance)
 		if err != nil {
 			return err
 		}
-
-		funcMap[variable.Name] = valFunc
+		m.lookupFuncs[variable.Name] = valFunc
 	}
-
-	for manifestPath, data := range m.manifests {
-		output := bytes.Buffer{}
-		// Let's use some very familiar delimitors
-		t, err := template.New(manifestPath).Delims("<", ">").Funcs(funcMap).Parse(string(data))
-		if err != nil {
-			return err
-		}
-
-		if err := t.Execute(&output, nil); err != nil {
-			return err
-		}
-
-		m.manifests[manifestPath] = output.Bytes()
-	}
-
 	return nil
 }
 
-func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resources.Group, error) {
+func (m *Module) LoadGroups(instanceName, namespace string) (map[string]resources.Group, error) {
 	groups := make(map[string]resources.Group)
 
 	for manifestPath, data := range m.manifests {
 		// TODO also do something about multiple formats here
 		group := resources.Group{}
-		if err := loadFromPath(&group, data, manifestPath, instanceName); err != nil {
+		if err := loadObjWithModuleContext(&group, data, manifestPath, instanceName, m); err != nil {
 			return nil, err
 		}
 
@@ -378,6 +444,7 @@ func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resource
 		}
 
 		groups[manifestPath] = group
+		//log.Printf("Loaded group from %q", manifestPath)
 	}
 
 	return groups, nil
@@ -385,7 +452,7 @@ func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resource
 
 func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte, error) {
 	output := make(map[string][]byte)
-	groups, err := m.MakeGroups(instance.Name, instance.Namespace)
+	groups, err := m.LoadGroups(instance.Name, instance.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -415,7 +482,7 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 
 func (m *Module) EncodeGroupsToJSON(instance ModuleInstance) (map[string][]byte, error) {
 	output := make(map[string][]byte)
-	groups, err := m.MakeGroups(instance.Name, instance.Namespace)
+	groups, err := m.LoadGroups(instance.Name, instance.Namespace)
 	if err != nil {
 		return nil, err
 	}

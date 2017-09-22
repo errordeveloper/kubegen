@@ -16,7 +16,8 @@ ConfigMaps:
         remote_write:
           url: 'https://cloud.weave.works/api/prom/push'
           basic_auth:
-            password: <service_token>
+            password:
+              kubegen.String.Lookup: "service_token"
         scrape_configs:
           - job_name: kubernetes-service-endpoints
             kubernetes_sd_configs:

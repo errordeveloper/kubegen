@@ -6,7 +6,7 @@ daemonset "weave-scope-agent" {
   labels {
     app = "weave-scope"
     name = "weave-scope-agent"
-    weave-cloud-component = "scop"
+    weave-cloud-component = "scope"
     weave-scope-component = "agent"
   }
 

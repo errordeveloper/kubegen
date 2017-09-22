@@ -4,7 +4,7 @@
 # Generated from module
 #	Name: "weavecloud"
 #	SourceDir: ".examples/modules/weavecloud"
-#	manifestPath: ".examples/modules/weavecloud/cortext-configmap.yml"
+#	manifestPath: ".examples/modules/weavecloud/cortex-configmap.yml"
 #
 
 apiVersion: v1
@@ -141,31 +141,11 @@ kind: List
 # Generated from module
 #	Name: "weavecloud"
 #	SourceDir: ".examples/modules/weavecloud"
-#	manifestPath: ".examples/modules/weavecloud/cortext.hcl"
+#	manifestPath: ".examples/modules/weavecloud/cortex.hcl"
 #
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: weave-cortex
-      name: weave-cortex-agent
-      weave-cloud-component: cortex
-      weave-cortex-component: agent
-    name: weave-cortex-agent
-    namespace: kube-system
-  spec:
-    ports:
-    - name: agent
-      port: 80
-      targetPort: agent
-    selector:
-      app: weave-cortex
-      name: weave-cortex-agent
-      weave-cloud-component: cortex
-      weave-cortex-component: agent
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -244,18 +224,31 @@ items:
           - containerPort: 9100
             name: agent
             protocol: TCP
-          securityContext:
-            capabilities: {}
-            privileged: true
-            readOnlyRootFilesystem: false
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
   status:
     currentNumberScheduled: 0
     desiredNumberScheduled: 0
     numberMisscheduled: 0
     numberReady: 0
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
+    name: weave-cortex-agent
+    namespace: kube-system
+  spec:
+    ports:
+    - name: agent
+      port: 80
+      targetPort: agent
+    selector:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
 kind: List
 
 ---
@@ -268,22 +261,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: weave-flux
-      name: weave-flux-agent
-      weave-cloud-component: flux
-      weave-flux-component: agent
-    name: weave-flux-agent
-    namespace: kube-system
-  spec:
-    selector:
-      app: weave-flux
-      name: weave-flux-agent
-      weave-cloud-component: flux
-      weave-flux-component: agent
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -312,9 +289,25 @@ items:
       spec:
         containers:
         - args:
-          - --token=abc123
+          - --token=<service_token>
           image: quay.io/weaveworks/fluxd:0.1.0
           name: agent
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
+    name: weave-flux-agent
+    namespace: kube-system
+  spec:
+    selector:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
 kind: List
 
 ---
@@ -333,7 +326,7 @@ items:
     labels:
       app: weave-scope
       name: weave-scope-agent
-      weave-cloud-component: scop
+      weave-cloud-component: scope
       weave-scope-component: agent
     name: weave-scope-agent
     namespace: kube-system
@@ -342,14 +335,14 @@ items:
       matchLabels:
         app: weave-scope
         name: weave-scope-agent
-        weave-cloud-component: scop
+        weave-cloud-component: scope
         weave-scope-component: agent
     template:
       metadata:
         labels:
           app: weave-scope
           name: weave-scope-agent
-          weave-cloud-component: scop
+          weave-cloud-component: scope
           weave-scope-component: agent
       spec:
         containers:
@@ -358,16 +351,9 @@ items:
           - --probe.docker.bridge=docker0
           - --probe.docker=true
           - --probe.kubernetes=true
-          - --service-token=abc123
+          - --service-token=<service_token>
           image: weaveworks/scope:latest
           name: agent
-          securityContext:
-            capabilities: {}
-            privileged: true
-            readOnlyRootFilesystem: false
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
           volumeMounts:
           - mountPath: /var/run/scope/plugins
             name: scope-plugins

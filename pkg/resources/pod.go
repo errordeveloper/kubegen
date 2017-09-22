@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/pkg/api/v1"
 
-	"github.com/jinzhu/copier"
 	"github.com/ulule/deepcopier"
 )
 
@@ -45,6 +44,14 @@ func (i *Container) Convert(volumes []v1.Volume) (*v1.Container, error) {
 	deepcopier.Copy(i).To(&container)
 
 	i.maybeAddEnvVars(&container)
+
+	// Ensure that any singleton unnamed port inherits the
+	// name from the container's name
+	if len(i.Ports) == 1 {
+		if i.Ports[0].Name == "" {
+			i.Ports[0].Name = container.Name
+		}
+	}
 
 	// you'd think the types could be simply converted,
 	// but it turns out they won't because tags are different...
@@ -81,8 +88,7 @@ func (i *Container) Convert(volumes []v1.Volume) (*v1.Container, error) {
 
 	if i.SecurityContext != nil {
 		container.SecurityContext = &v1.SecurityContext{}
-		// deepcopier doesn't deal with pointers very well, so we use the other copier here
-		copier.Copy(&container.SecurityContext, i.SecurityContext)
+		deepcopier.Copy(i.SecurityContext).To(container.SecurityContext)
 	}
 
 	resourceRequirements, err := i.Resources.Convert()

@@ -2,55 +2,6 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "annotations": {
-          "prometheus.io/path": "/prometheus"
-        },
-        "labels": {
-          "name": "cart"
-        },
-        "name": "cart",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "http",
-            "port": 80,
-            "targetPort": "http"
-          }
-        ],
-        "selector": {
-          "name": "cart"
-        }
-      }
-    },
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "cart-db"
-        },
-        "name": "cart-db",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "mongo",
-            "port": 27017,
-            "targetPort": "mongo"
-          }
-        ],
-        "selector": {
-          "name": "cart-db"
-        }
-      }
-    },
-    {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
       "metadata": {
@@ -99,21 +50,6 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ],
@@ -130,67 +66,28 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
+      "apiVersion": "v1",
+      "kind": "Service",
       "metadata": {
-        "labels": {
-          "name": "cart-db"
+        "annotations": {
+          "prometheus.io/path": "/prometheus"
         },
-        "name": "cart-db",
+        "labels": {
+          "name": "cart"
+        },
+        "name": "cart",
         "namespace": "sock-shop-test"
       },
       "spec": {
-        "replicas": 1,
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": "http"
+          }
+        ],
         "selector": {
-          "matchLabels": {
-            "name": "cart-db"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "cart-db"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "mongo",
-                "name": "cart-db",
-                "ports": [
-                  {
-                    "containerPort": 27017,
-                    "name": "mongo"
-                  }
-                ],
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "CHOWN",
-                      "SETGID",
-                      "SETUID"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
-              }
-            ],
-            "volumes": [
-              {
-                "emptyDir": {
-                  "medium": "Memory"
-                },
-                "name": "tmp-volume"
-              }
-            ]
-          }
+          "name": "cart"
         }
       }
     }
@@ -200,6 +97,118 @@
 {
   "apiVersion": "v1",
   "items": [
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "catalogue"
+        },
+        "name": "catalogue",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "catalogue"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "catalogue"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "ZIPKIN",
+                    "value": "http://zipkin:9411/api/v1/spans"
+                  }
+                ],
+                "image": "\u003cimage_registry\u003e/catalogue:0.3.0",
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 300,
+                  "periodSeconds": 3
+                },
+                "name": "catalogue",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "name": "http"
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 180,
+                  "periodSeconds": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "catalogue-db"
+        },
+        "name": "catalogue-db",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "catalogue-db"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "catalogue-db"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "MYSQL_DATABASE",
+                    "value": "socksdb"
+                  },
+                  {
+                    "name": "MYSQL_ROOT_PASSWORD",
+                    "value": "fake_password"
+                  }
+                ],
+                "image": "\u003cimage_registry\u003e/catalogue-db:0.3.0",
+                "name": "catalogue-db",
+                "ports": [
+                  {
+                    "containerPort": 3306,
+                    "name": "mysql"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
     {
       "apiVersion": "v1",
       "kind": "Service",
@@ -245,133 +254,6 @@
           "name": "catalogue-db"
         }
       }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "catalogue"
-        },
-        "name": "catalogue",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "catalogue"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "catalogue"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "env": [
-                  {
-                    "name": "ZIPKIN",
-                    "value": "http://zipkin:9411/api/v1/spans"
-                  }
-                ],
-                "image": "docker.io/weaveworksdemos/catalogue:0.3.0",
-                "livenessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 300,
-                  "periodSeconds": 3
-                },
-                "name": "catalogue",
-                "ports": [
-                  {
-                    "containerPort": 80,
-                    "name": "http"
-                  }
-                ],
-                "readinessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 180,
-                  "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "catalogue-db"
-        },
-        "name": "catalogue-db",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "catalogue-db"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "catalogue-db"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "env": [
-                  {
-                    "name": "MYSQL_DATABASE",
-                    "value": "socksdb"
-                  },
-                  {
-                    "name": "MYSQL_ROOT_PASSWORD",
-                    "value": "fake_password"
-                  }
-                ],
-                "image": "docker.io/weaveworksdemos/catalogue-db:0.3.0",
-                "name": "catalogue-db",
-                "ports": [
-                  {
-                    "containerPort": 3306,
-                    "name": "mysql"
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      }
     }
   ],
   "kind": "List"
@@ -379,30 +261,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "front-end"
-        },
-        "name": "front-end",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "ports": [
-          {
-            "nodePort": 30001,
-            "port": 80,
-            "targetPort": "http"
-          }
-        ],
-        "selector": {
-          "name": "front-end"
-        },
-        "type": "NodePort"
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -429,7 +287,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/front-end:0.3.1",
+                "image": "\u003cimage_registry\u003e/front-end:0.3.1",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/",
@@ -458,23 +316,35 @@
                     "cpu": "100m",
                     "memory": "100Mi"
                   }
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ]
           }
         }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "front-end"
+        },
+        "name": "front-end",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "ports": [
+          {
+            "nodePort": 30001,
+            "port": 80,
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "name": "front-end"
+        },
+        "type": "NodePort"
       }
     }
   ],
@@ -483,55 +353,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "annotations": {
-          "prometheus.io/path": "/prometheus"
-        },
-        "labels": {
-          "name": "orders"
-        },
-        "name": "orders",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "http",
-            "port": 80,
-            "targetPort": "http"
-          }
-        ],
-        "selector": {
-          "name": "orders"
-        }
-      }
-    },
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "orders-db"
-        },
-        "name": "orders-db",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "mongo",
-            "port": 27017,
-            "targetPort": "mongo"
-          }
-        ],
-        "selector": {
-          "name": "orders-db"
-        }
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -581,21 +402,6 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ],
@@ -612,84 +418,16 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "orders-db"
-        },
-        "name": "orders-db",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "orders-db"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "orders-db"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "mongo",
-                "name": "orders-db",
-                "ports": [
-                  {
-                    "containerPort": 27017,
-                    "name": "mongo"
-                  }
-                ],
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "CHOWN",
-                      "SETGID",
-                      "SETUID"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
-              }
-            ],
-            "volumes": [
-              {
-                "emptyDir": {
-                  "medium": "Memory"
-                },
-                "name": "tmp-volume"
-              }
-            ]
-          }
-        }
-      }
-    }
-  ],
-  "kind": "List"
-}
-{
-  "apiVersion": "v1",
-  "items": [
-    {
       "apiVersion": "v1",
       "kind": "Service",
       "metadata": {
-        "labels": {
-          "name": "payment"
+        "annotations": {
+          "prometheus.io/path": "/prometheus"
         },
-        "name": "payment",
+        "labels": {
+          "name": "orders"
+        },
+        "name": "orders",
         "namespace": "sock-shop-test"
       },
       "spec": {
@@ -701,10 +439,16 @@
           }
         ],
         "selector": {
-          "name": "payment"
+          "name": "orders"
         }
       }
-    },
+    }
+  ],
+  "kind": "List"
+}
+{
+  "apiVersion": "v1",
+  "items": [
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -737,7 +481,7 @@
                     "value": "http://zipkin:9411/api/v1/spans"
                   }
                 ],
-                "image": "docker.io/weaveworksdemos/payment:0.4.1",
+                "image": "\u003cimage_registry\u003e/payment:0.4.1",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -760,25 +504,33 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "payment"
+        },
+        "name": "payment",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "name": "payment"
         }
       }
     }
@@ -788,6 +540,102 @@
 {
   "apiVersion": "v1",
   "items": [
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "rabbitmq"
+        },
+        "name": "rabbitmq",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "rabbitmq"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "rabbitmq"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "rabbitmq:3",
+                "name": "rabbitmq",
+                "ports": [
+                  {
+                    "containerPort": 5672,
+                    "name": "rabbitmq"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "queue-master"
+        },
+        "name": "queue-master",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "queue-master"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "queue-master"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "\u003cimage_registry\u003e/queue-master:0.3.0",
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 300,
+                  "periodSeconds": 3
+                },
+                "name": "queue-master",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "name": "http"
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 180,
+                  "periodSeconds": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
     {
       "apiVersion": "v1",
       "kind": "Service",
@@ -836,120 +684,6 @@
           "name": "queue-master"
         }
       }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "rabbitmq"
-        },
-        "name": "rabbitmq",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "rabbitmq"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "rabbitmq"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "rabbitmq:3",
-                "name": "rabbitmq",
-                "ports": [
-                  {
-                    "containerPort": 5672,
-                    "name": "rabbitmq"
-                  }
-                ],
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "CHOWN",
-                      "SETGID",
-                      "SETUID",
-                      "DAC_OVERRIDE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "queue-master"
-        },
-        "name": "queue-master",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "queue-master"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "queue-master"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "docker.io/weaveworksdemos/queue-master:0.3.0",
-                "livenessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 300,
-                  "periodSeconds": 3
-                },
-                "name": "queue-master",
-                "ports": [
-                  {
-                    "containerPort": 80,
-                    "name": "http"
-                  }
-                ],
-                "readinessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 180,
-                  "periodSeconds": 3
-                }
-              }
-            ]
-          }
-        }
-      }
     }
   ],
   "kind": "List"
@@ -957,32 +691,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "annotations": {
-          "prometheus.io/path": "/prometheus"
-        },
-        "labels": {
-          "name": "shipping"
-        },
-        "name": "shipping",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "http",
-            "port": 80,
-            "targetPort": "http"
-          }
-        ],
-        "selector": {
-          "name": "shipping"
-        }
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -1009,7 +717,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/shipping:0.4.0",
+                "image": "\u003cimage_registry\u003e/shipping:0.4.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -1032,21 +740,6 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ],
@@ -1061,6 +754,32 @@
           }
         }
       }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "annotations": {
+          "prometheus.io/path": "/prometheus"
+        },
+        "labels": {
+          "name": "shipping"
+        },
+        "name": "shipping",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "name": "shipping"
+        }
+      }
     }
   ],
   "kind": "List"
@@ -1068,6 +787,120 @@
 {
   "apiVersion": "v1",
   "items": [
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "user"
+        },
+        "name": "user",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "user"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "user"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "MONGO_HOST",
+                    "value": "user-db:27017"
+                  },
+                  {
+                    "name": "ZIPKIN",
+                    "value": "http://zipkin:9411/api/v1/spans"
+                  }
+                ],
+                "image": "\u003cimage_registry\u003e/user:0.4.0",
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 300,
+                  "periodSeconds": 3
+                },
+                "name": "user",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "name": "http"
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 180,
+                  "periodSeconds": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "user-db"
+        },
+        "name": "user-db",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "user-db"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "user-db"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "\u003cimage_registry\u003e/user-db:0.3.0",
+                "name": "user-db",
+                "ports": [
+                  {
+                    "containerPort": 27017,
+                    "name": "mongo"
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "emptyDir": {
+                  "medium": "Memory"
+                },
+                "name": "tmp-volume"
+              }
+            ]
+          }
+        }
+      }
+    },
     {
       "apiVersion": "v1",
       "kind": "Service",
@@ -1113,152 +946,6 @@
           "name": "user-db"
         }
       }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "user"
-        },
-        "name": "user",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "user"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "user"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "env": [
-                  {
-                    "name": "MONGO_HOST",
-                    "value": "user-db:27017"
-                  },
-                  {
-                    "name": "ZIPKIN",
-                    "value": "http://zipkin:9411/api/v1/spans"
-                  }
-                ],
-                "image": "docker.io/weaveworksdemos/user:0.4.0",
-                "livenessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 300,
-                  "periodSeconds": 3
-                },
-                "name": "user",
-                "ports": [
-                  {
-                    "containerPort": 80,
-                    "name": "http"
-                  }
-                ],
-                "readinessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 180,
-                  "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "user-db"
-        },
-        "name": "user-db",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "user-db"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "user-db"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "docker.io/weaveworksdemos/user-db:0.3.0",
-                "name": "user-db",
-                "ports": [
-                  {
-                    "containerPort": 27017,
-                    "name": "mongo"
-                  }
-                ],
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "CHOWN",
-                      "SETGID",
-                      "SETUID"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
-              }
-            ],
-            "volumes": [
-              {
-                "emptyDir": {
-                  "medium": "Memory"
-                },
-                "name": "tmp-volume"
-              }
-            ]
-          }
-        }
-      }
     }
   ],
   "kind": "List"
@@ -1266,54 +953,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "zipkin"
-        },
-        "name": "zipkin",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "zipkin",
-            "nodePort": 30002,
-            "port": 9411,
-            "targetPort": "zipkin"
-          }
-        ],
-        "selector": {
-          "name": "zipkin"
-        },
-        "type": "NodePort"
-      }
-    },
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "zipkin-mysql"
-        },
-        "name": "zipkin-mysql",
-        "namespace": "sock-shop-test"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "mysql",
-            "port": 3306,
-            "targetPort": "mysql"
-          }
-        ],
-        "selector": {
-          "name": "zipkin-mysql"
-        }
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -1461,6 +1100,54 @@
           }
         }
       }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "zipkin"
+        },
+        "name": "zipkin",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "zipkin",
+            "nodePort": 30002,
+            "port": 9411,
+            "targetPort": "zipkin"
+          }
+        ],
+        "selector": {
+          "name": "zipkin"
+        },
+        "type": "NodePort"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "zipkin-mysql"
+        },
+        "name": "zipkin-mysql",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "mysql",
+            "port": 3306,
+            "targetPort": "mysql"
+          }
+        ],
+        "selector": {
+          "name": "zipkin-mysql"
+        }
+      }
     }
   ],
   "kind": "List"
@@ -1468,55 +1155,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "annotations": {
-          "prometheus.io/path": "/prometheus"
-        },
-        "labels": {
-          "name": "cart"
-        },
-        "name": "cart",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "http",
-            "port": 80,
-            "targetPort": "http"
-          }
-        ],
-        "selector": {
-          "name": "cart"
-        }
-      }
-    },
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "cart-db"
-        },
-        "name": "cart-db",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "mongo",
-            "port": 27017,
-            "targetPort": "mongo"
-          }
-        ],
-        "selector": {
-          "name": "cart-db"
-        }
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -1566,21 +1204,6 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ],
@@ -1597,67 +1220,28 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
+      "apiVersion": "v1",
+      "kind": "Service",
       "metadata": {
-        "labels": {
-          "name": "cart-db"
+        "annotations": {
+          "prometheus.io/path": "/prometheus"
         },
-        "name": "cart-db",
+        "labels": {
+          "name": "cart"
+        },
+        "name": "cart",
         "namespace": "sock-shop-prod"
       },
       "spec": {
-        "replicas": 1,
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": "http"
+          }
+        ],
         "selector": {
-          "matchLabels": {
-            "name": "cart-db"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "cart-db"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "mongo",
-                "name": "cart-db",
-                "ports": [
-                  {
-                    "containerPort": 27017,
-                    "name": "mongo"
-                  }
-                ],
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "CHOWN",
-                      "SETGID",
-                      "SETUID"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
-              }
-            ],
-            "volumes": [
-              {
-                "emptyDir": {
-                  "medium": "Memory"
-                },
-                "name": "tmp-volume"
-              }
-            ]
-          }
+          "name": "cart"
         }
       }
     }
@@ -1667,6 +1251,118 @@
 {
   "apiVersion": "v1",
   "items": [
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "catalogue"
+        },
+        "name": "catalogue",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "catalogue"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "catalogue"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "ZIPKIN",
+                    "value": "http://zipkin:9411/api/v1/spans"
+                  }
+                ],
+                "image": "\u003cimage_registry\u003e/catalogue:0.3.0",
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 300,
+                  "periodSeconds": 3
+                },
+                "name": "catalogue",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "name": "http"
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 180,
+                  "periodSeconds": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "catalogue-db"
+        },
+        "name": "catalogue-db",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "catalogue-db"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "catalogue-db"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "MYSQL_DATABASE",
+                    "value": "socksdb"
+                  },
+                  {
+                    "name": "MYSQL_ROOT_PASSWORD",
+                    "value": "fake_password"
+                  }
+                ],
+                "image": "\u003cimage_registry\u003e/catalogue-db:0.3.0",
+                "name": "catalogue-db",
+                "ports": [
+                  {
+                    "containerPort": 3306,
+                    "name": "mysql"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
     {
       "apiVersion": "v1",
       "kind": "Service",
@@ -1712,133 +1408,6 @@
           "name": "catalogue-db"
         }
       }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "catalogue"
-        },
-        "name": "catalogue",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "catalogue"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "catalogue"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "env": [
-                  {
-                    "name": "ZIPKIN",
-                    "value": "http://zipkin:9411/api/v1/spans"
-                  }
-                ],
-                "image": "docker.io/weaveworksdemos/catalogue:0.3.0",
-                "livenessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 300,
-                  "periodSeconds": 3
-                },
-                "name": "catalogue",
-                "ports": [
-                  {
-                    "containerPort": 80,
-                    "name": "http"
-                  }
-                ],
-                "readinessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 180,
-                  "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "catalogue-db"
-        },
-        "name": "catalogue-db",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "catalogue-db"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "catalogue-db"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "env": [
-                  {
-                    "name": "MYSQL_DATABASE",
-                    "value": "socksdb"
-                  },
-                  {
-                    "name": "MYSQL_ROOT_PASSWORD",
-                    "value": "fake_password"
-                  }
-                ],
-                "image": "docker.io/weaveworksdemos/catalogue-db:0.3.0",
-                "name": "catalogue-db",
-                "ports": [
-                  {
-                    "containerPort": 3306,
-                    "name": "mysql"
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      }
     }
   ],
   "kind": "List"
@@ -1846,30 +1415,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "front-end"
-        },
-        "name": "front-end",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "ports": [
-          {
-            "nodePort": 30001,
-            "port": 80,
-            "targetPort": "http"
-          }
-        ],
-        "selector": {
-          "name": "front-end"
-        },
-        "type": "NodePort"
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -1896,7 +1441,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/front-end:0.3.1",
+                "image": "\u003cimage_registry\u003e/front-end:0.3.1",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/",
@@ -1925,23 +1470,35 @@
                     "cpu": "100m",
                     "memory": "100Mi"
                   }
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ]
           }
         }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "front-end"
+        },
+        "name": "front-end",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "ports": [
+          {
+            "nodePort": 30001,
+            "port": 80,
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "name": "front-end"
+        },
+        "type": "NodePort"
       }
     }
   ],
@@ -1950,55 +1507,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "annotations": {
-          "prometheus.io/path": "/prometheus"
-        },
-        "labels": {
-          "name": "orders"
-        },
-        "name": "orders",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "http",
-            "port": 80,
-            "targetPort": "http"
-          }
-        ],
-        "selector": {
-          "name": "orders"
-        }
-      }
-    },
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "orders-db"
-        },
-        "name": "orders-db",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "mongo",
-            "port": 27017,
-            "targetPort": "mongo"
-          }
-        ],
-        "selector": {
-          "name": "orders-db"
-        }
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -2048,21 +1556,6 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ],
@@ -2079,84 +1572,16 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "orders-db"
-        },
-        "name": "orders-db",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "orders-db"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "orders-db"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "mongo",
-                "name": "orders-db",
-                "ports": [
-                  {
-                    "containerPort": 27017,
-                    "name": "mongo"
-                  }
-                ],
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "CHOWN",
-                      "SETGID",
-                      "SETUID"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
-              }
-            ],
-            "volumes": [
-              {
-                "emptyDir": {
-                  "medium": "Memory"
-                },
-                "name": "tmp-volume"
-              }
-            ]
-          }
-        }
-      }
-    }
-  ],
-  "kind": "List"
-}
-{
-  "apiVersion": "v1",
-  "items": [
-    {
       "apiVersion": "v1",
       "kind": "Service",
       "metadata": {
-        "labels": {
-          "name": "payment"
+        "annotations": {
+          "prometheus.io/path": "/prometheus"
         },
-        "name": "payment",
+        "labels": {
+          "name": "orders"
+        },
+        "name": "orders",
         "namespace": "sock-shop-prod"
       },
       "spec": {
@@ -2168,10 +1593,16 @@
           }
         ],
         "selector": {
-          "name": "payment"
+          "name": "orders"
         }
       }
-    },
+    }
+  ],
+  "kind": "List"
+}
+{
+  "apiVersion": "v1",
+  "items": [
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -2204,7 +1635,7 @@
                     "value": "http://zipkin:9411/api/v1/spans"
                   }
                 ],
-                "image": "docker.io/weaveworksdemos/payment:0.4.1",
+                "image": "\u003cimage_registry\u003e/payment:0.4.1",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -2227,25 +1658,33 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "payment"
+        },
+        "name": "payment",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "name": "payment"
         }
       }
     }
@@ -2255,6 +1694,102 @@
 {
   "apiVersion": "v1",
   "items": [
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "rabbitmq"
+        },
+        "name": "rabbitmq",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "rabbitmq"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "rabbitmq"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "rabbitmq:3",
+                "name": "rabbitmq",
+                "ports": [
+                  {
+                    "containerPort": 5672,
+                    "name": "rabbitmq"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "queue-master"
+        },
+        "name": "queue-master",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "queue-master"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "queue-master"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "\u003cimage_registry\u003e/queue-master:0.3.0",
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 300,
+                  "periodSeconds": 3
+                },
+                "name": "queue-master",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "name": "http"
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 180,
+                  "periodSeconds": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
     {
       "apiVersion": "v1",
       "kind": "Service",
@@ -2303,120 +1838,6 @@
           "name": "queue-master"
         }
       }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "rabbitmq"
-        },
-        "name": "rabbitmq",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "rabbitmq"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "rabbitmq"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "rabbitmq:3",
-                "name": "rabbitmq",
-                "ports": [
-                  {
-                    "containerPort": 5672,
-                    "name": "rabbitmq"
-                  }
-                ],
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "CHOWN",
-                      "SETGID",
-                      "SETUID",
-                      "DAC_OVERRIDE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "queue-master"
-        },
-        "name": "queue-master",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "queue-master"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "queue-master"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "docker.io/weaveworksdemos/queue-master:0.3.0",
-                "livenessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 300,
-                  "periodSeconds": 3
-                },
-                "name": "queue-master",
-                "ports": [
-                  {
-                    "containerPort": 80,
-                    "name": "http"
-                  }
-                ],
-                "readinessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 180,
-                  "periodSeconds": 3
-                }
-              }
-            ]
-          }
-        }
-      }
     }
   ],
   "kind": "List"
@@ -2424,32 +1845,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "annotations": {
-          "prometheus.io/path": "/prometheus"
-        },
-        "labels": {
-          "name": "shipping"
-        },
-        "name": "shipping",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "http",
-            "port": 80,
-            "targetPort": "http"
-          }
-        ],
-        "selector": {
-          "name": "shipping"
-        }
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -2476,7 +1871,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/shipping:0.4.0",
+                "image": "\u003cimage_registry\u003e/shipping:0.4.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -2499,21 +1894,6 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
                 }
               }
             ],
@@ -2528,6 +1908,32 @@
           }
         }
       }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "annotations": {
+          "prometheus.io/path": "/prometheus"
+        },
+        "labels": {
+          "name": "shipping"
+        },
+        "name": "shipping",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "name": "shipping"
+        }
+      }
     }
   ],
   "kind": "List"
@@ -2535,6 +1941,120 @@
 {
   "apiVersion": "v1",
   "items": [
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "user"
+        },
+        "name": "user",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "user"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "user"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "MONGO_HOST",
+                    "value": "user-db:27017"
+                  },
+                  {
+                    "name": "ZIPKIN",
+                    "value": "http://zipkin:9411/api/v1/spans"
+                  }
+                ],
+                "image": "\u003cimage_registry\u003e/user:0.4.0",
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 300,
+                  "periodSeconds": 3
+                },
+                "name": "user",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "name": "http"
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "initialDelaySeconds": 180,
+                  "periodSeconds": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "user-db"
+        },
+        "name": "user-db",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "user-db"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "user-db"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "\u003cimage_registry\u003e/user-db:0.3.0",
+                "name": "user-db",
+                "ports": [
+                  {
+                    "containerPort": 27017,
+                    "name": "mongo"
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "emptyDir": {
+                  "medium": "Memory"
+                },
+                "name": "tmp-volume"
+              }
+            ]
+          }
+        }
+      }
+    },
     {
       "apiVersion": "v1",
       "kind": "Service",
@@ -2580,152 +2100,6 @@
           "name": "user-db"
         }
       }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "user"
-        },
-        "name": "user",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "user"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "user"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "env": [
-                  {
-                    "name": "MONGO_HOST",
-                    "value": "user-db:27017"
-                  },
-                  {
-                    "name": "ZIPKIN",
-                    "value": "http://zipkin:9411/api/v1/spans"
-                  }
-                ],
-                "image": "docker.io/weaveworksdemos/user:0.4.0",
-                "livenessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 300,
-                  "periodSeconds": 3
-                },
-                "name": "user",
-                "ports": [
-                  {
-                    "containerPort": 80,
-                    "name": "http"
-                  }
-                ],
-                "readinessProbe": {
-                  "httpGet": {
-                    "path": "/health",
-                    "port": "http"
-                  },
-                  "initialDelaySeconds": 180,
-                  "periodSeconds": 3
-                },
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "NET_BIND_SERVICE"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": true,
-                  "runAsUser": 10001,
-                  "seLinuxOptions": {}
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "name": "user-db"
-        },
-        "name": "user-db",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "name": "user-db"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "name": "user-db"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "image": "docker.io/weaveworksdemos/user-db:0.3.0",
-                "name": "user-db",
-                "ports": [
-                  {
-                    "containerPort": 27017,
-                    "name": "mongo"
-                  }
-                ],
-                "securityContext": {
-                  "capabilities": {
-                    "add": [
-                      "CHOWN",
-                      "SETGID",
-                      "SETUID"
-                    ],
-                    "drop": [
-                      "all"
-                    ]
-                  },
-                  "privileged": false,
-                  "readOnlyRootFilesystem": true,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
-              }
-            ],
-            "volumes": [
-              {
-                "emptyDir": {
-                  "medium": "Memory"
-                },
-                "name": "tmp-volume"
-              }
-            ]
-          }
-        }
-      }
     }
   ],
   "kind": "List"
@@ -2733,54 +2107,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "zipkin"
-        },
-        "name": "zipkin",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "zipkin",
-            "nodePort": 30002,
-            "port": 9411,
-            "targetPort": "zipkin"
-          }
-        ],
-        "selector": {
-          "name": "zipkin"
-        },
-        "type": "NodePort"
-      }
-    },
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "name": "zipkin-mysql"
-        },
-        "name": "zipkin-mysql",
-        "namespace": "sock-shop-prod"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "mysql",
-            "port": 3306,
-            "targetPort": "mysql"
-          }
-        ],
-        "selector": {
-          "name": "zipkin-mysql"
-        }
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -2926,6 +2252,54 @@
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "zipkin"
+        },
+        "name": "zipkin",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "zipkin",
+            "nodePort": 30002,
+            "port": 9411,
+            "targetPort": "zipkin"
+          }
+        ],
+        "selector": {
+          "name": "zipkin"
+        },
+        "type": "NodePort"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "zipkin-mysql"
+        },
+        "name": "zipkin-mysql",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "mysql",
+            "port": 3306,
+            "targetPort": "mysql"
+          }
+        ],
+        "selector": {
+          "name": "zipkin-mysql"
         }
       }
     }

@@ -30,6 +30,8 @@ test-cmds:
             ln -sf ../../examples .examples ; \
 	    ln -sf ../../../examples assets/.examples ; \
 	    go test -v ; \
+	    rc=$$? ; \
 	    rm -f .examples ; \
 	    rm -f assets/.examples ; \
+	    exit $${rc} ; \
 	done

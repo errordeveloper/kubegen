@@ -1,8 +1,10 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"path"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,6 +16,7 @@ import (
 	_ "k8s.io/client-go/pkg/apis/extensions/install"
 	extensionsv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
+	"github.com/ghodss/yaml"
 	"github.com/hashicorp/hcl"
 )
 
@@ -138,6 +141,36 @@ func NewFromHCL(obj interface{}, data []byte) error {
 
 	if err := hcl.DecodeObject(obj, manifest); err != nil {
 		return fmt.Errorf("kubegen/util: error constructing an object from HCL – %v", err)
+	}
+
+	return nil
+}
+
+func LoadObj(obj interface{}, data []byte, sourcePath string, instanceName string) error {
+	var errorFmt string
+
+	if instanceName != "" {
+		errorFmt = fmt.Sprintf("kubegen/util: error loading module %q source", instanceName)
+	} else {
+		errorFmt = "kubegen/util: error loading manifest file"
+	}
+
+	ext := path.Ext(sourcePath)
+	switch {
+	case ext == ".json":
+		if err := json.Unmarshal(data, obj); err != nil {
+			return fmt.Errorf("%s as JSON (%q) – %v", errorFmt, sourcePath, err)
+		}
+	case ext == ".yaml" || ext == ".yml":
+		if err := yaml.Unmarshal(data, obj); err != nil {
+			return fmt.Errorf("%s as YAML (%q) – %v", errorFmt, sourcePath, err)
+		}
+	case ext == ".kg" || ext == ".hcl":
+		if err := NewFromHCL(obj, data); err != nil {
+			return fmt.Errorf("%s as HCL (%q) – %v", errorFmt, sourcePath, err)
+		}
+	default:
+		return fmt.Errorf("%s %q – unknown file extension", errorFmt, sourcePath)
 	}
 
 	return nil

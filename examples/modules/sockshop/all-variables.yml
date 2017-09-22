@@ -2,5 +2,13 @@ Kind: "kubegen.k8s.io/Module.v1alpha1"
 
 Variables:
   - name: image_registry
-    type: string
+    type: String
     default: "docker.io/weaveworksdemos"
+
+  - name: cart_image
+    type: String
+    default: "docker.io/weaveworksdemos/cart:0.4.0"
+
+  - name: orders_image
+    type: String
+    default: "docker.io/weaveworksdemos/orders:0.4.2"

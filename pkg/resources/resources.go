@@ -104,11 +104,6 @@ func (i *Group) appendToList(components *api.List, component Convertable) error 
 
 func (i *Group) MakeList() (*api.List, error) {
 	components := &api.List{}
-	for _, component := range i.Services {
-		if err := i.appendToList(components, component); err != nil {
-			return nil, err
-		}
-	}
 	for _, component := range i.Deployments {
 		if err := i.appendToList(components, component); err != nil {
 			return nil, err
@@ -130,6 +125,11 @@ func (i *Group) MakeList() (*api.List, error) {
 		}
 	}
 	for _, component := range i.ConfigMaps {
+		if err := i.appendToList(components, component); err != nil {
+			return nil, err
+		}
+	}
+	for _, component := range i.Services {
 		if err := i.appendToList(components, component); err != nil {
 			return nil, err
 		}
