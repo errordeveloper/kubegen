@@ -24,13 +24,16 @@ type ModuleInstance struct {
 	Partials  map[string]interface{} `yaml:"Partials,omitempty" json:"Partials,omitempty" hcl:"partials"`
 }
 
+type valueLookupFunc func() []byte
+
 type Module struct {
-	Kind             string            `yaml:"Kind" json:"Kind" hcl:"kind"`
-	Variables        []ModuleVariable  `yaml:"Variables,omitempty" json:"Variables,omitempty" hcl:"variable"`
-	Partials         []ModulePartial   `yaml:"Partials,omitempty" json:"Partials,omitempty" hcl:"partial"`
-	manifests        map[string][]byte `yaml:"-" json:"-" hcl:"-"`
-	path             string            `yaml:"-" json:"-" hcl:"-"`
-	IncludeManifests []RawResource     `yaml:"Include" json:"Include" hcl:"include"`
+	Kind             string                     `yaml:"Kind" json:"Kind" hcl:"kind"`
+	Variables        []ModuleVariable           `yaml:"Variables,omitempty" json:"Variables,omitempty" hcl:"variable"`
+	Partials         []ModulePartial            `yaml:"Partials,omitempty" json:"Partials,omitempty" hcl:"partial"`
+	manifests        map[string][]byte          `yaml:"-" json:"-" hcl:"-"`
+	path             string                     `yaml:"-" json:"-" hcl:"-"`
+	lookupFuncs      map[string]valueLookupFunc `yaml:"-" json:"-" hcl:"-"`
+	IncludeManifests []RawResource              `yaml:"Include" json:"Include" hcl:"include"`
 }
 
 // TODO conditionally laod "raw" files

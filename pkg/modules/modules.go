@@ -3,14 +3,12 @@ package modules
 import (
 	"fmt"
 
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path"
 	"sort"
 	"strings"
-	"text/template"
 
 	// "github.com/buger/jsonparser"
 	"github.com/ghodss/yaml"
@@ -48,6 +46,37 @@ func loadObj(obj interface{}, data []byte, sourcePath string, instanceName strin
 		return fmt.Errorf("%s %q – unknown file extension", errorFmt, sourcePath)
 	}
 
+	return nil
+}
+
+func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo, kind string) error {
+	funcs := make(map[string]valueLookupFunc, 3)
+
+	funcs["String"] = func() []byte {
+		return m.lookupFuncs[string(branch.Value())]()
+	}
+
+	funcs["Number"] = func() []byte {
+		return m.lookupFuncs[string(branch.Value())]()
+	}
+
+	funcs["Object"] = func() []byte {
+		return m.lookupFuncs[string(branch.Value())]()
+	}
+
+	switch branch.Kind() {
+	case converter.String:
+		x := funcs[kind]()
+
+		c.AddModifier(branch, func(c *converter.Converter) error {
+			if err := c.Replace(branch, x); err != nil {
+				return err
+			}
+			return nil
+		})
+	default:
+		return fmt.Errorf("in %q value is a %s, but must be a string", branch.PathToString(), branch.Kind())
+	}
 	return nil
 }
 
@@ -90,59 +119,24 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 
 	conv.DefineKeyword("kubegen.String.Lookup",
 		func(c *converter.Converter, branch *converter.BranchInfo) error {
-			p := branch.PathToString()
-			x := []byte("\"TEST_STRING\"")
-			switch branch.Kind() {
-			case converter.String:
-				c.AddModifier(branch, func(c *converter.Converter) error {
-					if err := c.Replace(branch, x); err != nil {
-						return err
-					}
-					return nil
-				})
-			default:
-				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.Kind())
+			if err := moduleContext.doLookup(c, branch, "String"); err != nil {
+				return err
 			}
 			return nil
 		})
 
 	conv.DefineKeyword("kubegen.Number.Lookup",
 		func(c *converter.Converter, branch *converter.BranchInfo) error {
-			p := branch.PathToString()
-			x := []byte("12345")
-			switch branch.Kind() {
-			case converter.String:
-				c.AddModifier(branch, func(c *converter.Converter) error {
-					if err := c.Replace(branch, x); err != nil {
-						return err
-					}
-					return nil
-				})
-			default:
-				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.Kind())
+			if err := moduleContext.doLookup(c, branch, "Number"); err != nil {
+				return err
 			}
 			return nil
 		})
 
 	conv.DefineKeyword("kubegen.Object.Lookup",
 		func(c *converter.Converter, branch *converter.BranchInfo) error {
-			p := branch.PathToString()
-			var x []byte
-			//if v, ok := objs[string(branch.value)]; ok {
-			//	x = v
-			//} else {
-			x = []byte("{ }")
-			//}
-			switch branch.Kind() {
-			case converter.String:
-				c.AddModifier(branch, func(c *converter.Converter) error {
-					if err := c.Replace(branch, x); err != nil {
-						return err
-					}
-					return nil
-				})
-			default:
-				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.Kind())
+			if err := moduleContext.doLookup(c, branch, "Object"); err != nil {
+				return err
 			}
 			return nil
 		})
@@ -214,19 +208,9 @@ func (b *Bundle) LoadModules(selectNames []string) error {
 			b.Modules[n].Namespace = b.Namespace
 		}
 
-		if err := m.Load(i); err != nil {
+		if err := m.LoadVariables(i); err != nil {
 			return err
 		}
-
-		//fn := func(wd interface{}) (interface{}, error) {
-		//	fmt.Printf("wd: %#v\n", wd)
-		//	return wd, nil
-		//}
-		//w := &interpolationWalker{F: fn, Replace: false}
-		//err = reflectwalk.Walk(m, w)
-		//if err != nil {
-		//	return fmt.Errorf("error while walking a module: %v", err)
-		//}
 
 		b.loadedModules = append(b.loadedModules, *m)
 	}
@@ -356,7 +340,7 @@ func NewModule(dir, instanceName string) (*Module, error) {
 	return module, nil
 }
 
-func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, error) {
+func (i *ModuleVariable) makeValueLookupFunc(instance ModuleInstance) (func() []byte, error) {
 	undefinedNonOptionalVariableError := fmt.Errorf(
 		"module %q must set variable %q (of type %s)",
 		instance.Name, i.Name, i.Type)
@@ -416,7 +400,7 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 				}
 			}
 		}
-		return func() int32 { return value }, nil
+		return func() []byte { return []byte(fmt.Sprintf("%d", value)) }, nil
 	case "string":
 		var value string
 		v, isSet := instance.Variables[i.Name]
@@ -452,44 +436,25 @@ func (i *ModuleVariable) makeValFunc(instance ModuleInstance) (interface{}, erro
 				}
 			}
 		}
-		return func() string { return value }, nil
+		return func() []byte { return []byte(fmt.Sprintf("%q", value)) }, nil
 	default:
 		return nil, unknownVariableTypeError
 	}
 }
 
-func (m *Module) Load(instance ModuleInstance) error {
-	// TODO we shuld probably use, as has sane and widely-used syntax,
-	// it is also fairly restrictive https://github.com/hoisie/mustache
-	funcMap := template.FuncMap{}
+func (m *Module) LoadVariables(instance ModuleInstance) error {
+	m.lookupFuncs = make(map[string]valueLookupFunc, len(m.Variables))
 	for _, variable := range m.Variables {
-		valFunc, err := variable.makeValFunc(instance)
+		valFunc, err := variable.makeValueLookupFunc(instance)
 		if err != nil {
 			return err
 		}
-
-		funcMap[variable.Name] = valFunc
+		m.lookupFuncs[variable.Name] = valFunc
 	}
-
-	for manifestPath, data := range m.manifests {
-		output := bytes.Buffer{}
-		// Let's use some very familiar delimitors
-		t, err := template.New(manifestPath).Delims("<", ">").Funcs(funcMap).Parse(string(data))
-		if err != nil {
-			return err
-		}
-
-		if err := t.Execute(&output, nil); err != nil {
-			return err
-		}
-
-		m.manifests[manifestPath] = output.Bytes()
-	}
-
 	return nil
 }
 
-func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resources.Group, error) {
+func (m *Module) LoadGroups(instanceName, namespace string) (map[string]resources.Group, error) {
 	groups := make(map[string]resources.Group)
 
 	for manifestPath, data := range m.manifests {
@@ -512,7 +477,7 @@ func (m *Module) MakeGroups(instanceName, namespace string) (map[string]resource
 
 func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte, error) {
 	output := make(map[string][]byte)
-	groups, err := m.MakeGroups(instance.Name, instance.Namespace)
+	groups, err := m.LoadGroups(instance.Name, instance.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -542,7 +507,7 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 
 func (m *Module) EncodeGroupsToJSON(instance ModuleInstance) (map[string][]byte, error) {
 	output := make(map[string][]byte)
-	groups, err := m.MakeGroups(instance.Name, instance.Namespace)
+	groups, err := m.LoadGroups(instance.Name, instance.Namespace)
 	if err != nil {
 		return nil, err
 	}
