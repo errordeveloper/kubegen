@@ -1,11 +1,14 @@
 package converter
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/buger/jsonparser"
+	"github.com/ghodss/yaml"
+
 	_ "github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
@@ -945,7 +948,6 @@ func TestKeywordJoinStrings(t *testing.T) {
 			return fmt.Errorf("must be an array")
 		}
 		c.AddModifier(branch, func(c *Converter) error {
-
 			x := []string{}
 			jsonparser.ArrayEach(branch.Value(), func(value []byte, dataType ValueType, offset int, err error) {
 				x = append(x, string(value))
@@ -968,6 +970,118 @@ func TestKeywordJoinStrings(t *testing.T) {
 	{
 		v, t, _, err := jsonparser.Get(conv.data, "foobar")
 		a := []byte("foobar")
+		assert.Nil(err)
+		assert.Equal(jsonparser.String, t)
+		assert.Equal(a, v)
+	}
+}
+
+func TestKeywordObjectToJSON(t *testing.T) {
+	conv := New()
+
+	assert := assert.New(t)
+
+	tobj1 := []byte(`{
+			"Kind": "Some",
+			"foobar1": {
+				"kubegen.String.AsJSON": [
+					"foo",
+					"bar"
+				]
+			},
+			"foobar2": {
+				"kubegen.String.AsYAML": [
+					"foo",
+					"bar"
+				]
+			},
+			"foobar3": {
+				"kubegen.String.AsYAML": {
+					"foo": [],
+					"bar": {}
+				}
+			},
+			"foobar4": {
+				"kubegen.String.Join": [
+					"---",
+					{
+						"kubegen.String.AsYAML": {
+							"foo": 1,
+							"bar": 2
+						}
+					}
+				]
+			}
+	}`)
+
+	if err := conv.LoadObj(tobj1, "tobj1.json", ""); err != nil {
+		t.Fatalf("failed to load – %v", err)
+	}
+
+	conv.DefineKeyword("kubegen.String.AsJSON", func(c *Converter, branch *BranchInfo) error {
+		c.AddModifier(branch, func(c *Converter) error {
+			x, err := json.Marshal(string(branch.Value()))
+			if err != nil {
+				return err
+			}
+			if err = c.Replace(branch, x); err != nil {
+				return err
+			}
+			return nil
+		})
+		return nil
+	})
+
+	conv.DefineKeyword("kubegen.String.AsYAML", func(c *Converter, branch *BranchInfo) error {
+		c.AddModifier(branch, func(c *Converter) error {
+			o := new(interface{})
+			if err := json.Unmarshal(branch.Value(), o); err != nil {
+				return err
+			}
+			x, err := yaml.Marshal(o)
+			if err != nil {
+				return err
+			}
+			{
+				x, err := json.Marshal(string(x))
+				if err != nil {
+					return err
+				}
+				if err = c.Replace(branch, x); err != nil {
+					return err
+				}
+				return nil
+			}
+		})
+		return nil
+	})
+
+	if err := conv.Run(); err != nil {
+		t.Logf("c.data=%s", string(conv.data))
+		t.Fatalf("failed to convert – %v", err)
+	}
+
+	assert.Equal(0, len(conv.modifiers))
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "foobar1")
+		a := []byte(`[\"foo\",\"bar\"]`)
+		assert.Nil(err)
+		assert.Equal(jsonparser.String, t)
+		assert.Equal(a, v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "foobar2")
+		a := []byte(`- foo\n- bar\n`)
+		assert.Nil(err)
+		assert.Equal(jsonparser.String, t)
+		assert.Equal(a, v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "foobar3")
+		a := []byte(`bar: {}\nfoo: []\n`)
 		assert.Nil(err)
 		assert.Equal(jsonparser.String, t)
 		assert.Equal(a, v)
