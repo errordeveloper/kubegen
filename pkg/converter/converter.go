@@ -31,6 +31,8 @@ type (
 
 	branch     = map[string]*BranchInfo
 	branchPath = []string
+
+	KeywordEvalPhase = int
 )
 
 const (
@@ -39,6 +41,19 @@ const (
 	Array  = jsonparser.Array
 	Number = jsonparser.Number
 )
+
+const (
+	KeywordEvalPhaseA = iota
+	KeywordEvalPhaseB
+	KeywordEvalPhaseC
+	KeywordEvalPhases
+)
+
+var keywordEvalPhases = [KeywordEvalPhases]KeywordEvalPhase{
+	KeywordEvalPhaseA,
+	KeywordEvalPhaseB,
+	KeywordEvalPhaseC,
+}
 
 type Converter struct {
 	tree BranchInfo
@@ -49,7 +64,8 @@ type Converter struct {
 	// how our parser works)
 	// TODO we will have to use regex matchers here actually, we can keep keys
 	// as string and use compiledRegexp.String()
-	keywords map[string]keywordCallbackMaker
+	keywords         [KeywordEvalPhases]map[string]keywordCallbackMaker
+	keywordEvalPhase KeywordEvalPhase
 	// modifiers are actual modifiers mapped by dot-joined path
 	// TODO we probably want to do something better here, as dot-joined path
 	// doesn't guarantee uniqueness (TBD, also cosider escaping literal dots)
@@ -59,9 +75,23 @@ type Converter struct {
 type keywordCallbackMaker func(*Converter, *BranchInfo) error
 type keywordCallback func(*Converter) error
 
+type Keyword struct {
+	ReturnType ValueType
+	EvalPhase  KeywordEvalPhase
+	FuncName   string
+}
+
+func (kw *Keyword) String() string {
+	return fmt.Sprintf("kubegen.%s.%s", strings.Title(kw.ReturnType.String()), kw.FuncName)
+}
+
 func New() *Converter {
 	return &Converter{
-		keywords:  make(map[string]keywordCallbackMaker),
+		keywords: [KeywordEvalPhases]map[string]keywordCallbackMaker{
+			KeywordEvalPhaseA: make(map[string]keywordCallbackMaker),
+			KeywordEvalPhaseB: make(map[string]keywordCallbackMaker),
+			KeywordEvalPhaseC: make(map[string]keywordCallbackMaker),
+		},
 		modifiers: make(map[string]keywordCallback),
 	}
 }
@@ -142,7 +172,7 @@ func (c *Converter) doIterate(parentBranch *BranchInfo, key string, value []byte
 		return
 	}
 	parentBranch.self[key] = &newBranch
-	if makeModifier, ok := c.keywords[key]; ok {
+	if makeModifier, ok := c.keywords[c.keywordEvalPhase][key]; ok {
 		if err := makeModifier(c, &newBranch); err != nil {
 			errors <- fmt.Errorf("failed to register modifier for keyword %q – %v", key, err)
 			return
@@ -212,7 +242,7 @@ func (c *Converter) checkKind() (err error) {
 	return
 }
 
-func (c *Converter) run() error {
+func (c *Converter) run(phase KeywordEvalPhase) error {
 	// it is okay to check this here, so we fail early,
 	// however we should abstract deep checks more specifically
 	if err := c.checkKind(); err != nil {
@@ -226,6 +256,7 @@ func (c *Converter) run() error {
 		self:   make(branch),
 		path:   []string{""},
 	}
+	c.keywordEvalPhase = phase
 
 	{
 		errors := make(chan error)
@@ -242,22 +273,67 @@ func (c *Converter) run() error {
 }
 
 func (c *Converter) Run() error {
-	for {
-		if err := c.run(); err != nil {
-			return err
+	eval := func(phase KeywordEvalPhase) error {
+		for {
+			if err := c.run(phase); err != nil {
+				return err
+			}
+			if len(c.modifiers) == 0 {
+				return nil
+			}
+			if err := c.callModifiersOnce(); err != nil {
+				return err
+			}
 		}
-		if len(c.modifiers) == 0 {
-			return nil
-		}
-		if err := c.callModifiersOnce(); err != nil {
+	}
+
+	for phase := range keywordEvalPhases {
+		if err := eval(phase); err != nil {
 			return err
 		}
 	}
+
+	return nil
 }
 
-func (c *Converter) DefineKeyword(keyword string, fn keywordCallbackMaker) {
+var (
+	KeywordStringLookup = &Keyword{
+		ReturnType: String,
+		EvalPhase:  KeywordEvalPhaseA,
+		FuncName:   "Lookup",
+	}
+	KeywordNumberLookup = &Keyword{
+		ReturnType: Number,
+		EvalPhase:  KeywordEvalPhaseA,
+		FuncName:   "Lookup",
+	}
+	KeywordObjectLookup = &Keyword{
+		ReturnType: Object,
+		EvalPhase:  KeywordEvalPhaseA,
+		FuncName:   "Lookup",
+	}
+
+	KeywordStringJoin = &Keyword{
+		ReturnType: String,
+		EvalPhase:  KeywordEvalPhaseB,
+		FuncName:   "Join",
+	}
+
+	KeywordStringAsJSON = &Keyword{
+		ReturnType: String,
+		EvalPhase:  KeywordEvalPhaseC,
+		FuncName:   "AsJSON",
+	}
+	KeywordStringAsYAML = &Keyword{
+		ReturnType: String,
+		EvalPhase:  KeywordEvalPhaseC,
+		FuncName:   "AsYAML",
+	}
+)
+
+func (c *Converter) DefineKeyword(kw *Keyword, fn keywordCallbackMaker) {
 	// TODO compile regex here and use compiledRegexp.String() to get the key back?
-	c.keywords[keyword] = fn
+	c.keywords[kw.EvalPhase][kw.String()] = fn
 }
 
 func (c *Converter) AddModifier(branch *BranchInfo, fn keywordCallback) {

@@ -74,7 +74,7 @@ func TestConverterBasic(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -134,7 +134,7 @@ func TestConverterOnlyObjects(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -280,7 +280,7 @@ func TestBasicKubegenAsset(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -341,7 +341,7 @@ func TestConverterGet(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -381,7 +381,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 
 	tobj := []byte(`{
 		"Kind": "some",
-		"kubegen.TestDeletion": { "aFoodOrder": "YES" },
+		"kubegen.Null.Delete": { "aFoodOrder": "YES" },
 		"order": {
 			"potatoe": {
 				"mash": { "count": 1 },
@@ -393,11 +393,11 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 					"other": [
 						{
 							"kind": "sweetAndSour",
-							"kubegen.TestDeletion": "someOfThatMayBe"
+							"kubegen.Null.Delete": "someOfThatMayBe"
 						},
 						{
 							"kind": "sourCream",
-							"kubegen.TestDeletion": "yesExtraOfThatPleaseThankYou"
+							"kubegen.Null.Delete": "yesExtraOfThatPleaseThankYou"
 						}
 					]
 				}
@@ -435,27 +435,30 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 	assert.True(len(tobj) > len(umobj),
 		"object without modifier keywords should be larger")
 
-	conv.DefineKeyword("kubegen.TestDeletion",
-		func(c *Converter, branch *BranchInfo) error {
-			p := branch.PathToString()
-			switch branch.kind {
-			case jsonparser.String:
-				fallthrough
-			case jsonparser.Object:
-				// TODO panic if key exists or find a way to have unique keys
-				c.modifiers[p] = func(c *Converter) error {
-					c.data = jsonparser.Delete(c.data, branch.path[1:]...)
-					return nil
-				}
+	conv.DefineKeyword(&Keyword{
+		ReturnType: jsonparser.Null,
+		EvalPhase:  KeywordEvalPhaseA,
+		FuncName:   "Delete",
+	}, func(c *Converter, branch *BranchInfo) error {
+		p := branch.PathToString()
+		switch branch.kind {
+		case jsonparser.String:
+			fallthrough
+		case jsonparser.Object:
+			// TODO panic if key exists or find a way to have unique keys
+			c.modifiers[p] = func(c *Converter) error {
+				c.data = jsonparser.Delete(c.data, branch.path[1:]...)
+				return nil
 			}
-			return nil
-		})
+		}
+		return nil
+	})
 
 	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
 	}
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
@@ -474,7 +477,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 	assert.Equal(unmodified.data, conv.data,
 		"new object should be exactly the same as one without modifier keywords")
 
-	assert.Equal(0, len(unmodified.keywords),
+	assert.Equal(0, len(unmodified.keywords[KeywordEvalPhaseA]),
 		"object without modifier keywords has no keyword handlers")
 	assert.Equal(0, len(unmodified.modifiers),
 		"object without modifier keywords has no keyword callbacks")
@@ -518,16 +521,15 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		[]byte(`{ "Kind": "Some", "test6nf": { "kubegen.Number.Lookup": {} } }`),
 	}
 
-	conv.DefineKeyword("kubegen.String.Lookup",
+	conv.DefineKeyword(KeywordStringLookup,
 		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
-
 			switch branch.kind {
 			case jsonparser.String:
 				c.modifiers[p] = func(c *Converter) error {
 					v, err := jsonparser.Set(c.data, []byte("\"TEST\""), branch.parent.path[1:]...)
 					if err != nil {
-						return err
+						return fmt.Errorf("could not set string – %v", err)
 					}
 					c.data = v
 					return nil
@@ -538,16 +540,15 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 			return nil
 		})
 
-	conv.DefineKeyword("kubegen.Number.Lookup",
+	conv.DefineKeyword(KeywordNumberLookup,
 		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
-
 			switch branch.kind {
 			case jsonparser.String:
 				c.modifiers[p] = func(c *Converter) error {
 					v, err := jsonparser.Set(c.data, []byte("0"), branch.parent.path[1:]...)
 					if err != nil {
-						return err
+						return fmt.Errorf("could not set number – %v", err)
 					}
 					c.data = v
 					return nil
@@ -572,7 +573,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		var err error
 		err = conv2.loadStrict(v)
 		assert.Nil(err)
-		err = conv2.run()
+		err = conv2.run(KeywordEvalPhaseA)
 		assert.NotNil(err)
 	}
 
@@ -580,7 +581,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		t.Fatalf("failed to laod – %v\nc.data=%s", err, string(conv.data))
 	}
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
@@ -655,7 +656,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 		// "testInsertObj4": []byte(`{}`),
 	}
 
-	conv.DefineKeyword("kubegen.String.Lookup",
+	conv.DefineKeyword(KeywordStringLookup,
 		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
 
@@ -664,7 +665,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 				c.modifiers[p] = func(c *Converter) error {
 					v, err := jsonparser.Set(c.data, []byte("\"TEST_STRING\""), branch.parent.path[1:]...)
 					if err != nil {
-						return err
+						return fmt.Errorf("could not set string – %v", err)
 					}
 					c.data = v
 					return nil
@@ -675,7 +676,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 			return nil
 		})
 
-	conv.DefineKeyword("kubegen.Number.Lookup",
+	conv.DefineKeyword(KeywordNumberLookup,
 		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
 
@@ -685,7 +686,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 				c.modifiers[p] = func(c *Converter) error {
 					v, err := jsonparser.Set(c.data, []byte("12345"), branch.parent.path[1:]...)
 					if err != nil {
-						return err
+						return fmt.Errorf("could not set number – %v", err)
 					}
 					c.data = v
 					return nil
@@ -696,7 +697,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 			return nil
 		})
 
-	conv.DefineKeyword("kubegen.Object.Lookup",
+	conv.DefineKeyword(KeywordObjectLookup,
 		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
 			var x []byte
@@ -710,7 +711,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 				c.modifiers[p] = func(c *Converter) error {
 					v, err := jsonparser.Set(c.data, x, branch.parent.path[1:]...)
 					if err != nil {
-						return err
+						return fmt.Errorf("could not set object – %v", err)
 					}
 					c.data = v
 					return nil
@@ -727,7 +728,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	// first pass
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
@@ -775,7 +776,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	// second pass
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
@@ -849,7 +850,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	// third pass
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
@@ -871,7 +872,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	// final pass
 
-	if err := conv.run(); err != nil {
+	if err := conv.run(KeywordEvalPhaseA); err != nil {
 		t.Fatalf("failed to convert – %v\nc.data=%s\nc.tree.self=%#v", err, string(conv.data), conv.tree.self)
 	}
 
@@ -943,7 +944,7 @@ func TestKeywordJoinStrings(t *testing.T) {
 		t.Fatalf("failed to load – %v", err)
 	}
 
-	conv.DefineKeyword("kubegen.String.Join", func(c *Converter, branch *BranchInfo) error {
+	conv.DefineKeyword(KeywordStringJoin, func(c *Converter, branch *BranchInfo) error {
 		if branch.Kind() != Array {
 			return fmt.Errorf("must be an array")
 		}
@@ -953,7 +954,7 @@ func TestKeywordJoinStrings(t *testing.T) {
 				x = append(x, string(value))
 			})
 			if err := c.Replace(branch, []byte(fmt.Sprintf("%q", strings.Join(x, "")))); err != nil {
-				return err
+				return fmt.Errorf("could not join string – %v", err)
 			}
 			return nil
 		})
@@ -1018,7 +1019,7 @@ func TestKeywordObjectToJSON(t *testing.T) {
 		t.Fatalf("failed to load – %v", err)
 	}
 
-	conv.DefineKeyword("kubegen.String.AsJSON", func(c *Converter, branch *BranchInfo) error {
+	conv.DefineKeyword(KeywordStringAsJSON, func(c *Converter, branch *BranchInfo) error {
 		c.AddModifier(branch, func(c *Converter) error {
 			x, err := json.Marshal(string(branch.Value()))
 			if err != nil {
@@ -1032,7 +1033,7 @@ func TestKeywordObjectToJSON(t *testing.T) {
 		return nil
 	})
 
-	conv.DefineKeyword("kubegen.String.AsYAML", func(c *Converter, branch *BranchInfo) error {
+	conv.DefineKeyword(KeywordStringAsYAML, func(c *Converter, branch *BranchInfo) error {
 		c.AddModifier(branch, func(c *Converter) error {
 			o := new(interface{})
 			if err := json.Unmarshal(branch.Value(), o); err != nil {
@@ -1086,4 +1087,16 @@ func TestKeywordObjectToJSON(t *testing.T) {
 		assert.Equal(jsonparser.String, t)
 		assert.Equal(a, v)
 	}
+}
+
+func TestKeywordToString(t *testing.T) {
+	assert := assert.New(t)
+
+	kw := &Keyword{
+		ReturnType: String,
+		EvalPhase:  KeywordEvalPhaseA,
+		FuncName:   "FooBar",
+	}
+
+	assert.Equal("kubegen.String.FooBar", kw.String())
 }
