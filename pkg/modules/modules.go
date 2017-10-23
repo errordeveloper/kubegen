@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	// "github.com/buger/jsonparser"
+	"github.com/buger/jsonparser"
 
 	"github.com/errordeveloper/kubegen/pkg/converter"
 	"github.com/errordeveloper/kubegen/pkg/resources"
@@ -54,43 +54,9 @@ func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo, 
 }
 
 func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
-	/*
-
-		w := &interpolationWalker{
-			FindKey: "kubegen.fromPartial",
-			Callback: func(m map[string]interface{}) (map[string]interface{}, error) {
-				partialName := m["kubegen.fromPartial"]
-				partialNotFound := true
-				for _, p := range moduleContext.Partials {
-					if p.Name == partialName {
-						partialNotFound = false
-						if err := mergo.Merge(&m, p.Spec); err != nil {
-							return nil, fmt.Errorf(
-								"error while merging partial %q for %q (%q)",
-								partialName, instanceName, sourcePath)
-						}
-					}
-				}
-				if partialNotFound {
-					return nil, fmt.Errorf(
-						"patial %q not found in module %q (%q)",
-						partialName, instanceName, sourcePath)
-				}
-				return m, nil
-			},
-		}
-
-		if err := reflectwalk.Walk(tobj, w); err != nil {
-			return fmt.Errorf(
-				"error while walking %q (%q): %v",
-				instanceName, sourcePath, err)
-		}
-
-	*/
-
 	conv := converter.New()
 
-	conv.DefineKeyword("kubegen.String.Lookup",
+	conv.DefineKeyword(converter.KeywordStringLookup,
 		func(c *converter.Converter, branch *converter.BranchInfo) error {
 			if err := moduleContext.doLookup(c, branch, "String"); err != nil {
 				return err
@@ -98,7 +64,7 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 			return nil
 		})
 
-	conv.DefineKeyword("kubegen.Number.Lookup",
+	conv.DefineKeyword(converter.KeywordNumberLookup,
 		func(c *converter.Converter, branch *converter.BranchInfo) error {
 			if err := moduleContext.doLookup(c, branch, "Number"); err != nil {
 				return err
@@ -106,7 +72,7 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 			return nil
 		})
 
-	conv.DefineKeyword("kubegen.Object.Lookup",
+	conv.DefineKeyword(converter.KeywordObjectLookup,
 		func(c *converter.Converter, branch *converter.BranchInfo) error {
 			if err := moduleContext.doLookup(c, branch, "Object"); err != nil {
 				return err
@@ -114,12 +80,27 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 			return nil
 		})
 
+	conv.DefineKeyword(converter.KeywordStringJoin,
+		func(c *converter.Converter, branch *converter.BranchInfo) error {
+			if branch.Kind() != converter.Array {
+				return fmt.Errorf("must be an array")
+			}
+			c.AddModifier(branch, func(c *converter.Converter) error {
+				x := []string{}
+				jsonparser.ArrayEach(branch.Value(), func(value []byte, dataType converter.ValueType, offset int, err error) {
+					x = append(x, string(value))
+				})
+				if err := c.Replace(branch, []byte(fmt.Sprintf("%q", strings.Join(x, "")))); err != nil {
+					return fmt.Errorf("could not join string – %v", err)
+				}
+				return nil
+			})
+			return nil
+		})
+
 	if err := conv.LoadObj(data, sourcePath, instanceName); err != nil {
 		return err
 	}
-
-	// TODO define keywords for variable look here
-	// (we might move them later, but seems okay now)
 
 	if err := conv.Run(); err != nil {
 		return err

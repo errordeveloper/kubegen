@@ -7,11 +7,13 @@ Deployments:
   containers:
   - name: cart
     image:
-      kubegen.String.Lookup: cart_image
+      kubegen.String.Join:
+      - kubegen.String.Lookup: image_registry
+      - /cart:0.4.0
       #kubegen.String:
-      #  kubegen.Join(/):
-      #    - kubegen.String.Lookup: image_registry
-      #    - cart:0.4.0
+      #  .Join(/):
+      #  - .Lookup: image_registry
+      #  - cart:0.4.0
     ports:
     - name: http
       containerPort: 80

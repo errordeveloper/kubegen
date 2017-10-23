@@ -29,7 +29,10 @@ Deployments:
   replicas: 1
   containers:
   - name: queue-master
-    image: <image_registry>/queue-master:0.3.0
+    image:
+      kubegen.String.Join:
+      - kubegen.String.Lookup: image_registry
+      - /queue-master:0.3.0
     ports:
     - name: http
       containerPort: 80

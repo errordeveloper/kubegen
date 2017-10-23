@@ -7,11 +7,13 @@ Deployments:
   containers:
   - name: orders
     image:
-      kubegen.String.Lookup: orders_image
+      kubegen.String.Join:
+      - kubegen.String.Lookup: image_registry
+      - /orders:0.4.2
       #kubegen.String:
-      #  kubegen.Join(/):
-      #    - kubegen.String.Lookup: image_registry
-      #    - orders:0.4.2
+      #  .Join(/):
+      #  - .Lookup: image_registry
+      #  - orders:0.4.2
     ports:
     - name: http
       containerPort: 80
