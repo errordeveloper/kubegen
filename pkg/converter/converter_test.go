@@ -1,13 +1,11 @@
 package converter
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/buger/jsonparser"
-	"github.com/ghodss/yaml"
 
 	_ "github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
@@ -944,22 +942,7 @@ func TestKeywordJoinStrings(t *testing.T) {
 		t.Fatalf("failed to load – %v", err)
 	}
 
-	conv.DefineKeyword(KeywordStringJoin, func(c *Converter, branch *BranchInfo) error {
-		if branch.Kind() != Array {
-			return fmt.Errorf("must be an array")
-		}
-		c.AddModifier(branch, func(c *Converter) error {
-			x := []string{}
-			jsonparser.ArrayEach(branch.Value(), func(value []byte, dataType ValueType, offset int, err error) {
-				x = append(x, string(value))
-			})
-			if err := c.Replace(branch, []byte(fmt.Sprintf("%q", strings.Join(x, "")))); err != nil {
-				return fmt.Errorf("could not join string – %v", err)
-			}
-			return nil
-		})
-		return nil
-	})
+	conv.DefineKeyword(KeywordStringJoin, StringJoin)
 
 	if err := conv.Run(); err != nil {
 		t.Logf("c.data=%s", string(conv.data))
@@ -1019,43 +1002,8 @@ func TestKeywordObjectToJSON(t *testing.T) {
 		t.Fatalf("failed to load – %v", err)
 	}
 
-	conv.DefineKeyword(KeywordStringAsJSON, func(c *Converter, branch *BranchInfo) error {
-		c.AddModifier(branch, func(c *Converter) error {
-			x, err := json.Marshal(string(branch.Value()))
-			if err != nil {
-				return err
-			}
-			if err = c.Replace(branch, x); err != nil {
-				return err
-			}
-			return nil
-		})
-		return nil
-	})
-
-	conv.DefineKeyword(KeywordStringAsYAML, func(c *Converter, branch *BranchInfo) error {
-		c.AddModifier(branch, func(c *Converter) error {
-			o := new(interface{})
-			if err := json.Unmarshal(branch.Value(), o); err != nil {
-				return err
-			}
-			x, err := yaml.Marshal(o)
-			if err != nil {
-				return err
-			}
-			{
-				x, err := json.Marshal(string(x))
-				if err != nil {
-					return err
-				}
-				if err = c.Replace(branch, x); err != nil {
-					return err
-				}
-				return nil
-			}
-		})
-		return nil
-	})
+	conv.DefineKeyword(KeywordStringAsJSON, StringAsJSON)
+	conv.DefineKeyword(KeywordStringAsYAML, StringAsYAML)
 
 	if err := conv.Run(); err != nil {
 		t.Logf("c.data=%s", string(conv.data))
@@ -1100,3 +1048,11 @@ func TestKeywordToString(t *testing.T) {
 
 	assert.Equal("kubegen.String.FooBar", kw.String())
 }
+
+// TODO:
+// - kubegen.String.ReadFile
+// - kubegen.Object.LoadJSON
+// - kubegen.Object.LoadYAML
+// Also:
+// - kubegen.Array.ReadBytes
+// - kubegen.String.AsBASE64

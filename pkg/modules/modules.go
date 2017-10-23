@@ -9,8 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/buger/jsonparser"
-
 	"github.com/errordeveloper/kubegen/pkg/converter"
 	"github.com/errordeveloper/kubegen/pkg/resources"
 	"github.com/errordeveloper/kubegen/pkg/util"
@@ -80,23 +78,9 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 			return nil
 		})
 
-	conv.DefineKeyword(converter.KeywordStringJoin,
-		func(c *converter.Converter, branch *converter.BranchInfo) error {
-			if branch.Kind() != converter.Array {
-				return fmt.Errorf("must be an array")
-			}
-			c.AddModifier(branch, func(c *converter.Converter) error {
-				x := []string{}
-				jsonparser.ArrayEach(branch.Value(), func(value []byte, dataType converter.ValueType, offset int, err error) {
-					x = append(x, string(value))
-				})
-				if err := c.Replace(branch, []byte(fmt.Sprintf("%q", strings.Join(x, "")))); err != nil {
-					return fmt.Errorf("could not join string – %v", err)
-				}
-				return nil
-			})
-			return nil
-		})
+	conv.DefineKeyword(converter.KeywordStringJoin, converter.StringJoin)
+	conv.DefineKeyword(converter.KeywordStringAsJSON, converter.StringAsJSON)
+	conv.DefineKeyword(converter.KeywordStringAsYAML, converter.StringAsYAML)
 
 	if err := conv.LoadObj(data, sourcePath, instanceName); err != nil {
 		return err

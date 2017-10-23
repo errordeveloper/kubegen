@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/buger/jsonparser"
+	"github.com/ghodss/yaml"
 
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
@@ -330,6 +331,61 @@ var (
 		FuncName:   "AsYAML",
 	}
 )
+
+func StringJoin(c *Converter, branch *BranchInfo) error {
+	if branch.Kind() != Array {
+		return fmt.Errorf("must be an array")
+	}
+	c.AddModifier(branch, func(c *Converter) error {
+		x := []string{}
+		jsonparser.ArrayEach(branch.Value(), func(value []byte, dataType ValueType, offset int, err error) {
+			x = append(x, string(value))
+		})
+		if err := c.Replace(branch, []byte(fmt.Sprintf("%q", strings.Join(x, "")))); err != nil {
+			return fmt.Errorf("could not join string – %v", err)
+		}
+		return nil
+	})
+	return nil
+}
+
+func StringAsYAML(c *Converter, branch *BranchInfo) error {
+	c.AddModifier(branch, func(c *Converter) error {
+		o := new(interface{})
+		if err := json.Unmarshal(branch.Value(), o); err != nil {
+			return err
+		}
+		x, err := yaml.Marshal(o)
+		if err != nil {
+			return err
+		}
+		{
+			x, err := json.Marshal(string(x))
+			if err != nil {
+				return err
+			}
+			if err = c.Replace(branch, x); err != nil {
+				return err
+			}
+			return nil
+		}
+	})
+	return nil
+}
+
+func StringAsJSON(c *Converter, branch *BranchInfo) error {
+	c.AddModifier(branch, func(c *Converter) error {
+		x, err := json.Marshal(string(branch.Value()))
+		if err != nil {
+			return err
+		}
+		if err = c.Replace(branch, x); err != nil {
+			return err
+		}
+		return nil
+	})
+	return nil
+}
 
 func (c *Converter) DefineKeyword(kw *Keyword, fn keywordCallbackMaker) {
 	// TODO compile regex here and use compiledRegexp.String() to get the key back?
