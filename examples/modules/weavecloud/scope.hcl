@@ -21,7 +21,14 @@ daemonset "weave-scope-agent" {
       "--probe.docker.bridge=docker0",
       "--probe.docker=true",
       "--probe.kubernetes=true",
-      "--service-token=<service_token>"
+      {
+        kubegen.String.Join = [
+          "--service-token=",
+          {
+              kubegen.String.Lookup = "service_token"
+          },
+        ]
+      },
     ]
     security_context = {
       privileged = true
