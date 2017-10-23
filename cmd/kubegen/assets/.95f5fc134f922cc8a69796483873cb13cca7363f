@@ -97,7 +97,7 @@ items:
         - env:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
-          image: <image_registry>/catalogue:0.3.0
+          image: docker.io/weaveworksdemos/catalogue:0.3.0
           livenessProbe:
             httpGet:
               path: /health
@@ -137,7 +137,7 @@ items:
             value: socksdb
           - name: MYSQL_ROOT_PASSWORD
             value: fake_password
-          image: <image_registry>/catalogue-db:0.3.0
+          image: docker.io/weaveworksdemos/catalogue-db:0.3.0
           name: catalogue-db
           ports:
           - containerPort: 3306
@@ -200,7 +200,7 @@ items:
           name: front-end
       spec:
         containers:
-        - image: <image_registry>/front-end:0.3.1
+        - image: docker.io/weaveworksdemos/front-end:0.3.1
           livenessProbe:
             httpGet:
               path: /
@@ -336,7 +336,7 @@ items:
         - env:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
-          image: <image_registry>/payment:0.4.1
+          image: docker.io/weaveworksdemos/payment:0.4.1
           livenessProbe:
             httpGet:
               path: /health
@@ -420,7 +420,7 @@ items:
           name: queue-master
       spec:
         containers:
-        - image: <image_registry>/queue-master:0.3.0
+        - image: docker.io/weaveworksdemos/queue-master:0.3.0
           livenessProbe:
             httpGet:
               path: /health
@@ -497,7 +497,7 @@ items:
           name: shipping
       spec:
         containers:
-        - image: <image_registry>/shipping:0.4.0
+        - image: docker.io/weaveworksdemos/shipping:0.4.0
           livenessProbe:
             httpGet:
               path: /health
@@ -569,7 +569,7 @@ items:
             value: user-db:27017
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
-          image: <image_registry>/user:0.4.0
+          image: docker.io/weaveworksdemos/user:0.4.0
           livenessProbe:
             httpGet:
               path: /health
@@ -604,7 +604,7 @@ items:
           name: user-db
       spec:
         containers:
-        - image: <image_registry>/user-db:0.3.0
+        - image: docker.io/weaveworksdemos/user-db:0.3.0
           name: user-db
           ports:
           - containerPort: 27017
@@ -867,7 +867,7 @@ items:
         - env:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
-          image: <image_registry>/catalogue:0.3.0
+          image: docker.io/weaveworksdemos/catalogue:0.3.0
           livenessProbe:
             httpGet:
               path: /health
@@ -907,7 +907,7 @@ items:
             value: socksdb
           - name: MYSQL_ROOT_PASSWORD
             value: fake_password
-          image: <image_registry>/catalogue-db:0.3.0
+          image: docker.io/weaveworksdemos/catalogue-db:0.3.0
           name: catalogue-db
           ports:
           - containerPort: 3306
@@ -970,7 +970,7 @@ items:
           name: front-end
       spec:
         containers:
-        - image: <image_registry>/front-end:0.3.1
+        - image: docker.io/weaveworksdemos/front-end:0.3.1
           livenessProbe:
             httpGet:
               path: /
@@ -1106,7 +1106,7 @@ items:
         - env:
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
-          image: <image_registry>/payment:0.4.1
+          image: docker.io/weaveworksdemos/payment:0.4.1
           livenessProbe:
             httpGet:
               path: /health
@@ -1190,7 +1190,7 @@ items:
           name: queue-master
       spec:
         containers:
-        - image: <image_registry>/queue-master:0.3.0
+        - image: docker.io/weaveworksdemos/queue-master:0.3.0
           livenessProbe:
             httpGet:
               path: /health
@@ -1267,7 +1267,7 @@ items:
           name: shipping
       spec:
         containers:
-        - image: <image_registry>/shipping:0.4.0
+        - image: docker.io/weaveworksdemos/shipping:0.4.0
           livenessProbe:
             httpGet:
               path: /health
@@ -1339,7 +1339,7 @@ items:
             value: user-db:27017
           - name: ZIPKIN
             value: http://zipkin:9411/api/v1/spans
-          image: <image_registry>/user:0.4.0
+          image: docker.io/weaveworksdemos/user:0.4.0
           livenessProbe:
             httpGet:
               path: /health
@@ -1374,7 +1374,7 @@ items:
           name: user-db
       spec:
         containers:
-        - image: <image_registry>/user-db:0.3.0
+        - image: docker.io/weaveworksdemos/user-db:0.3.0
           name: user-db
           ports:
           - containerPort: 27017

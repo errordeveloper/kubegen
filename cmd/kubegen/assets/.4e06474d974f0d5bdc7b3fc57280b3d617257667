@@ -26,7 +26,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/cart:0.4.0",
+                "image": "quay.io/sockshop/cart:0.4.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -126,7 +126,7 @@
                     "value": "http://zipkin:9411/api/v1/spans"
                   }
                 ],
-                "image": "\u003cimage_registry\u003e/catalogue:0.3.0",
+                "image": "quay.io/sockshop/catalogue:0.3.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -191,7 +191,7 @@
                     "value": "fake_password"
                   }
                 ],
-                "image": "\u003cimage_registry\u003e/catalogue-db:0.3.0",
+                "image": "quay.io/sockshop/catalogue-db:0.3.0",
                 "name": "catalogue-db",
                 "ports": [
                   {
@@ -280,7 +280,7 @@
           "spec": {
             "containers": [
               {
-                "image": "\u003cimage_registry\u003e/front-end:0.3.1",
+                "image": "quay.io/sockshop/front-end:0.3.1",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/",
@@ -370,7 +370,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/orders:0.4.2",
+                "image": "quay.io/sockshop/orders:0.4.2",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -470,7 +470,7 @@
                     "value": "http://zipkin:9411/api/v1/spans"
                   }
                 ],
-                "image": "\u003cimage_registry\u003e/payment:0.4.1",
+                "image": "quay.io/sockshop/payment:0.4.1",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -592,7 +592,7 @@
           "spec": {
             "containers": [
               {
-                "image": "\u003cimage_registry\u003e/queue-master:0.3.0",
+                "image": "quay.io/sockshop/queue-master:0.3.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -700,7 +700,7 @@
           "spec": {
             "containers": [
               {
-                "image": "\u003cimage_registry\u003e/shipping:0.4.0",
+                "image": "quay.io/sockshop/shipping:0.4.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -804,7 +804,7 @@
                     "value": "http://zipkin:9411/api/v1/spans"
                   }
                 ],
-                "image": "\u003cimage_registry\u003e/user:0.4.0",
+                "image": "quay.io/sockshop/user:0.4.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -859,7 +859,7 @@
           "spec": {
             "containers": [
               {
-                "image": "\u003cimage_registry\u003e/user-db:0.3.0",
+                "image": "quay.io/sockshop/user-db:0.3.0",
                 "name": "user-db",
                 "ports": [
                   {
