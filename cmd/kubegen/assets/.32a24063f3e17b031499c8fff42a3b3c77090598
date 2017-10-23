@@ -289,7 +289,7 @@ items:
       spec:
         containers:
         - args:
-          - --token=<service_token>
+          - --token=foobarbaz
           image: quay.io/weaveworks/fluxd:0.1.0
           name: agent
 - apiVersion: v1
@@ -351,7 +351,7 @@ items:
           - --probe.docker.bridge=docker0
           - --probe.docker=true
           - --probe.kubernetes=true
-          - --service-token=<service_token>
+          - --service-token=foobarbaz
           image: weaveworks/scope:latest
           name: agent
           volumeMounts:
@@ -661,7 +661,7 @@ items:
       spec:
         containers:
         - args:
-          - --token=<service_token>
+          - --token=bazbarfoo
           image: quay.io/weaveworks/fluxd:0.1.0
           name: agent
 - apiVersion: v1
@@ -723,7 +723,7 @@ items:
           - --probe.docker.bridge=docker0
           - --probe.docker=true
           - --probe.kubernetes=true
-          - --service-token=<service_token>
+          - --service-token=bazbarfoo
           image: weaveworks/scope:latest
           name: agent
           volumeMounts:
