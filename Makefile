@@ -1,6 +1,7 @@
 test: build
 	@$(MAKE) -C ./pkg/apps/assets test
 	@go test -v ./pkg/apps
+	@go test -v ./pkg/converter
 	@go test -v ./cmd/kubegen-experiment-appgen
 	@$(MAKE) test-cmds
 
