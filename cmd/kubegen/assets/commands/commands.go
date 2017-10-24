@@ -33,6 +33,6 @@ func init() {
 	for _, command := range commands {
 		hash := sha1.New()
 		hash.Write([]byte(strings.Join(command, " ")))
-		Commands[fmt.Sprintf(".%x", hash.Sum(nil))] = command
+		Commands[fmt.Sprintf(".generated/%x", hash.Sum(nil))] = command
 	}
 }
