@@ -1,4 +1,4 @@
-kind = "kubegen.k8s.io/Module.v1alpha1"
+kind = "kubegen.k8s.io/Module.v1alpha2"
 
 namespace = "kube-system"
 
@@ -6,7 +6,7 @@ daemonset "weave-scope-agent" {
   labels {
     app = "weave-scope"
     name = "weave-scope-agent"
-    weave-cloud-component = "scop"
+    weave-cloud-component = "scope"
     weave-scope-component = "agent"
   }
 
@@ -21,7 +21,14 @@ daemonset "weave-scope-agent" {
       "--probe.docker.bridge=docker0",
       "--probe.docker=true",
       "--probe.kubernetes=true",
-      "--service-token=<service_token>"
+      {
+        kubegen.String.Join = [
+          "--service-token=",
+          {
+              kubegen.String.Lookup = "service_token"
+          },
+        ]
+      },
     ]
     security_context = {
       privileged = true

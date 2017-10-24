@@ -1,4 +1,4 @@
-Kind: "kubegen.k8s.io/Module.v1alpha1"
+Kind: "kubegen.k8s.io/Module.v1alpha2"
 
 Deployments:
 
@@ -6,7 +6,14 @@ Deployments:
   replicas: 1
   containers:
   - name: cart
-    image: <image_registry>/cart:0.4.0
+    image:
+      kubegen.String.Join:
+      - kubegen.String.Lookup: image_registry
+      - /cart:0.4.0
+      #kubegen.String:
+      #  .Join(/):
+      #  - .Lookup: image_registry
+      #  - cart:0.4.0
     ports:
     - name: http
       containerPort: 80
@@ -37,30 +44,9 @@ Deployments:
     emptyDir:
       medium: Memory
 
-- name: cart-db
-  replicas: 1
-  containers:
-  - name: cart-db
-    image: mongo
-    ports:
-    - name: mongo
-      containerPort: 27017
-    securityContext:
-      capabilities:
-        drop:
-          - all
-        add:
-          - CHOWN
-          - SETGID
-          - SETUID
-      readOnlyRootFilesystem: true
-    volumeMounts:
-    - mountPath: /tmp
-      name: tmp-volume
-  volumes:
-  - name: tmp-volume
-    emptyDir:
-      medium: Memory
+#- name: cart-db
+#  kubegen.fromPartial: mongo
+#  replicas: 2
 
 Services:
 
@@ -70,6 +56,6 @@ Services:
   ports:
   - name: http
 
-- name: cart-db
-  ports:
-  - name: mongo
+#- name: cart-db
+#  ports:
+#  - name: mongo

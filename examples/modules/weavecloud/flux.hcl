@@ -1,4 +1,4 @@
-kind = "kubegen.k8s.io/Module.v1alpha1"
+kind = "kubegen.k8s.io/Module.v1alpha2"
 
 namespace = "kube-system"
 
@@ -15,9 +15,14 @@ deployment "weave-flux-agent" {
   container "agent" {
     image = "quay.io/weaveworks/fluxd:0.1.0"
     image_pull_policy = "IfNotPresent"
-    args = [
-          "--token=<service_token>"
-    ]
+    args = [{
+      kubegen.String.Join = [
+        "--token=",
+        {
+          kubegen.String.Lookup = "service_token"
+        },
+      ]
+    }]
   }
 }
 

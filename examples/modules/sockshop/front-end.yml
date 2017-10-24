@@ -1,4 +1,4 @@
-Kind: "kubegen.k8s.io/Module.v1alpha1"
+Kind: "kubegen.k8s.io/Module.v1alpha2"
 
 Deployments:
 
@@ -6,7 +6,10 @@ Deployments:
   replicas: 1
   containers:
   - name: front-end
-    image: <image_registry>/front-end:0.3.1
+    image:
+      kubegen.String.Join:
+      - kubegen.String.Lookup: image_registry
+      - /front-end:0.3.1
     resources:
       requests:
         cpu: 100m

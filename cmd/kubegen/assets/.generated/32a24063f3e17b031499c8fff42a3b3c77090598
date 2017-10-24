@@ -4,7 +4,7 @@
 # Generated from module
 #	Name: "weavecloud"
 #	SourceDir: "modules/weavecloud"
-#	manifestPath: ".examples/modules/weavecloud/cortext-configmap.yml"
+#	manifestPath: ".examples/modules/weavecloud/cortex-configmap.yml"
 #
 
 apiVersion: v1
@@ -141,31 +141,11 @@ kind: List
 # Generated from module
 #	Name: "weavecloud"
 #	SourceDir: "modules/weavecloud"
-#	manifestPath: ".examples/modules/weavecloud/cortext.hcl"
+#	manifestPath: ".examples/modules/weavecloud/cortex.hcl"
 #
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: weave-cortex
-      name: weave-cortex-agent
-      weave-cloud-component: cortex
-      weave-cortex-component: agent
-    name: weave-cortex-agent
-    namespace: kube-system
-  spec:
-    ports:
-    - name: agent
-      port: 80
-      targetPort: agent
-    selector:
-      app: weave-cortex
-      name: weave-cortex-agent
-      weave-cloud-component: cortex
-      weave-cortex-component: agent
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -244,18 +224,31 @@ items:
           - containerPort: 9100
             name: agent
             protocol: TCP
-          securityContext:
-            capabilities: {}
-            privileged: true
-            readOnlyRootFilesystem: false
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
   status:
     currentNumberScheduled: 0
     desiredNumberScheduled: 0
     numberMisscheduled: 0
     numberReady: 0
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
+    name: weave-cortex-agent
+    namespace: kube-system
+  spec:
+    ports:
+    - name: agent
+      port: 80
+      targetPort: agent
+    selector:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
 kind: List
 
 ---
@@ -268,22 +261,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: weave-flux
-      name: weave-flux-agent
-      weave-cloud-component: flux
-      weave-flux-component: agent
-    name: weave-flux-agent
-    namespace: kube-system
-  spec:
-    selector:
-      app: weave-flux
-      name: weave-flux-agent
-      weave-cloud-component: flux
-      weave-flux-component: agent
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -315,6 +292,22 @@ items:
           - --token=foobarbaz
           image: quay.io/weaveworks/fluxd:0.1.0
           name: agent
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
+    name: weave-flux-agent
+    namespace: kube-system
+  spec:
+    selector:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
 kind: List
 
 ---
@@ -333,7 +326,7 @@ items:
     labels:
       app: weave-scope
       name: weave-scope-agent
-      weave-cloud-component: scop
+      weave-cloud-component: scope
       weave-scope-component: agent
     name: weave-scope-agent
     namespace: kube-system
@@ -342,14 +335,14 @@ items:
       matchLabels:
         app: weave-scope
         name: weave-scope-agent
-        weave-cloud-component: scop
+        weave-cloud-component: scope
         weave-scope-component: agent
     template:
       metadata:
         labels:
           app: weave-scope
           name: weave-scope-agent
-          weave-cloud-component: scop
+          weave-cloud-component: scope
           weave-scope-component: agent
       spec:
         containers:
@@ -361,13 +354,6 @@ items:
           - --service-token=foobarbaz
           image: weaveworks/scope:latest
           name: agent
-          securityContext:
-            capabilities: {}
-            privileged: true
-            readOnlyRootFilesystem: false
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
           volumeMounts:
           - mountPath: /var/run/scope/plugins
             name: scope-plugins
@@ -390,7 +376,7 @@ kind: List
 # Generated from module
 #	Name: "weavecloud"
 #	SourceDir: "modules/weavecloud"
-#	manifestPath: ".examples/modules/weavecloud/cortext-configmap.yml"
+#	manifestPath: ".examples/modules/weavecloud/cortex-configmap.yml"
 #
 
 apiVersion: v1
@@ -527,31 +513,11 @@ kind: List
 # Generated from module
 #	Name: "weavecloud"
 #	SourceDir: "modules/weavecloud"
-#	manifestPath: ".examples/modules/weavecloud/cortext.hcl"
+#	manifestPath: ".examples/modules/weavecloud/cortex.hcl"
 #
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: weave-cortex
-      name: weave-cortex-agent
-      weave-cloud-component: cortex
-      weave-cortex-component: agent
-    name: weave-cortex-agent
-    namespace: kube-system
-  spec:
-    ports:
-    - name: agent
-      port: 80
-      targetPort: agent
-    selector:
-      app: weave-cortex
-      name: weave-cortex-agent
-      weave-cloud-component: cortex
-      weave-cortex-component: agent
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -630,18 +596,31 @@ items:
           - containerPort: 9100
             name: agent
             protocol: TCP
-          securityContext:
-            capabilities: {}
-            privileged: true
-            readOnlyRootFilesystem: false
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
   status:
     currentNumberScheduled: 0
     desiredNumberScheduled: 0
     numberMisscheduled: 0
     numberReady: 0
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
+    name: weave-cortex-agent
+    namespace: kube-system
+  spec:
+    ports:
+    - name: agent
+      port: 80
+      targetPort: agent
+    selector:
+      app: weave-cortex
+      name: weave-cortex-agent
+      weave-cloud-component: cortex
+      weave-cortex-component: agent
 kind: List
 
 ---
@@ -654,22 +633,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: weave-flux
-      name: weave-flux-agent
-      weave-cloud-component: flux
-      weave-flux-component: agent
-    name: weave-flux-agent
-    namespace: kube-system
-  spec:
-    selector:
-      app: weave-flux
-      name: weave-flux-agent
-      weave-cloud-component: flux
-      weave-flux-component: agent
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -701,6 +664,22 @@ items:
           - --token=bazbarfoo
           image: quay.io/weaveworks/fluxd:0.1.0
           name: agent
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
+    name: weave-flux-agent
+    namespace: kube-system
+  spec:
+    selector:
+      app: weave-flux
+      name: weave-flux-agent
+      weave-cloud-component: flux
+      weave-flux-component: agent
 kind: List
 
 ---
@@ -719,7 +698,7 @@ items:
     labels:
       app: weave-scope
       name: weave-scope-agent
-      weave-cloud-component: scop
+      weave-cloud-component: scope
       weave-scope-component: agent
     name: weave-scope-agent
     namespace: kube-system
@@ -728,14 +707,14 @@ items:
       matchLabels:
         app: weave-scope
         name: weave-scope-agent
-        weave-cloud-component: scop
+        weave-cloud-component: scope
         weave-scope-component: agent
     template:
       metadata:
         labels:
           app: weave-scope
           name: weave-scope-agent
-          weave-cloud-component: scop
+          weave-cloud-component: scope
           weave-scope-component: agent
       spec:
         containers:
@@ -747,13 +726,6 @@ items:
           - --service-token=bazbarfoo
           image: weaveworks/scope:latest
           name: agent
-          securityContext:
-            capabilities: {}
-            privileged: true
-            readOnlyRootFilesystem: false
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
           volumeMounts:
           - mountPath: /var/run/scope/plugins
             name: scope-plugins
@@ -782,36 +754,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      prometheus.io/path: /prometheus
-    labels:
-      name: cart
-    name: cart
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: cart
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: cart-db
-    name: cart-db
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: mongo
-      port: 27017
-      targetPort: mongo
-    selector:
-      name: cart-db
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -847,61 +789,26 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-- apiVersion: extensions/v1beta1
-  kind: Deployment
+- apiVersion: v1
+  kind: Service
   metadata:
+    annotations:
+      prometheus.io/path: /prometheus
     labels:
-      name: cart-db
-    name: cart-db
+      name: cart
+    name: cart
     namespace: sock-shop-test
   spec:
-    replicas: 1
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
     selector:
-      matchLabels:
-        name: cart-db
-    template:
-      metadata:
-        labels:
-          name: cart-db
-      spec:
-        containers:
-        - image: mongo
-          name: cart-db
-          ports:
-          - containerPort: 27017
-            name: mongo
-          securityContext:
-            capabilities:
-              add:
-              - CHOWN
-              - SETGID
-              - SETUID
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
-        volumes:
-        - emptyDir:
-            medium: Memory
-          name: tmp-volume
+      name: cart
 kind: List
 
 ---
@@ -914,34 +821,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: catalogue
-    name: catalogue
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: catalogue
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: catalogue-db
-    name: catalogue-db
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: mysql
-      port: 3306
-      targetPort: mysql
-    selector:
-      name: catalogue-db
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -980,17 +859,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1019,6 +887,34 @@ items:
           ports:
           - containerPort: 3306
             name: mysql
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: catalogue
+    name: catalogue
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: catalogue
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: catalogue-db
+    name: catalogue-db
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+    selector:
+      name: catalogue-db
 kind: List
 
 ---
@@ -1031,21 +927,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: front-end
-    name: front-end
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - nodePort: 30001
-      port: 80
-      targetPort: http
-    selector:
-      name: front-end
-    type: NodePort
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1085,15 +966,21 @@ items:
             requests:
               cpu: 100m
               memory: 100Mi
-          securityContext:
-            capabilities:
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: front-end
+    name: front-end
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - nodePort: 30001
+      port: 80
+      targetPort: http
+    selector:
+      name: front-end
+    type: NodePort
 kind: List
 
 ---
@@ -1106,36 +993,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      prometheus.io/path: /prometheus
-    labels:
-      name: orders
-    name: orders
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: orders
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: orders-db
-    name: orders-db
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: mongo
-      port: 27017
-      targetPort: mongo
-    selector:
-      name: orders-db
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1171,61 +1028,26 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-- apiVersion: extensions/v1beta1
-  kind: Deployment
+- apiVersion: v1
+  kind: Service
   metadata:
+    annotations:
+      prometheus.io/path: /prometheus
     labels:
-      name: orders-db
-    name: orders-db
+      name: orders
+    name: orders
     namespace: sock-shop-test
   spec:
-    replicas: 1
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
     selector:
-      matchLabels:
-        name: orders-db
-    template:
-      metadata:
-        labels:
-          name: orders-db
-      spec:
-        containers:
-        - image: mongo
-          name: orders-db
-          ports:
-          - containerPort: 27017
-            name: mongo
-          securityContext:
-            capabilities:
-              add:
-              - CHOWN
-              - SETGID
-              - SETUID
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
-        volumes:
-        - emptyDir:
-            medium: Memory
-          name: tmp-volume
+      name: orders
 kind: List
 
 ---
@@ -1238,20 +1060,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: payment
-    name: payment
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: payment
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1290,17 +1098,20 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: payment
+    name: payment
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: payment
 kind: List
 
 ---
@@ -1313,36 +1124,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: rabbitmq
-    name: rabbitmq
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: rabbitmq
-      port: 5672
-      targetPort: rabbitmq
-    selector:
-      name: rabbitmq
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      prometheus.io/path: /prometheus
-    labels:
-      name: queue-master
-    name: queue-master
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: queue-master
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1366,20 +1147,6 @@ items:
           ports:
           - containerPort: 5672
             name: rabbitmq
-          securityContext:
-            capabilities:
-              add:
-              - CHOWN
-              - SETGID
-              - SETUID
-              - DAC_OVERRIDE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1415,6 +1182,36 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: rabbitmq
+    name: rabbitmq
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: rabbitmq
+      port: 5672
+      targetPort: rabbitmq
+    selector:
+      name: rabbitmq
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    labels:
+      name: queue-master
+    name: queue-master
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: queue-master
 kind: List
 
 ---
@@ -1427,22 +1224,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      prometheus.io/path: /prometheus
-    labels:
-      name: shipping
-    name: shipping
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: shipping
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1478,21 +1259,26 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    labels:
+      name: shipping
+    name: shipping
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: shipping
 kind: List
 
 ---
@@ -1505,34 +1291,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: user
-    name: user
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: user
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: user-db
-    name: user-db
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: mongo
-      port: 27017
-      targetPort: mongo
-    selector:
-      name: user-db
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1573,17 +1331,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1607,23 +1354,38 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
-          securityContext:
-            capabilities:
-              add:
-              - CHOWN
-              - SETGID
-              - SETUID
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: user
+    name: user
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: user
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: user-db
+    name: user-db
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: user-db
 kind: List
 
 ---
@@ -1636,36 +1398,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: zipkin
-    name: zipkin
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: zipkin
-      nodePort: 30002
-      port: 9411
-      targetPort: zipkin
-    selector:
-      name: zipkin
-    type: NodePort
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: zipkin-mysql
-    name: zipkin-mysql
-    namespace: sock-shop-test
-  spec:
-    ports:
-    - name: mysql
-      port: 3306
-      targetPort: mysql
-    selector:
-      name: zipkin-mysql
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1750,6 +1482,36 @@ items:
             value: mysql
           image: openzipkin/zipkin-dependencies:1.4.0
           name: zipkin-cron
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: zipkin
+    name: zipkin
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: zipkin
+      nodePort: 30002
+      port: 9411
+      targetPort: zipkin
+    selector:
+      name: zipkin
+    type: NodePort
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: zipkin-mysql
+    name: zipkin-mysql
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+    selector:
+      name: zipkin-mysql
 kind: List
 
 ---
@@ -1762,36 +1524,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      prometheus.io/path: /prometheus
-    labels:
-      name: cart
-    name: cart
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: cart
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: cart-db
-    name: cart-db
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: mongo
-      port: 27017
-      targetPort: mongo
-    selector:
-      name: cart-db
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1827,61 +1559,26 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-- apiVersion: extensions/v1beta1
-  kind: Deployment
+- apiVersion: v1
+  kind: Service
   metadata:
+    annotations:
+      prometheus.io/path: /prometheus
     labels:
-      name: cart-db
-    name: cart-db
+      name: cart
+    name: cart
     namespace: sock-shop-prod
   spec:
-    replicas: 1
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
     selector:
-      matchLabels:
-        name: cart-db
-    template:
-      metadata:
-        labels:
-          name: cart-db
-      spec:
-        containers:
-        - image: mongo
-          name: cart-db
-          ports:
-          - containerPort: 27017
-            name: mongo
-          securityContext:
-            capabilities:
-              add:
-              - CHOWN
-              - SETGID
-              - SETUID
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
-        volumes:
-        - emptyDir:
-            medium: Memory
-          name: tmp-volume
+      name: cart
 kind: List
 
 ---
@@ -1894,34 +1591,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: catalogue
-    name: catalogue
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: catalogue
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: catalogue-db
-    name: catalogue-db
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: mysql
-      port: 3306
-      targetPort: mysql
-    selector:
-      name: catalogue-db
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1960,17 +1629,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -1999,6 +1657,34 @@ items:
           ports:
           - containerPort: 3306
             name: mysql
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: catalogue
+    name: catalogue
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: catalogue
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: catalogue-db
+    name: catalogue-db
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+    selector:
+      name: catalogue-db
 kind: List
 
 ---
@@ -2011,21 +1697,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: front-end
-    name: front-end
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - nodePort: 30001
-      port: 80
-      targetPort: http
-    selector:
-      name: front-end
-    type: NodePort
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2065,15 +1736,21 @@ items:
             requests:
               cpu: 100m
               memory: 100Mi
-          securityContext:
-            capabilities:
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: front-end
+    name: front-end
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - nodePort: 30001
+      port: 80
+      targetPort: http
+    selector:
+      name: front-end
+    type: NodePort
 kind: List
 
 ---
@@ -2086,36 +1763,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      prometheus.io/path: /prometheus
-    labels:
-      name: orders
-    name: orders
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: orders
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: orders-db
-    name: orders-db
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: mongo
-      port: 27017
-      targetPort: mongo
-    selector:
-      name: orders-db
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2151,61 +1798,26 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-- apiVersion: extensions/v1beta1
-  kind: Deployment
+- apiVersion: v1
+  kind: Service
   metadata:
+    annotations:
+      prometheus.io/path: /prometheus
     labels:
-      name: orders-db
-    name: orders-db
+      name: orders
+    name: orders
     namespace: sock-shop-prod
   spec:
-    replicas: 1
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
     selector:
-      matchLabels:
-        name: orders-db
-    template:
-      metadata:
-        labels:
-          name: orders-db
-      spec:
-        containers:
-        - image: mongo
-          name: orders-db
-          ports:
-          - containerPort: 27017
-            name: mongo
-          securityContext:
-            capabilities:
-              add:
-              - CHOWN
-              - SETGID
-              - SETUID
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
-        volumes:
-        - emptyDir:
-            medium: Memory
-          name: tmp-volume
+      name: orders
 kind: List
 
 ---
@@ -2218,20 +1830,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: payment
-    name: payment
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: payment
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2270,17 +1868,20 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: payment
+    name: payment
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: payment
 kind: List
 
 ---
@@ -2293,36 +1894,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: rabbitmq
-    name: rabbitmq
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: rabbitmq
-      port: 5672
-      targetPort: rabbitmq
-    selector:
-      name: rabbitmq
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      prometheus.io/path: /prometheus
-    labels:
-      name: queue-master
-    name: queue-master
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: queue-master
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2346,20 +1917,6 @@ items:
           ports:
           - containerPort: 5672
             name: rabbitmq
-          securityContext:
-            capabilities:
-              add:
-              - CHOWN
-              - SETGID
-              - SETUID
-              - DAC_OVERRIDE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2395,6 +1952,36 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: rabbitmq
+    name: rabbitmq
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: rabbitmq
+      port: 5672
+      targetPort: rabbitmq
+    selector:
+      name: rabbitmq
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    labels:
+      name: queue-master
+    name: queue-master
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: queue-master
 kind: List
 
 ---
@@ -2407,22 +1994,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      prometheus.io/path: /prometheus
-    labels:
-      name: shipping
-    name: shipping
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: shipping
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2458,21 +2029,26 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/path: /prometheus
+    labels:
+      name: shipping
+    name: shipping
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: shipping
 kind: List
 
 ---
@@ -2485,34 +2061,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: user
-    name: user
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: http
-      port: 80
-      targetPort: http
-    selector:
-      name: user
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: user-db
-    name: user-db
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: mongo
-      port: 27017
-      targetPort: mongo
-    selector:
-      name: user-db
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2553,17 +2101,6 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-          securityContext:
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 10001
-            seLinuxOptions: {}
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2587,23 +2124,38 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
-          securityContext:
-            capabilities:
-              add:
-              - CHOWN
-              - SETGID
-              - SETUID
-              drop:
-              - all
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: false
-            runAsUser: 0
-            seLinuxOptions: {}
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: user
+    name: user
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: http
+    selector:
+      name: user
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: user-db
+    name: user-db
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: user-db
 kind: List
 
 ---
@@ -2616,36 +2168,6 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: zipkin
-    name: zipkin
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: zipkin
-      nodePort: 30002
-      port: 9411
-      targetPort: zipkin
-    selector:
-      name: zipkin
-    type: NodePort
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      name: zipkin-mysql
-    name: zipkin-mysql
-    namespace: sock-shop-prod
-  spec:
-    ports:
-    - name: mysql
-      port: 3306
-      targetPort: mysql
-    selector:
-      name: zipkin-mysql
 - apiVersion: extensions/v1beta1
   kind: Deployment
   metadata:
@@ -2730,5 +2252,35 @@ items:
             value: mysql
           image: openzipkin/zipkin-dependencies:1.4.0
           name: zipkin-cron
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: zipkin
+    name: zipkin
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: zipkin
+      nodePort: 30002
+      port: 9411
+      targetPort: zipkin
+    selector:
+      name: zipkin
+    type: NodePort
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: zipkin-mysql
+    name: zipkin-mysql
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+    selector:
+      name: zipkin-mysql
 kind: List
 

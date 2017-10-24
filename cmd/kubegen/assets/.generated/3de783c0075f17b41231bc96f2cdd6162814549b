@@ -24,35 +24,6 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "app": "weave-cortex",
-          "name": "weave-cortex-agent",
-          "weave-cloud-component": "cortex",
-          "weave-cortex-component": "agent"
-        },
-        "name": "weave-cortex-agent",
-        "namespace": "kube-system"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "agent",
-            "port": 80,
-            "targetPort": "agent"
-          }
-        ],
-        "selector": {
-          "app": "weave-cortex",
-          "name": "weave-cortex-agent",
-          "weave-cloud-component": "cortex",
-          "weave-cortex-component": "agent"
-        }
-      }
-    },
-    {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
       "metadata": {
@@ -166,15 +137,7 @@
                     "name": "agent",
                     "protocol": "TCP"
                   }
-                ],
-                "securityContext": {
-                  "capabilities": {},
-                  "privileged": true,
-                  "readOnlyRootFilesystem": false,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
+                ]
               }
             ]
           }
@@ -186,6 +149,35 @@
         "numberMisscheduled": 0,
         "numberReady": 0
       }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "app": "weave-cortex",
+          "name": "weave-cortex-agent",
+          "weave-cloud-component": "cortex",
+          "weave-cortex-component": "agent"
+        },
+        "name": "weave-cortex-agent",
+        "namespace": "kube-system"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "agent",
+            "port": 80,
+            "targetPort": "agent"
+          }
+        ],
+        "selector": {
+          "app": "weave-cortex",
+          "name": "weave-cortex-agent",
+          "weave-cloud-component": "cortex",
+          "weave-cortex-component": "agent"
+        }
+      }
     }
   ],
   "kind": "List"
@@ -193,28 +185,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "app": "weave-flux",
-          "name": "weave-flux-agent",
-          "weave-cloud-component": "flux",
-          "weave-flux-component": "agent"
-        },
-        "name": "weave-flux-agent",
-        "namespace": "kube-system"
-      },
-      "spec": {
-        "selector": {
-          "app": "weave-flux",
-          "name": "weave-flux-agent",
-          "weave-cloud-component": "flux",
-          "weave-flux-component": "agent"
-        }
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -260,6 +230,28 @@
           }
         }
       }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "app": "weave-flux",
+          "name": "weave-flux-agent",
+          "weave-cloud-component": "flux",
+          "weave-flux-component": "agent"
+        },
+        "name": "weave-flux-agent",
+        "namespace": "kube-system"
+      },
+      "spec": {
+        "selector": {
+          "app": "weave-flux",
+          "name": "weave-flux-agent",
+          "weave-cloud-component": "flux",
+          "weave-flux-component": "agent"
+        }
+      }
     }
   ],
   "kind": "List"
@@ -274,7 +266,7 @@
         "labels": {
           "app": "weave-scope",
           "name": "weave-scope-agent",
-          "weave-cloud-component": "scop",
+          "weave-cloud-component": "scope",
           "weave-scope-component": "agent"
         },
         "name": "weave-scope-agent",
@@ -285,7 +277,7 @@
           "matchLabels": {
             "app": "weave-scope",
             "name": "weave-scope-agent",
-            "weave-cloud-component": "scop",
+            "weave-cloud-component": "scope",
             "weave-scope-component": "agent"
           }
         },
@@ -294,7 +286,7 @@
             "labels": {
               "app": "weave-scope",
               "name": "weave-scope-agent",
-              "weave-cloud-component": "scop",
+              "weave-cloud-component": "scope",
               "weave-scope-component": "agent"
             }
           },
@@ -310,14 +302,6 @@
                 ],
                 "image": "weaveworks/scope:latest",
                 "name": "agent",
-                "securityContext": {
-                  "capabilities": {},
-                  "privileged": true,
-                  "readOnlyRootFilesystem": false,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                },
                 "volumeMounts": [
                   {
                     "mountPath": "/var/run/scope/plugins",
@@ -379,35 +363,6 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "app": "weave-cortex",
-          "name": "weave-cortex-agent",
-          "weave-cloud-component": "cortex",
-          "weave-cortex-component": "agent"
-        },
-        "name": "weave-cortex-agent",
-        "namespace": "kube-system"
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "agent",
-            "port": 80,
-            "targetPort": "agent"
-          }
-        ],
-        "selector": {
-          "app": "weave-cortex",
-          "name": "weave-cortex-agent",
-          "weave-cloud-component": "cortex",
-          "weave-cortex-component": "agent"
-        }
-      }
-    },
-    {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
       "metadata": {
@@ -521,15 +476,7 @@
                     "name": "agent",
                     "protocol": "TCP"
                   }
-                ],
-                "securityContext": {
-                  "capabilities": {},
-                  "privileged": true,
-                  "readOnlyRootFilesystem": false,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                }
+                ]
               }
             ]
           }
@@ -541,6 +488,35 @@
         "numberMisscheduled": 0,
         "numberReady": 0
       }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "app": "weave-cortex",
+          "name": "weave-cortex-agent",
+          "weave-cloud-component": "cortex",
+          "weave-cortex-component": "agent"
+        },
+        "name": "weave-cortex-agent",
+        "namespace": "kube-system"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "agent",
+            "port": 80,
+            "targetPort": "agent"
+          }
+        ],
+        "selector": {
+          "app": "weave-cortex",
+          "name": "weave-cortex-agent",
+          "weave-cloud-component": "cortex",
+          "weave-cortex-component": "agent"
+        }
+      }
     }
   ],
   "kind": "List"
@@ -548,28 +524,6 @@
 {
   "apiVersion": "v1",
   "items": [
-    {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "labels": {
-          "app": "weave-flux",
-          "name": "weave-flux-agent",
-          "weave-cloud-component": "flux",
-          "weave-flux-component": "agent"
-        },
-        "name": "weave-flux-agent",
-        "namespace": "kube-system"
-      },
-      "spec": {
-        "selector": {
-          "app": "weave-flux",
-          "name": "weave-flux-agent",
-          "weave-cloud-component": "flux",
-          "weave-flux-component": "agent"
-        }
-      }
-    },
     {
       "apiVersion": "extensions/v1beta1",
       "kind": "Deployment",
@@ -615,6 +569,28 @@
           }
         }
       }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "app": "weave-flux",
+          "name": "weave-flux-agent",
+          "weave-cloud-component": "flux",
+          "weave-flux-component": "agent"
+        },
+        "name": "weave-flux-agent",
+        "namespace": "kube-system"
+      },
+      "spec": {
+        "selector": {
+          "app": "weave-flux",
+          "name": "weave-flux-agent",
+          "weave-cloud-component": "flux",
+          "weave-flux-component": "agent"
+        }
+      }
     }
   ],
   "kind": "List"
@@ -629,7 +605,7 @@
         "labels": {
           "app": "weave-scope",
           "name": "weave-scope-agent",
-          "weave-cloud-component": "scop",
+          "weave-cloud-component": "scope",
           "weave-scope-component": "agent"
         },
         "name": "weave-scope-agent",
@@ -640,7 +616,7 @@
           "matchLabels": {
             "app": "weave-scope",
             "name": "weave-scope-agent",
-            "weave-cloud-component": "scop",
+            "weave-cloud-component": "scope",
             "weave-scope-component": "agent"
           }
         },
@@ -649,7 +625,7 @@
             "labels": {
               "app": "weave-scope",
               "name": "weave-scope-agent",
-              "weave-cloud-component": "scop",
+              "weave-cloud-component": "scope",
               "weave-scope-component": "agent"
             }
           },
@@ -665,14 +641,6 @@
                 ],
                 "image": "weaveworks/scope:latest",
                 "name": "agent",
-                "securityContext": {
-                  "capabilities": {},
-                  "privileged": true,
-                  "readOnlyRootFilesystem": false,
-                  "runAsNonRoot": false,
-                  "runAsUser": 0,
-                  "seLinuxOptions": {}
-                },
                 "volumeMounts": [
                   {
                     "mountPath": "/var/run/scope/plugins",

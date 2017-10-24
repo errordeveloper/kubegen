@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	module    modules.ModuleInstance
-	variables []string
+	module     modules.ModuleInstance
+	parameters []string
 )
 
 const (
@@ -39,8 +39,8 @@ func init() {
 	moduleCmd.Flags().StringVarP(&module.Namespace, "namespace", "N", "",
 		"Namespace of the module instance (optional)")
 
-	moduleCmd.Flags().StringSliceVarP(&variables, "variables", "v", []string{},
-		"Variables to set for the module instance")
+	moduleCmd.Flags().StringSliceVarP(&parameters, "parameters", "p", []string{},
+		"Parameters to set for the module instance")
 }
 
 func moduleFn(cmd *cobra.Command, args []string) error {
@@ -75,18 +75,18 @@ func moduleFn(cmd *cobra.Command, args []string) error {
 		module.OutputDir = module.Name
 	}
 
-	if len(variables) > 0 {
-		module.Variables = make(map[string]interface{})
+	if len(parameters) > 0 {
+		module.Parameters = make(map[string]interface{})
 	}
 
-	for _, v := range variables {
+	for _, v := range parameters {
 		kv := strings.SplitN(v, "=", 2)
 		if len(kv) < 2 {
-			return fmt.Errorf("invalid variable declaration %q, expected \"key=value\"", v)
+			return fmt.Errorf("invalid parameter declaration %q, expected \"key=value\"", v)
 		}
 
 		if kv[1] == "" {
-			return fmt.Errorf("invalid variable value %q, expected a non-empty string", v)
+			return fmt.Errorf("invalid parameter value %q, expected a non-empty string", v)
 		}
 
 		// TODO: intstr is really not good for us, it makes floats into strings and that's
@@ -94,9 +94,9 @@ func moduleFn(cmd *cobra.Command, args []string) error {
 		v := intstr.Parse(kv[1])
 		switch v.Type {
 		case intstr.Int:
-			module.Variables[kv[0]] = v.IntValue()
+			module.Parameters[kv[0]] = v.IntValue()
 		case intstr.String:
-			module.Variables[kv[0]] = v.String()
+			module.Parameters[kv[0]] = v.String()
 		}
 	}
 

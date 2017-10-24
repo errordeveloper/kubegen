@@ -1,4 +1,4 @@
-Kind: "kubegen.k8s.io/Module.v1alpha1"
+Kind: "kubegen.k8s.io/Module.v1alpha2"
 
 Deployments:
 
@@ -6,7 +6,10 @@ Deployments:
   replicas: 1
   containers:
   - name: shipping
-    image: <image_registry>/shipping:0.4.0
+    image:
+      kubegen.String.Join:
+      - kubegen.String.Lookup: image_registry
+      - /shipping:0.4.0
     ports:
     - name: http
       containerPort: 80

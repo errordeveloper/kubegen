@@ -83,23 +83,21 @@ type StatefulSet struct {
 }
 
 type ConfigMap struct {
-	Name          string `yaml:"name" hcl:",key" deepcopier:"skip"`
-	Metadata      `yaml:",inline" hcl:",squash" deepcopier:"skip"`
-	Data          map[string]string      `yaml:"data,omitempty" hcl:"data"`
-	ReadFromFiles []string               `yaml:"readFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
-	EncodeAsJSON  map[string]interface{} `yaml:"encodeAsJSON,omitempty" hcl:"encode_as_json" deepcopier:"skip"`
-	EncodeAsYAML  map[string]interface{} `yaml:"encodeAsYAML,omitempty" hcl:"encode_as_yaml" deepcopier:"skip"`
+	Name     string `yaml:"name" hcl:",key" deepcopier:"skip"`
+	Metadata `yaml:",inline" hcl:",squash" deepcopier:"skip"`
+	Data     map[string]string `yaml:"data,omitempty" hcl:"data"`
+	// TODO: kubegen.String.ReadFile
+	ReadFromFiles []string `yaml:"readFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
 }
 
 type Secret struct {
-	Name          string `yaml:"name" hcl:",key" deepcopier:"skip"`
-	Metadata      `yaml:",inline" hcl:",squash" deepcopier:"skip"`
-	Data          map[string][]byte      `yaml:"data,omitempty" hcl:"data"`
-	StringData    map[string]string      `json:"stringData,omitempty" hcl:"string_data"`
-	ReadFromFiles []string               `yaml:"readFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
-	EncodeAsJSON  map[string]interface{} `yaml:"encodeAsJSON,omitempty" hcl:"encode_as_json" deepcopier:"skip"`
-	EncodeAsYAML  map[string]interface{} `yaml:"encodeAsYAML,omitempty" hcl:"encode_as_yaml" deepcopier:"skip"`
-	Type          v1.SecretType          `yaml:"type,omitempty" hcl:"type"`
+	Name       string `yaml:"name" hcl:",key" deepcopier:"skip"`
+	Metadata   `yaml:",inline" hcl:",squash" deepcopier:"skip"`
+	Data       map[string][]byte `yaml:"data,omitempty" hcl:"data"`
+	StringData map[string]string `json:"stringData,omitempty" hcl:"string_data"`
+	// TODO: kubegen.String.ReadFile
+	ReadFromFiles []string      `yaml:"readFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
+	Type          v1.SecretType `yaml:"type,omitempty" hcl:"type"`
 }
 
 type Pod struct {
