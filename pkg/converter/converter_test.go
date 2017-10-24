@@ -184,7 +184,7 @@ func TestBasicKubegenAsset(t *testing.T) {
 	assert := assert.New(t)
 
 	tobj := []byte(`{
-		"Kind": "kubegen.k8s.io/Module.v1alpha1",
+		"Kind": "kubegen.k8s.io/Module.v1alpha2",
 		"Deployments": [
 			{
 				"name": "cart",

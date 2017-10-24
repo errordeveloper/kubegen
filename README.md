@@ -55,7 +55,7 @@ The following _bundle_ instatiates the same _module_ twice. The module defintion
 directory, and the generated Kubernetes resources will be written to `OutputDir: env/prod`.
 
 ```YAML
-Kind: kubegen.k8s.io/Bundle.v1alpha1
+Kind: kubegen.k8s.io/Bundle.v1alpha2
 
 Modules:
   - Name: prodApp
@@ -79,7 +79,7 @@ a resource definition (perhaps even without having to consult docs or the one yo
 
 For example, a front-end service in `errors.io` app has the following definition:
 ```YAML
-Kind: kubegen.k8s.io/Module.v1alpha1
+Kind: kubegen.k8s.io/Module.v1alpha2
 
 Parameters:
   - name: replicas

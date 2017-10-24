@@ -1,4 +1,4 @@
-Kind: "kubegen.k8s.io/Module.v1alpha1"
+Kind: "kubegen.k8s.io/Module.v1alpha2"
 
 Deployments:
 

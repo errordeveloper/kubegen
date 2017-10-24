@@ -1,8 +1,8 @@
 package modules
 
 const (
-	ModuleKind = "kubegen.k8s.io/Module.v1alpha1"
-	BundleKind = "kubegen.k8s.io/Bundle.v1alpha1"
+	ModuleKind = "kubegen.k8s.io/Module.v1alpha2"
+	BundleKind = "kubegen.k8s.io/Bundle.v1alpha2"
 )
 
 type Bundle struct {

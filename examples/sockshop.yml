@@ -1,4 +1,4 @@
-Kind: kubegen.k8s.io/Bundle.v1alpha1
+Kind: kubegen.k8s.io/Bundle.v1alpha2
 
 Modules:
 
