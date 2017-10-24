@@ -1,6 +1,6 @@
 Kind: "kubegen.k8s.io/Module.v1alpha1"
 
-Variables:
+Parameters:
   - name: image_registry
     type: String
     default: "docker.io/weaveworksdemos"

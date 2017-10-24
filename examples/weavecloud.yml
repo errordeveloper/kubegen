@@ -5,13 +5,13 @@ Modules:
   - Name: "weavecloud"
     SourceDir: "modules/weavecloud"
     OutputDir: "prod/weavecloud"
-    Variables:
+    Parameters:
       flux_replicas: 100
       service_token: "foobarbaz"
 
   - Name: "weavecloud"
     SourceDir: "modules/weavecloud"
     OutputDir: "dev/weavecloud"
-    Variables:
+    Parameters:
       flux_replicas: 10
       service_token: "bazbarfoo"

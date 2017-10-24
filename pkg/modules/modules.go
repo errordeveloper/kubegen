@@ -18,7 +18,7 @@ func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo, 
 	funcs := make(map[string]valueLookupFunc, 3)
 
 	if _, ok := m.lookupFuncs[string(branch.Value())]; !ok {
-		return fmt.Errorf("undeclared variable %q", string(branch.Value()))
+		return fmt.Errorf("undeclared parameter %q", string(branch.Value()))
 	}
 
 	// TODO this is pretty raw right now, we should refactor it, types are actually ignored
@@ -146,7 +146,7 @@ func (b *Bundle) LoadModules(selectNames []string) error {
 			b.Modules[n].Namespace = b.Namespace
 		}
 
-		if err := m.LoadVariables(i); err != nil {
+		if err := m.LoadParameters(i); err != nil {
 			return err
 		}
 
@@ -269,8 +269,8 @@ func NewModule(dir, instanceName string) (*Module, error) {
 				"error loading file %q in module %q – unrecognised `Kind: %q`, must be %q",
 				file.Name(), dir, m.Kind, ModuleKind)
 		}
-		// Variables and partials are scoped globally, here we collect them
-		module.Variables = append(module.Variables, m.Variables...)
+		// Parameters and partials are scoped globally, here we collect them
+		module.Parameters = append(module.Parameters, m.Parameters...)
 		module.Partials = append(module.Partials, m.Partials...)
 		// The module itself isn't something we can parse 100% yet, so we only store it as a string
 		module.manifests[manifestPath] = data
@@ -279,30 +279,30 @@ func NewModule(dir, instanceName string) (*Module, error) {
 	return module, nil
 }
 
-func (i *ModuleVariable) makeValueLookupFunc(instance ModuleInstance) (func() []byte, error) {
-	undefinedNonOptionalVariableError := fmt.Errorf(
-		"module %q must set variable %q (of type %s)",
+func (i *ModuleParameter) makeValueLookupFunc(instance ModuleInstance) (func() []byte, error) {
+	undefinedNonOptionalParameterError := fmt.Errorf(
+		"module %q must set parameter %q (of type %s)",
 		instance.Name, i.Name, i.Type)
 
-	unknownVariableTypeError := fmt.Errorf(
-		"variable %q in module %q of unknown type %q, only types \"String\" and \"Number\" are supported",
+	unknownParameterTypeError := fmt.Errorf(
+		"parameter %q in module %q of unknown type %q, only types \"String\" and \"Number\" are supported",
 		i.Name, instance.Name, i.Type)
 
-	wrongVariableTypeError := func(v interface{}) error {
+	wrongParameterTypeError := func(v interface{}) error {
 		return fmt.Errorf(
-			"variable %q in module %q not of type %q [value: %#v]",
+			"parameter %q in module %q not of type %q [value: %#v]",
 			i.Name, instance.Name, i.Type, v)
 	}
 
 	defaultValueNotSetError := fmt.Errorf(
-		"variable %q in module %q of type %q must either be required or provide a default value",
+		"parameter %q in module %q of type %q must either be required or provide a default value",
 		i.Name, instance.Name, i.Type)
 
 	switch i.Type {
 	case "Number":
 		// all numeric values from YAML are parsed as float64, but Kubernetes API mostly wants int32
 		var value int32
-		v, isSet := instance.Variables[i.Name]
+		v, isSet := instance.Parameters[i.Name]
 		// TODO how can we safely detect if default value is set and derive whether this is optional or not from that?
 		if i.Required {
 			if isSet {
@@ -312,10 +312,10 @@ func (i *ModuleVariable) makeValueLookupFunc(instance ModuleInstance) (func() []
 				case int:
 					value = int32(v.(int))
 				default:
-					return nil, wrongVariableTypeError(v)
+					return nil, wrongParameterTypeError(v)
 				}
 			} else {
-				return nil, undefinedNonOptionalVariableError
+				return nil, undefinedNonOptionalParameterError
 			}
 		} else {
 			if isSet {
@@ -325,7 +325,7 @@ func (i *ModuleVariable) makeValueLookupFunc(instance ModuleInstance) (func() []
 				case int:
 					value = int32(v.(int))
 				default:
-					return nil, wrongVariableTypeError(v)
+					return nil, wrongParameterTypeError(v)
 				}
 			} else {
 				if i.Default == nil {
@@ -335,24 +335,24 @@ func (i *ModuleVariable) makeValueLookupFunc(instance ModuleInstance) (func() []
 				case string:
 					value = int32(i.Default.(float64))
 				default:
-					return nil, wrongVariableTypeError(v)
+					return nil, wrongParameterTypeError(v)
 				}
 			}
 		}
 		return func() []byte { return []byte(fmt.Sprintf("%d", value)) }, nil
 	case "String":
 		var value string
-		v, isSet := instance.Variables[i.Name]
+		v, isSet := instance.Parameters[i.Name]
 		if i.Required {
 			if isSet {
 				switch v.(type) {
 				case string:
 					value = v.(string)
 				default:
-					return nil, wrongVariableTypeError(v)
+					return nil, wrongParameterTypeError(v)
 				}
 			} else {
-				return nil, undefinedNonOptionalVariableError
+				return nil, undefinedNonOptionalParameterError
 			}
 		} else {
 			// TODO warn if we see an empty string here as it is most likely an issue...
@@ -361,7 +361,7 @@ func (i *ModuleVariable) makeValueLookupFunc(instance ModuleInstance) (func() []
 				case string:
 					value = v.(string)
 				default:
-					return nil, wrongVariableTypeError(v)
+					return nil, wrongParameterTypeError(v)
 				}
 			} else {
 				if i.Default == nil {
@@ -371,24 +371,24 @@ func (i *ModuleVariable) makeValueLookupFunc(instance ModuleInstance) (func() []
 				case string:
 					value = i.Default.(string)
 				default:
-					return nil, wrongVariableTypeError(v)
+					return nil, wrongParameterTypeError(v)
 				}
 			}
 		}
 		return func() []byte { return []byte(fmt.Sprintf("%q", value)) }, nil
 	default:
-		return nil, unknownVariableTypeError
+		return nil, unknownParameterTypeError
 	}
 }
 
-func (m *Module) LoadVariables(instance ModuleInstance) error {
-	m.lookupFuncs = make(map[string]valueLookupFunc, len(m.Variables))
-	for _, variable := range m.Variables {
-		valFunc, err := variable.makeValueLookupFunc(instance)
+func (m *Module) LoadParameters(instance ModuleInstance) error {
+	m.lookupFuncs = make(map[string]valueLookupFunc, len(m.Parameters))
+	for _, parameter := range m.Parameters {
+		valFunc, err := parameter.makeValueLookupFunc(instance)
 		if err != nil {
 			return err
 		}
-		m.lookupFuncs[variable.Name] = valFunc
+		m.lookupFuncs[parameter.Name] = valFunc
 	}
 	return nil
 }

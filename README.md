@@ -61,13 +61,13 @@ Modules:
   - Name: prodApp
     SourceDir: modules/myapp
     OutputDir: env/prod
-    Variables:
+    Parameters:
       api_service_replicas: 100
       domain_name: errors.io
   - Name: testApp
     SourceDir: modules/myapp
     OutputDir: env/test
-    Variables:
+    Parameters:
       api_service_replicas: 10
       use_rds: false
       domain_name: testing.errors.io
@@ -81,7 +81,7 @@ For example, a front-end service in `errors.io` app has the following definition
 ```YAML
 Kind: kubegen.k8s.io/Module.v1alpha1
 
-Variables:
+Parameters:
   - name: replicas
     type: number
     default: 2
@@ -132,7 +132,7 @@ You can build it from source, if you wish to hack on it, otherwise you can downl
 #### Sub-command: `kubegen bundle`
 
 This sub-command takes path to a module bundle and generates Kubernetes resources for modules included in the bundle.
-Any variables should be specified in in the bundle manifest. This command is the primary interface for day-to-day
+Any parameters should be specified in in the bundle manifest. This command is the primary interface for day-to-day
 usage of `kubegen`.
 
 
@@ -177,8 +177,8 @@ Wrote 18 files based on bundle manifest "examples/sockshop.yml":
 
 #### Sub-command: `kubegen module`
 
-This sub-command take path to a module and generates Kubernetes resources defined within that module. Any variables should
-be specified `--variables` flag. It is convenient for testing.
+This sub-command take path to a module and generates Kubernetes resources defined within that module. Any parameters should
+be specified `--parameters` flag. It is convenient for testing.
 
 ***Usage: `kubegen module <moduleSourceDir> [flags]`***
 
@@ -187,7 +187,7 @@ be specified `--variables` flag. It is convenient for testing.
   -n, --name string             Name of the module instance (optional) (default "$(basename <source-dir>)")
   -N, --namespace string        Namespace of the module instance (optional)
   -O, --output-dir string       Output directory (default "./<name>")
-  -v, --variables stringSlice   Variables to set for the module instance
+  -p, --parameters stringSlice   Parameters to set for the module instance
 ```
 
 ***Global Flags***
@@ -234,7 +234,7 @@ There are 2 main layers in `kubegen`:
 
 A manifest withing a module may contain the following top-level keys:
 
-- `Variables`
+- `Parameters`
 - `Deployments`
 - `Services`
 - `DaemonSets`
@@ -245,9 +245,9 @@ A manifest withing a module may contain the following top-level keys:
 
 Each of those keys is expected to contains a list of objects of the same type (as denoted by the key).
 
-Variabels are scoped globaly per-module, and you can provide a varibale-only manifest, which is useful for denoting variables that are shared by all manifests withing a module.
+Variabels are scoped globaly per-module, and you can provide a varibale-only manifest, which is useful for denoting parameters that are shared by all manifests withing a module.
 
-A manifest is converted to `List` of objects defined within it and results in one file. In other words, module instance will result in as many native manifest files as there are manifests withing a module, unless variable-only manifests are used.
+A manifest is converted to `List` of objects defined within it and results in one file. In other words, module instance will result in as many native manifest files as there are manifests withing a module, unless parameter-only manifests are used.
 
 ### Resource Conversion Rules
 
@@ -266,7 +266,7 @@ Additionally, there are currently some minor details in how container and servic
 The style of HCL keys is a little different.
 First of all, top-level keys are singular instead of plural, e.g.
 ```HCL
-variable "my_replicas" {
+parameter "my_replicas" {
   type = "string"
   required = true
 }

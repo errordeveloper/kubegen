@@ -1,8 +1,8 @@
 ### There two levels of reusability that kubegen provides.
 ### 
-### First of all, each module may define a set of simple variables.
+### First of all, each module may define a set of simple parameters.
 ### Currently kubegen implements two types: "string" and "number".
-### Variables can be substitude as values anywhere.
+### Parameters can be substitude as values anywhere.
 ### 
 ### If in any object a key `kubegen.extendWith` is encoun
 
@@ -15,7 +15,7 @@
 ## Problems:
 # - no re-usability framework within Kubernetes is a good thing, but it's a bad thing that there
 #   very few things in the ecosystem for users to choose from (given the ecosystem is fairly big)
-# - no variable that user can define, even for some of the simplest cases (one has to use sed or something)
+# - no parameter that user can define, even for some of the simplest cases (one has to use sed or something)
 # - too much verbosity, and that's on top of all the overhead that Kubernetes brings already
 # - some things in a kubernetes object can be ommited, but it's not always very clear
 #   and things aren't some of the shortcuts aren't quite as use-full as you'd think;
@@ -38,9 +38,9 @@
 #
 ## The simples configuration
 
-{ "foo": { "kubegen.stringValueFromVariable": "aFoo" } }
+{ "foo": { "kubegen.stringValueFromParameter": "aFoo" } }
 
-{ "foo": { "kubegen.numbericValueFromVariable": "aBar" } }
+{ "foo": { "kubegen.numbericValueFromParameter": "aBar" } }
 { "foo": { "kubegen.numbericValueFromExpresision": "5*appScaleX" } }
 
 { "foo": { "kubegen.stringValueFromFile": "./aFoo.txt" } }
@@ -64,7 +64,7 @@
 }
 
 foo:
-  kubegen.stringValueFromVariable: aFoo
+  kubegen.stringValueFromParameter: aFoo
 
 foo:
   kubegen.stringTemplateInline: "{{aFoo}}"

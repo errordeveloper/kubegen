@@ -59,7 +59,7 @@ var keywordEvalPhases = [KeywordEvalPhases]KeywordEvalPhase{
 type Converter struct {
 	tree BranchInfo
 	data []byte
-	// TODO add module context, cause we want to be able to lookup variables etc
+	// TODO add module context, cause we want to be able to lookup parameters etc
 	// when we encouter a keyword, we construct a callback to do modifications
 	// as it's unsafe to do it right on the spot (that may be just because of
 	// how our parser works)

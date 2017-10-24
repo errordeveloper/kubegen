@@ -29,7 +29,7 @@ func main() {
 	rootCmd.Flags().StringVarP(&image, "image", "i", "", "Container image to use")
 	rootCmd.Flags().Int32VarP(&replicas, "replicas", "r", apps.DEFAULT_REPLICAS, "Number of pods")
 	rootCmd.Flags().Int32VarP(&port, "port", "p", apps.DEFAULT_PORT, "Container and service port to use")
-	rootCmd.Flags().StringSliceVar(&env, "env", []string{}, "Environment variables to set")
+	rootCmd.Flags().StringSliceVar(&env, "env", []string{}, "Environment parameters to set")
 	rootCmd.Flags().StringVarP(&flavor, "flavor", "F", apps.DefaultFlavor, "Flavor of generator to use")
 	rootCmd.Flags().StringVarP(&outputFormat, "output", "o", "yaml-stdout", "Output format [\"yaml-stdout\", \"json-stdout\", \"yaml-files\"]")
 
@@ -55,7 +55,7 @@ func command(cmd *cobra.Command, args []string) error {
 		for _, e := range env {
 			parts := strings.Split(e, "=")
 			if len(parts) != 2 {
-				return fmt.Errorf("Invalid environment variable: %q", e)
+				return fmt.Errorf("Invalid environment parameter: %q", e)
 			}
 			component.Env[parts[0]] = parts[1]
 		}
