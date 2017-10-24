@@ -91,13 +91,16 @@ Parameters:
 
 Deployments:
   - name: frontend
-    replicas: <replicas>
+    replicas:
+      kubegen.Number.Lookup: replicas
     containers:
       - name: agent
         image: 'errordeveloper/errorsio-frontend'
         imagePullPolicy: IfNotPresent
         args:
-          - '--domain=<domain_name>'
+          - kubegen.String.Join:
+            - --domain=
+            - kubegen.String.Lookup: domain_name
         ports:
           - name: http
             containerPort: 8080
@@ -187,7 +190,7 @@ be specified `--parameters` flag. It is convenient for testing.
   -n, --name string             Name of the module instance (optional) (default "$(basename <source-dir>)")
   -N, --namespace string        Namespace of the module instance (optional)
   -O, --output-dir string       Output directory (default "./<name>")
-  -p, --parameters stringSlice   Parameters to set for the module instance
+  -p, --parameters stringSlice  Parameters to set for the module instance
 ```
 
 ***Global Flags***
