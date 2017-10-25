@@ -35,6 +35,10 @@ func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo, 
 		return m.lookupFuncs[string(branch.Value())]()
 	}
 
+	funcs["Array"] = func() []byte {
+		return m.lookupFuncs[string(branch.Value())]()
+	}
+
 	switch branch.Kind() {
 	case converter.String:
 		x := funcs[kind]()
@@ -73,6 +77,14 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 	conv.DefineKeyword(converter.KeywordObjectLookup,
 		func(c *converter.Converter, branch *converter.BranchInfo) error {
 			if err := moduleContext.doLookup(c, branch, "Object"); err != nil {
+				return err
+			}
+			return nil
+		})
+
+	conv.DefineKeyword(converter.KeywordArrayLookup,
+		func(c *converter.Converter, branch *converter.BranchInfo) error {
+			if err := moduleContext.doLookup(c, branch, "Array"); err != nil {
 				return err
 			}
 			return nil
