@@ -269,9 +269,9 @@ func NewModule(dir, instanceName string) (*Module, error) {
 				"error loading file %q in module %q – unrecognised `Kind: %q`, must be %q",
 				file.Name(), dir, m.Kind, ModuleKind)
 		}
-		// Parameters and partials are scoped globally, here we collect them
+		// Parameters and Internals are scoped globally, here we collect them
 		module.Parameters = append(module.Parameters, m.Parameters...)
-		module.Partials = append(module.Partials, m.Partials...)
+		module.Internals = append(module.Internals, m.Internals...)
 		// The module itself isn't something we can parse 100% yet, so we only store it as a string
 		module.manifests[manifestPath] = data
 	}

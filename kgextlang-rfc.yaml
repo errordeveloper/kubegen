@@ -164,3 +164,15 @@ kubegen.If: "arrayParameter" # true if defined and not empty
 kubegen.If: "objectParameter.bar"
   foo: bar
 
+## Parameters and Internals
+
+## Parameters are externally settable attributes of a module.
+## Internals are internally settable attributes of a module,
+## these aren't different from parameters, however aren't visible
+## to user, they are meant for private use within a module, e.g.
+## shared objects that reused by some parts of a module or
+## objects loaded from a JSON/YAML file that needs to be included
+## in part, perhaps based on a given condition, and path to such
+## file could be determined by a parameter.
+## A parameter can be required or may have a default value, while
+## internals always must have a value.

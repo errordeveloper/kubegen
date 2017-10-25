@@ -37,16 +37,19 @@ type (
 )
 
 const (
-	String = jsonparser.String
-	Object = jsonparser.Object
-	Array  = jsonparser.Array
-	Number = jsonparser.Number
+	Null    = jsonparser.Null
+	Boolean = jsonparser.Boolean
+	Number  = jsonparser.Number
+	String  = jsonparser.String
+	Object  = jsonparser.Object
+	Array   = jsonparser.Array
 )
 
 const (
 	KeywordEvalPhaseA = iota
 	KeywordEvalPhaseB
 	KeywordEvalPhaseC
+	KeywordEvalPhaseD
 	KeywordEvalPhases
 )
 
@@ -54,6 +57,7 @@ var keywordEvalPhases = [KeywordEvalPhases]KeywordEvalPhase{
 	KeywordEvalPhaseA,
 	KeywordEvalPhaseB,
 	KeywordEvalPhaseC,
+	KeywordEvalPhaseD,
 }
 
 type Converter struct {
@@ -92,6 +96,7 @@ func New() *Converter {
 			KeywordEvalPhaseA: make(map[string]keywordCallbackMaker),
 			KeywordEvalPhaseB: make(map[string]keywordCallbackMaker),
 			KeywordEvalPhaseC: make(map[string]keywordCallbackMaker),
+			KeywordEvalPhaseD: make(map[string]keywordCallbackMaker),
 		},
 		modifiers: make(map[string]keywordCallback),
 	}
@@ -298,36 +303,52 @@ func (c *Converter) Run() error {
 }
 
 var (
+	KeywordBooleanIf = &Keyword{
+		ReturnType: Null,
+		EvalPhase:  KeywordEvalPhaseA,
+		FuncName:   "If",
+	}
+
+	KeywordBooleanLookup = &Keyword{
+		ReturnType: Boolean,
+		EvalPhase:  KeywordEvalPhaseB,
+		FuncName:   "Lookup",
+	}
 	KeywordStringLookup = &Keyword{
 		ReturnType: String,
-		EvalPhase:  KeywordEvalPhaseA,
+		EvalPhase:  KeywordEvalPhaseB,
 		FuncName:   "Lookup",
 	}
 	KeywordNumberLookup = &Keyword{
 		ReturnType: Number,
-		EvalPhase:  KeywordEvalPhaseA,
+		EvalPhase:  KeywordEvalPhaseB,
+		FuncName:   "Lookup",
+	}
+	KeywordArrayLookup = &Keyword{
+		ReturnType: Array,
+		EvalPhase:  KeywordEvalPhaseB,
 		FuncName:   "Lookup",
 	}
 	KeywordObjectLookup = &Keyword{
 		ReturnType: Object,
-		EvalPhase:  KeywordEvalPhaseA,
+		EvalPhase:  KeywordEvalPhaseB,
 		FuncName:   "Lookup",
 	}
 
 	KeywordStringJoin = &Keyword{
 		ReturnType: String,
-		EvalPhase:  KeywordEvalPhaseB,
+		EvalPhase:  KeywordEvalPhaseC,
 		FuncName:   "Join",
 	}
 
 	KeywordStringAsJSON = &Keyword{
 		ReturnType: String,
-		EvalPhase:  KeywordEvalPhaseC,
+		EvalPhase:  KeywordEvalPhaseD,
 		FuncName:   "AsJSON",
 	}
 	KeywordStringAsYAML = &Keyword{
 		ReturnType: String,
-		EvalPhase:  KeywordEvalPhaseC,
+		EvalPhase:  KeywordEvalPhaseD,
 		FuncName:   "AsYAML",
 	}
 )
