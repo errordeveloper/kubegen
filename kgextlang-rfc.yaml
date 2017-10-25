@@ -108,3 +108,59 @@ foo:
   - [ 3, 4, 5 ]
   - { }
   - "bar"
+
+## Object Operations - merge
+
+## Lookup two objects and merge both (second object take prevalence)
+--- 
+kubegen.Object.Lookup: [ "objectParameter", "objectParameter" ]
+
+## Lookup an object and merge with parent object (parent object take prevalence)
+--- 
+kubegen.Object.Lookup: "objectParameter"
+foo: bar
+
+## Lookup an object and merge with parent object wich shares key `foo` that point
+## to an array (`foo` in parent object take prevalence)
+--- 
+kubegen.Object.Lookup: "objectParameter"
+foo: [ bar ]
+
+## Lookup an object and merge with parent object wich shares key `foo` that point
+## to an array, as `foo` in parent object take prevalence, array concatenation has
+## to be explicit (extended child lookup syntax)
+--- 
+kubegen.Object.Lookup: "objectParameter"
+foo:
+  - bar
+  - kubegen.Array.Lookup: "objectParameter.foo[0]"
+
+## Conditionals
+
+## Undefined params in conditionals will cause an error
+## Conditionals are evaluated prior to lookups (KeywordEvalPhaseA)
+
+--- 
+kubegen.If: "boolParameter" # true if defined and true
+  foo: bar
+
+--- 
+kubegen.If: "numberParameter" # true if defined and >= 1
+  foo: bar
+
+--- 
+kubegen.If: "stringParameter" # true if defined and not empty
+  foo: bar
+
+--- 
+kubegen.If: "objectParameter" # true if defined and not empty
+  foo: bar
+
+--- 
+kubegen.If: "arrayParameter" # true if defined and not empty
+  foo: bar
+
+--- 
+kubegen.If: "objectParameter.bar"
+  foo: bar
+
