@@ -84,7 +84,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 		case jsonparser.Object:
 			// TODO panic if key exists or find a way to have unique keys
 			c.modifiers[p] = func(c *Converter) error {
-				c.data = jsonparser.Delete(c.data, branch.path[1:]...)
+				c.Delete(branch)
 				return nil
 			}
 		}
@@ -164,11 +164,9 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 			switch branch.kind {
 			case jsonparser.String:
 				c.modifiers[p] = func(c *Converter) error {
-					v, err := jsonparser.Set(c.data, []byte("\"TEST\""), branch.parent.path[1:]...)
-					if err != nil {
+					if err := c.Set(branch, "TEST"); err != nil {
 						return fmt.Errorf("could not set string – %v", err)
 					}
-					c.data = v
 					return nil
 				}
 			default:
@@ -183,11 +181,9 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 			switch branch.kind {
 			case jsonparser.String:
 				c.modifiers[p] = func(c *Converter) error {
-					v, err := jsonparser.Set(c.data, []byte("0"), branch.parent.path[1:]...)
-					if err != nil {
+					if err := c.Set(branch, 0); err != nil {
 						return fmt.Errorf("could not set number – %v", err)
 					}
-					c.data = v
 					return nil
 				}
 			default:
@@ -299,11 +295,9 @@ func TestKeywordLookupRecursive(t *testing.T) {
 			switch branch.kind {
 			case jsonparser.String:
 				c.modifiers[p] = func(c *Converter) error {
-					v, err := jsonparser.Set(c.data, []byte("\"TEST_STRING\""), branch.parent.path[1:]...)
-					if err != nil {
+					if err := c.Set(branch, "TEST_STRING"); err != nil {
 						return fmt.Errorf("could not set string – %v", err)
 					}
-					c.data = v
 					return nil
 				}
 			default:
@@ -315,16 +309,12 @@ func TestKeywordLookupRecursive(t *testing.T) {
 	conv.DefineKeyword(KeywordNumberLookup,
 		func(c *Converter, branch *BranchInfo) error {
 			p := branch.PathToString()
-
 			switch branch.kind {
 			case jsonparser.String:
-
 				c.modifiers[p] = func(c *Converter) error {
-					v, err := jsonparser.Set(c.data, []byte("12345"), branch.parent.path[1:]...)
-					if err != nil {
+					if err := c.Set(branch, 12345); err != nil {
 						return fmt.Errorf("could not set number – %v", err)
 					}
-					c.data = v
 					return nil
 				}
 			default:
@@ -405,18 +395,17 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	{
 		v, t, _, err := jsonparser.Get(conv.data, "test3m")
-		a := []byte(fmt.Sprintf(`[12345,"TEST_STRING",%s]`, objs["testInsertObj2"]))
+		a := fmt.Sprintf(`[12345,"TEST_STRING",%s]`, objs["testInsertObj2"])
 		assert.Nil(err)
 		assert.Equal(jsonparser.Array, t)
-		assert.Equal(a, v)
+		assert.JSONEq(a, string(v))
 	}
 
 	{
 		v, t, _, err := jsonparser.Get(conv.data, "test5o")
-		a := []byte("{ }")
 		assert.Nil(err)
 		assert.Equal(jsonparser.Object, t)
-		assert.Equal(a, v)
+		assert.JSONEq("{}", string(v))
 	}
 
 	{
@@ -433,10 +422,10 @@ func TestKeywordLookupRecursive(t *testing.T) {
 
 	{
 		v, t, _, err := jsonparser.Get(conv.data, "test3m")
-		a := []byte(fmt.Sprintf(`[12345,"TEST_STRING",%s]`, objs["testInsertObj2"]))
+		a := fmt.Sprintf(`[12345,"TEST_STRING",%s]`, objs["testInsertObj2"])
 		assert.Nil(err)
 		assert.Equal(jsonparser.Array, t)
-		assert.Equal(a, v)
+		assert.JSONEq(a, string(v))
 	}
 
 	{
@@ -461,23 +450,22 @@ func TestKeywordLookupRecursive(t *testing.T) {
 		v, t, _, err := jsonparser.Get(conv.data, "test4o", "foo", "[2]")
 		assert.Nil(err)
 		assert.Equal(jsonparser.Object, t)
-		assert.Equal(v, objs["testInsertObj2"])
+		assert.JSONEq(string(objs["testInsertObj2"]), string(v))
+
 	}
 
 	{
 		v, t, _, err := jsonparser.Get(conv.data, "test5o")
-		a := []byte("{ }")
 		assert.Nil(err)
 		assert.Equal(jsonparser.Object, t)
-		assert.Equal(a, v)
+		assert.JSONEq("{}", string(v))
 	}
 
 	{
 		v, t, _, err := jsonparser.Get(conv.data, "test4o", "bar", "[0]")
-		a := []byte("{ }")
 		assert.Nil(err)
 		assert.Equal(jsonparser.Object, t)
-		assert.Equal(a, v)
+		assert.JSONEq("{}", string(v))
 	}
 
 	{
@@ -496,23 +484,21 @@ func TestKeywordLookupRecursive(t *testing.T) {
 		v, t, _, err := jsonparser.Get(conv.data, "test4o", "foo", "[2]")
 		assert.Nil(err)
 		assert.Equal(jsonparser.Object, t)
-		assert.Equal(v, objs["testInsertObj2"])
+		assert.JSONEq(string(objs["testInsertObj2"]), string(v))
 	}
 
 	{
 		v, t, _, err := jsonparser.Get(conv.data, "test5o")
-		a := []byte("{ }")
 		assert.Nil(err)
 		assert.Equal(jsonparser.Object, t)
-		assert.Equal(a, v)
+		assert.JSONEq("{}", string(v))
 	}
 
 	{
 		v, t, _, err := jsonparser.Get(conv.data, "test4o", "bar", "[0]")
-		a := []byte("{ }")
 		assert.Nil(err)
 		assert.Equal(jsonparser.Object, t)
-		assert.Equal(a, v)
+		assert.JSONEq("{}", string(v))
 	}
 }
 
@@ -546,10 +532,9 @@ func TestKeywordJoinStrings(t *testing.T) {
 
 	{
 		v, t, _, err := jsonparser.Get(conv.data, "foobar")
-		a := []byte("foobar")
 		assert.Nil(err)
 		assert.Equal(jsonparser.String, t)
-		assert.Equal(a, v)
+		assert.Equal("foobar", string(v))
 	}
 }
 
@@ -809,7 +794,7 @@ func TestKeywordLoadJSON(t *testing.T) {
 						return fmt.Errorf("cannot marshal new object – %v", err)
 					}
 
-					c.data = jsonparser.Delete(c.data, branch.path[1:]...)
+					c.Delete(branch)
 
 					if len(branch.path[1:]) == 1 {
 						if c.data, err = util.EnsureJSON(newData); err != nil {
@@ -889,7 +874,7 @@ func TestKeywordLoadJSON(t *testing.T) {
 						return fmt.Errorf("cannot marshal new object – %v", err)
 					}
 
-					c.data = jsonparser.Delete(c.data, branch.path[1:]...)
+					c.Delete(branch)
 
 					if c.data, err = jsonparser.Set(c.data, newData, branch.parent.path[1:]...); err != nil {
 						return fmt.Errorf("could not set object – %v", err)

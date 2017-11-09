@@ -76,15 +76,11 @@ func New() *Converter {
 func (c *Converter) load(data []byte) { c.data = data }
 
 func (c *Converter) loadStrict(data []byte) error {
-	obj := new(interface{})
-	if err := json.Unmarshal(data, obj); err != nil {
-		return fmt.Errorf("error while re-decoding – %v", err)
-	}
-	data, err := json.Marshal(obj)
+	v, err := util.EnsureJSON(data)
 	if err != nil {
-		return fmt.Errorf("error while re-encoding – %v", err)
+		return err
 	}
-	c.load(data)
+	c.load(v)
 	return nil
 }
 
@@ -285,6 +281,7 @@ func (c *Converter) AddModifier(branch *BranchInfo, fn keywordCallback) {
 func (c *Converter) callModifiersOnce() error {
 	for p, fn := range c.modifiers {
 		if err := fn(c); err != nil {
+			// TODO should put more info in the error (perhaps use github.com/pkg/errors)
 			return fmt.Errorf("callback on %q failed to modify the tree – %v", p, err)
 		}
 		delete(c.modifiers, p)
@@ -321,11 +318,26 @@ func (b *BranchInfo) PathToString() string {
 	return strings.Join(b.path, ".")
 }
 
-func (c *Converter) Replace(branch *BranchInfo, value []byte) error {
+func (c *Converter) doSet(branch *BranchInfo, value []byte) error {
 	x, err := jsonparser.Set(c.data, value, branch.parent.path[1:]...)
 	if err != nil {
 		return err
 	}
-	c.load(x)
+	c.loadStrict(x)
 	return nil
+}
+
+func (c *Converter) Set(branch *BranchInfo, value interface{}) error {
+	v, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("failed to marshal `%q:%#v` – %v", branch.PathToString(), value, err)
+	}
+	if err := c.doSet(branch, v); err != nil {
+		return fmt.Errorf("failed to set `%q:%s` – %v", branch.PathToString(), value, err)
+	}
+	return nil
+}
+
+func (c *Converter) Delete(branch *BranchInfo) {
+	c.data = jsonparser.Delete(c.data, branch.path[1:]...)
 }

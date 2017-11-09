@@ -97,7 +97,7 @@ func StringJoin(c *Converter, branch *BranchInfo) error {
 		jsonparser.ArrayEach(branch.Value(), func(value []byte, dataType ValueType, offset int, err error) {
 			x = append(x, string(value))
 		})
-		if err := c.Replace(branch, []byte(fmt.Sprintf("%q", strings.Join(x, "")))); err != nil {
+		if err := c.Set(branch, strings.Join(x, "")); err != nil {
 			return fmt.Errorf("could not join string – %v", err)
 		}
 		return nil
@@ -116,11 +116,7 @@ func StringAsYAML(c *Converter, branch *BranchInfo) error {
 			return err
 		}
 		{
-			x, err := json.Marshal(string(x))
-			if err != nil {
-				return err
-			}
-			if err = c.Replace(branch, x); err != nil {
+			if err = c.Set(branch, string(x)); err != nil {
 				return err
 			}
 			return nil
@@ -131,11 +127,7 @@ func StringAsYAML(c *Converter, branch *BranchInfo) error {
 
 func StringAsJSON(c *Converter, branch *BranchInfo) error {
 	c.AddModifier(branch, func(c *Converter) error {
-		x, err := json.Marshal(string(branch.Value()))
-		if err != nil {
-			return err
-		}
-		if err = c.Replace(branch, x); err != nil {
+		if err := c.Set(branch, string(branch.Value())); err != nil {
 			return err
 		}
 		return nil
