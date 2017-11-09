@@ -1,10 +1,14 @@
 package converter
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/buger/jsonparser"
+	"github.com/imdario/mergo"
+
+	"github.com/errordeveloper/kubegen/pkg/util"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -638,11 +642,73 @@ func TestKeywordToString(t *testing.T) {
 	assert.Equal("kubegen.String.FooBar", kw.String())
 }
 
-/*
+func TestDeleteIsSane(t *testing.T) {
+
+	assert := assert.New(t)
+
+	tobj := []byte(`{
+			"Kind": "Some",
+			"kubegen.Object.LoadJSON": "TRUEO",
+			"other": {
+				"kubegen.Object.LoadJSON": "FALSEO"
+			},
+			"another": {
+				"kubegen.Object.LoadJSON": "TRUEO",
+				"something": [
+					{ "kubegen.Array.LoadJSON": "TRUEA" },
+					{ "kubegen.Array.LoadJSON": "FLASEA" }
+				]
+			}
+		}`)
+
+	js, err := util.EnsureJSON(tobj)
+	assert.Nil(err)
+
+	js = jsonparser.Delete(js, "kubegen.Object.LoadJSON")
+
+	js, err = util.EnsureJSON(js)
+	assert.Nil(err)
+
+	{
+		v, err := jsonparser.GetString(js, "other", "kubegen.Object.LoadJSON")
+		assert.Nil(err)
+		assert.Equal("FALSEO", v)
+	}
+
+	{
+		v, err := jsonparser.GetString(js, "another", "kubegen.Object.LoadJSON")
+		assert.Nil(err)
+		assert.Equal("TRUEO", v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(js, "another", "something", "[0]")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.JSONEq(`{"kubegen.Array.LoadJSON":"TRUEA"}`, string(v))
+	}
+
+	js = jsonparser.Delete(js, "other", "kubegen.Object.LoadJSON")
+
+	js, err = util.EnsureJSON(js)
+	assert.Nil(err)
+
+	{
+		_, err := jsonparser.GetString(js, "other", "kubegen.Object.LoadJSON")
+		assert.NotNil(err)
+	}
+
+	{
+		v, err := jsonparser.GetString(js, "another", "kubegen.Object.LoadJSON")
+		assert.Nil(err)
+		assert.Equal("TRUEO", v)
+	}
+}
+
 func TestKeywordLoadJSON(t *testing.T) {
 	conv := New()
 
-	//assert := assert.New(t)
+	assert := assert.New(t)
 
 	loadObject := &Keyword{
 		ReturnType: Object,
@@ -657,68 +723,224 @@ func TestKeywordLoadJSON(t *testing.T) {
 	}
 
 	tfiles := map[string][]byte{
-		"file1.json": []byte(`{ "test": true }`),
+		"TRUEO":  []byte(`{ "test": true }`),
+		"FALSEO": []byte(`{ "test": false }`),
+		"TRUEA":  []byte(`[ "test", true ]`),
+		"FALSEA": []byte(`[ "test", false ]`),
 	}
 
 	tobj := []byte(`{
-		"Kind": "Some",
-		"kubegen.Object.LoadJSON": "file1.json"
-	}`)
-
-	// TODO parse and re-marshal, check if we get desired type
-
-	conv.DefineKeyword(loadObject, func(c *Converter, branch *BranchInfo) error {
-		p := branch.PathToString()
-
-		switch branch.kind {
-		case jsonparser.String:
-
-			c.modifiers[p] = func(c *Converter) error {
-				v, err := jsonparser.Set(c.data, tfiles[string(branch.Value())], branch.parent.path[0:]...)
-				if err != nil {
-					return fmt.Errorf("could not set object – %v", err)
-				}
-				c.data = v
-				return nil
+			"Kind": "Some",
+			"kubegen.Object.LoadJSON": "TRUEO",
+			"other": {
+				"kubegen.Object.LoadJSON": "FALSEO"
+			},
+			"another": {
+				"kubegen.Object.LoadJSON": "TRUEO",
+				"something": [
+					{ "kubegen.Array.LoadJSON": "TRUEA" },
+					{ "kubegen.Array.LoadJSON": "FLASEA" }
+				]
 			}
-		default:
-			return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
-		}
-		return nil
-	})
+		}`)
 
-	conv.DefineKeyword(loadArray, func(c *Converter, branch *BranchInfo) error {
-		p := branch.PathToString()
+	//mutex := &sync.Mutex{}
 
-		switch branch.kind {
-		case jsonparser.String:
-
-			c.modifiers[p] = func(c *Converter) error {
-				v, err := jsonparser.Set(c.data, tfiles[string(branch.Value())], branch.parent.path[1:]...)
-				if err != nil {
-					return fmt.Errorf("could not set object – %v", err)
-				}
-				c.data = v
-				return nil
+	conv.DefineKeyword(loadObject,
+		func(c *Converter, branch *BranchInfo) error {
+			p := branch.PathToString()
+			var newData []byte
+			if v, ok := tfiles[string(branch.value)]; ok {
+				newData = v
+			} else {
+				newData = []byte("{ }")
 			}
-		default:
-			return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
-		}
-		return nil
-	})
+			switch branch.kind {
+			case jsonparser.String:
+				c.modifiers[p] = func(c *Converter) error {
+					var (
+						err         error
+						oldData     []byte
+						oldDataTemp []byte
+						oldDataType jsonparser.ValueType
+						oldObj      map[string]interface{}
+						newObj      map[string]interface{}
+					)
+
+					if len(branch.path[1:]) == 1 {
+						_, oldDataType, _, err = jsonparser.Get(c.data)
+						oldData = make([]byte, len(c.data))
+						copy(oldData, c.data)
+					} else {
+						oldDataTemp, oldDataType, _, err = jsonparser.Get(c.data, branch.parent.path[1:]...)
+						oldData = make([]byte, len(oldDataTemp))
+						copy(oldData, oldDataTemp)
+					}
+
+					switch {
+					case err != nil:
+						return fmt.Errorf("cannot get old data – %v", err)
+					case len(oldData) == 0:
+						return fmt.Errorf("old data is empty")
+					case oldDataType != jsonparser.Object:
+						return fmt.Errorf("old data type is %s, but must be an object", oldDataType)
+					}
+
+					oldData = jsonparser.Delete(oldData, branch.path[len(branch.path)-1])
+
+					if err := json.Unmarshal(oldData, &oldObj); err != nil {
+						return fmt.Errorf("cannot unmarshal old data – %v", err)
+					}
+
+					if err := json.Unmarshal(newData, &newObj); err != nil {
+						return fmt.Errorf("cannot unmarshal new data – %v", err)
+					}
+
+					if err := mergo.Map(&oldObj, newObj); err != nil {
+						return fmt.Errorf("cannot merge – %v", err)
+					}
+
+					if newData, err = json.Marshal(oldObj); err != nil {
+						return fmt.Errorf("cannot marshal new object – %v", err)
+					}
+
+					c.data = jsonparser.Delete(c.data, branch.path[1:]...)
+
+					if len(branch.path[1:]) == 1 {
+						if c.data, err = util.EnsureJSON(newData); err != nil {
+							return err
+						}
+					} else {
+						if c.data, err = jsonparser.Set(c.data, newData, branch.parent.path[1:]...); err != nil {
+							return fmt.Errorf("could not set object – %v", err)
+						}
+						if c.data, err = util.EnsureJSON(c.data); err != nil {
+							return err
+						}
+					}
+
+					return nil
+
+				}
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+			}
+			return nil
+		})
+
+	conv.DefineKeyword(loadArray,
+		func(c *Converter, branch *BranchInfo) error {
+			p := branch.PathToString()
+			var newData []byte
+			if v, ok := tfiles[string(branch.value)]; ok {
+				newData = v
+			} else {
+				newData = []byte("[ ]")
+			}
+			switch branch.kind {
+			case jsonparser.String:
+				c.modifiers[p] = func(c *Converter) error {
+					var (
+						err         error
+						oldData     []byte
+						oldDataTemp []byte
+						oldDataType jsonparser.ValueType
+						oldObj      map[string]interface{}
+						newObj      []interface{}
+					)
+
+					if len(branch.path[1:]) == 1 {
+						return fmt.Errorf("cannot insert array in place of root object")
+					}
+
+					oldDataTemp, oldDataType, _, err = jsonparser.Get(c.data, branch.parent.path[1:]...)
+					oldData = make([]byte, len(oldDataTemp))
+					copy(oldData, oldDataTemp)
+
+					switch {
+					case err != nil:
+						return fmt.Errorf("cannot get old data – %v", err)
+					case len(oldData) == 0:
+						return fmt.Errorf("old data is empty")
+					case oldDataType != jsonparser.Object:
+						return fmt.Errorf("old data type is %s, but must be an object", oldDataType)
+					}
+
+					oldData = jsonparser.Delete(oldData, branch.path[len(branch.path)-1])
+
+					if err := json.Unmarshal(oldData, &oldObj); err != nil {
+						t.Logf("oldData=%s", oldData)
+						return fmt.Errorf("cannot unmarshal old data – %v", err)
+					}
+
+					if len(oldObj) > 1 {
+						return fmt.Errorf("old data object contains non expected keys, cannot replace with an array")
+					}
+
+					if err := json.Unmarshal(newData, &newObj); err != nil {
+						return fmt.Errorf("cannot unmarshal new data – %v", err)
+					}
+
+					if newData, err = json.Marshal(newObj); err != nil {
+						return fmt.Errorf("cannot marshal new object – %v", err)
+					}
+
+					c.data = jsonparser.Delete(c.data, branch.path[1:]...)
+
+					if c.data, err = jsonparser.Set(c.data, newData, branch.parent.path[1:]...); err != nil {
+						return fmt.Errorf("could not set object – %v", err)
+					}
+					if c.data, err = util.EnsureJSON(c.data); err != nil {
+						return err
+					}
+
+					return nil
+
+				}
+			default:
+				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+			}
+			return nil
+		})
+
 	if err := conv.LoadObj(tobj, "tobj1.json", ""); err != nil {
 		t.Fatalf("failed to load – %v", err)
 	}
+
 	if err := conv.Run(); err != nil {
 		t.Logf("c.data=%s", string(conv.data))
 		t.Fatalf("failed to convert – %v", err)
 	}
+
+	{
+		v, err := jsonparser.GetString(conv.data, "Kind")
+		assert.Nil(err)
+		assert.Equal("Some", v)
+	}
+
+	{
+		v, err := jsonparser.GetBoolean(conv.data, "test")
+		assert.Nil(err)
+		assert.Equal(true, v)
+	}
+
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "other")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Object, t)
+		assert.JSONEq(`{"test":false}`, string(v))
+	}
+
+	{
+		v, err := jsonparser.GetBoolean(conv.data, "another", "test")
+		assert.Nil(err)
+		assert.Equal(true, v)
+	}
+
 }
-*/
 
 // TODO:
 // - kubegen.String.ReadFile
-// - kubegen.Object.LoadJSON
 // - kubegen.Object.LoadYAML
 // Also:
 // - kubegen.Array.ReadBytes
