@@ -6,7 +6,7 @@ imports:
   subpackages:
   - winterm
 - name: github.com/buger/jsonparser
-  version: fda8192cc4f100afbdbbcce82284a5b711969174
+  version: 5096fddd2cca678b0801ece8513a06e580981fd2
 - name: github.com/d4l3k/go-highlight
   version: ce3036b16fa0fdcee2a3f3a58d15c377a9b60093
   repo: https://github.com/errordeveloper/go-highlight
