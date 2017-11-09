@@ -727,6 +727,10 @@ func TestKeywordLoadJSON(t *testing.T) {
 		"FALSEO": []byte(`{ "test": false }`),
 		"TRUEA":  []byte(`[ "test", true ]`),
 		"FALSEA": []byte(`[ "test", false ]`),
+		"RECURSIVE": []byte(`[
+			{ "kubegen.Array.LoadJSON": "TRUEA" },
+			{ "kubegen.Array.LoadJSON": "FALSEA" }
+		]`),
 	}
 
 	tobj := []byte(`{
@@ -741,10 +745,11 @@ func TestKeywordLoadJSON(t *testing.T) {
 					{ "kubegen.Array.LoadJSON": "TRUEA" },
 					{ "kubegen.Array.LoadJSON": "FLASEA" }
 				]
+			},
+			"more": {
+				"kubegen.Array.LoadJSON": "RECURSIVE"
 			}
-		}`)
-
-	//mutex := &sync.Mutex{}
+	}`)
 
 	conv.DefineKeyword(loadObject,
 		func(c *Converter, branch *BranchInfo) error {
@@ -869,7 +874,6 @@ func TestKeywordLoadJSON(t *testing.T) {
 					oldData = jsonparser.Delete(oldData, branch.path[len(branch.path)-1])
 
 					if err := json.Unmarshal(oldData, &oldObj); err != nil {
-						t.Logf("oldData=%s", oldData)
 						return fmt.Errorf("cannot unmarshal old data – %v", err)
 					}
 
@@ -937,6 +941,12 @@ func TestKeywordLoadJSON(t *testing.T) {
 		assert.Equal(true, v)
 	}
 
+	{
+		v, t, _, err := jsonparser.Get(conv.data, "more")
+		assert.Nil(err)
+		assert.Equal(jsonparser.Array, t)
+		assert.JSONEq(`[ [ "test", true ], [ "test", false ] ]`, string(v))
+	}
 }
 
 // TODO:
