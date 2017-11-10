@@ -32,74 +32,76 @@ type keywordCallback func(*Converter) error
 type Keyword struct {
 	ReturnType ValueType
 	EvalPhase  KeywordEvalPhase
-	FuncName   string
+	VerbName   string
+	Argument   bool
 }
 
 var (
 	KeywordBooleanIf = &Keyword{
 		ReturnType: Null,
 		EvalPhase:  KeywordEvalPhaseA,
-		FuncName:   "If",
+		VerbName:   "If",
 	}
 
 	KeywordBooleanLookup = &Keyword{
 		ReturnType: Boolean,
 		EvalPhase:  KeywordEvalPhaseB,
-		FuncName:   "Lookup",
+		VerbName:   "Lookup",
 	}
 	KeywordStringLookup = &Keyword{
 		ReturnType: String,
 		EvalPhase:  KeywordEvalPhaseB,
-		FuncName:   "Lookup",
+		VerbName:   "Lookup",
 	}
 	KeywordNumberLookup = &Keyword{
 		ReturnType: Number,
 		EvalPhase:  KeywordEvalPhaseB,
-		FuncName:   "Lookup",
+		VerbName:   "Lookup",
 	}
 	KeywordArrayLookup = &Keyword{
 		ReturnType: Array,
 		EvalPhase:  KeywordEvalPhaseB,
-		FuncName:   "Lookup",
+		VerbName:   "Lookup",
 	}
 	KeywordObjectLookup = &Keyword{
 		ReturnType: Object,
 		EvalPhase:  KeywordEvalPhaseB,
-		FuncName:   "Lookup",
+		VerbName:   "Lookup",
 	}
 
 	KeywordStringJoin = &Keyword{
 		ReturnType: String,
 		EvalPhase:  KeywordEvalPhaseC,
-		FuncName:   "Join",
+		VerbName:   "Join",
 	}
 
 	KeywordStringAsJSON = &Keyword{
 		ReturnType: String,
 		EvalPhase:  KeywordEvalPhaseD,
-		FuncName:   "AsJSON",
+		VerbName:   "AsJSON",
 	}
 	KeywordStringAsYAML = &Keyword{
 		ReturnType: String,
 		EvalPhase:  KeywordEvalPhaseD,
-		FuncName:   "AsYAML",
+		VerbName:   "AsYAML",
 	}
 
 	LoadObjectJSON = &Keyword{
 		ReturnType: Object,
 		EvalPhase:  KeywordEvalPhaseA,
-		FuncName:   "LoadJSON",
+		VerbName:   "LoadJSON",
 	}
 
 	LoadArrayJSON = &Keyword{
 		ReturnType: Array,
 		EvalPhase:  KeywordEvalPhaseA,
-		FuncName:   "LoadJSON",
+		VerbName:   "LoadJSON",
 	}
 )
 
 func (kw *Keyword) String() string {
-	return fmt.Sprintf("kubegen.%s.%s", strings.Title(kw.ReturnType.String()), kw.FuncName)
+	// TODO maybe add args if given, so we get nicer error messages?
+	return fmt.Sprintf("kubegen.%s.%s", strings.Title(kw.ReturnType.String()), kw.VerbName)
 }
 
 func StringJoin(c *Converter, branch *BranchInfo) error {

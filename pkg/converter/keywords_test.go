@@ -73,7 +73,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 	conv.DefineKeyword(&Keyword{
 		ReturnType: jsonparser.Null,
 		EvalPhase:  KeywordEvalPhaseA,
-		FuncName:   "Delete",
+		VerbName:   "Delete",
 	}, func(c *Converter, branch *BranchInfo) error {
 		p := branch.PathToString()
 		switch branch.kind {
@@ -619,7 +619,7 @@ func TestKeywordToString(t *testing.T) {
 	kw := &Keyword{
 		ReturnType: String,
 		EvalPhase:  KeywordEvalPhaseA,
-		FuncName:   "FooBar",
+		VerbName:   "FooBar",
 	}
 
 	assert.Equal("kubegen.String.FooBar", kw.String())
@@ -827,7 +827,7 @@ func TestKeywordSelect(t *testing.T) {
 	objectSelect := &Keyword{
 		ReturnType: Array,
 		EvalPhase:  KeywordEvalPhaseA,
-		FuncName:   "LoadJSON",
+		VerbName:   "LoadJSON",
 		Argument:   true,
 	}
 

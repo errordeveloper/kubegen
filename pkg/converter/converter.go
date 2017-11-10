@@ -54,6 +54,7 @@ type Converter struct {
 	// TODO we will have to use regex matchers here actually, we can keep keys
 	// as string and use compiledRegexp.String()
 	keywords         [KeywordEvalPhases]map[string]keywordCallbackMaker
+	keywordMatcher   *keywordMatcher
 	keywordEvalPhase KeywordEvalPhase
 	// modifiers are actual modifiers mapped by dot-joined path
 	// TODO we probably want to do something better here, as dot-joined path
@@ -69,7 +70,8 @@ func New() *Converter {
 			KeywordEvalPhaseC: make(map[string]keywordCallbackMaker),
 			KeywordEvalPhaseD: make(map[string]keywordCallbackMaker),
 		},
-		modifiers: make(map[string]keywordCallback),
+		keywordMatcher: newKeywordMatcher(),
+		modifiers:      make(map[string]keywordCallback),
 	}
 }
 
