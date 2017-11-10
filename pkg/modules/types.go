@@ -27,13 +27,13 @@ type ModuleInstance struct {
 type valueLookupFunc func() []byte
 
 type Module struct {
-	Kind             string                     `yaml:"Kind" json:"Kind" hcl:"kind"`
-	Parameters       []ModuleParameter          `yaml:"Parameters,omitempty" json:"Parameters,omitempty" hcl:"parameter"`
-	Internals        []ModuleInternal           `yaml:"Internals,omitempty" json:"Internals,omitempty" hcl:"internals"`
-	manifests        map[string][]byte          `yaml:"-" json:"-" hcl:"-"`
-	path             string                     `yaml:"-" json:"-" hcl:"-"`
-	lookupFuncs      map[string]valueLookupFunc `yaml:"-" json:"-" hcl:"-"`
-	IncludeManifests []RawResource              `yaml:"Include" json:"Include" hcl:"include"`
+	Kind             string               `yaml:"Kind" json:"Kind" hcl:"kind"`
+	Parameters       []ModuleParameter    `yaml:"Parameters,omitempty" json:"Parameters,omitempty" hcl:"parameter"`
+	Internals        []ModuleInternal     `yaml:"Internals,omitempty" json:"Internals,omitempty" hcl:"internals"`
+	manifests        map[string][]byte    `yaml:"-" json:"-" hcl:"-"`
+	path             string               `yaml:"-" json:"-" hcl:"-"`
+	attributes       map[string]attribute `yaml:"-" json:"-" hcl:"-"`
+	IncludeManifests []RawResource        `yaml:"Include" json:"Include" hcl:"include"`
 }
 
 // TODO conditionally laod "raw" files
@@ -53,4 +53,10 @@ type ModuleInternal struct {
 	Name  string      `yaml:"name" json:"name" hcl:",key"`
 	Type  string      `yaml:"type" json:"type" hcl:"type"`
 	Value interface{} `yaml:"default" json:"default" hcl:"default"`
+}
+
+type attribute struct {
+	Type  string      `yaml:"type" json:"type" hcl:"type"`
+	Value interface{} `yaml:"value" json:"value" hcl:"value"`
+	Kind  string      `yaml:"kind" json:"kind" hcl:"kind"`
 }
