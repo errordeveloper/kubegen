@@ -14,7 +14,7 @@ import (
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo) error {
+func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo, kw *converter.Keyword) error {
 	v, ok := m.attributes[string(branch.Value())]
 	if !ok {
 		return fmt.Errorf("undeclared attribute %q", string(branch.Value()))
@@ -23,7 +23,10 @@ func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo) 
 	switch branch.Kind() {
 	case converter.String:
 		c.AddModifier(branch, func(c *converter.Converter) error {
-			if err := c.Set(branch, v); err != nil {
+			if err := v.typeCheck(kw); err != nil {
+				return err
+			}
+			if err := c.Set(branch, v.Value); err != nil {
 				return err
 			}
 			return nil
@@ -368,6 +371,36 @@ func (i *ModuleInternal) load(m *Module, instance ModuleInstance) error {
 
 	return fmt.Errorf("cannot load internal attribute %q in module %q – NOT IMPLEMENTED YET",
 		i.Name, instance.Name)
+}
+
+// TODO maybe this should be a more generic thing in pkg/converter, e.g. kw.TypeCheck(interface{})
+func (i *attribute) typeCheck(kw *converter.Keyword) error {
+	rt := strings.Title(kw.ReturnType.String())
+	cannotConvertError := fmt.Errorf("cannot convert %s type to % for %q", i.Type, rt)
+	if i.Type != rt {
+		return cannotConvertError
+	}
+
+	switch kw.ReturnType {
+	case converter.Number:
+		switch i.Value.(type) {
+		case int:
+			break
+		case float64:
+			break
+		default:
+			return cannotConvertError
+		}
+	case converter.String:
+		switch i.Value.(type) {
+		case string:
+			break
+		default:
+			return cannotConvertError
+		}
+	}
+
+	return nil
 }
 
 func (m *Module) LoadAttributes(instance ModuleInstance) error {

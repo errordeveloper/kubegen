@@ -53,25 +53,25 @@ type Converter struct {
 	// how our parser works)
 	// TODO we will have to use regex matchers here actually, we can keep keys
 	// as string and use compiledRegexp.String()
-	keywords         [KeywordEvalPhases]map[string]keywordCallbackMaker
+	keywords         [KeywordEvalPhases]map[string]Modifier
 	keywordMatcher   *keywordMatcher
 	keywordEvalPhase KeywordEvalPhase
 	// modifiers are actual modifiers mapped by dot-joined path
 	// TODO we probably want to do something better here, as dot-joined path
 	// doesn't guarantee uniqueness (TBD, also cosider escaping literal dots)
-	modifiers map[string]keywordCallback
+	modifiers map[string]modifierCallback
 }
 
 func New() *Converter {
 	return &Converter{
-		keywords: [KeywordEvalPhases]map[string]keywordCallbackMaker{
-			KeywordEvalPhaseA: make(map[string]keywordCallbackMaker),
-			KeywordEvalPhaseB: make(map[string]keywordCallbackMaker),
-			KeywordEvalPhaseC: make(map[string]keywordCallbackMaker),
-			KeywordEvalPhaseD: make(map[string]keywordCallbackMaker),
+		keywords: [KeywordEvalPhases]map[string]Modifier{
+			KeywordEvalPhaseA: make(map[string]Modifier),
+			KeywordEvalPhaseB: make(map[string]Modifier),
+			KeywordEvalPhaseC: make(map[string]Modifier),
+			KeywordEvalPhaseD: make(map[string]Modifier),
 		},
 		keywordMatcher: newKeywordMatcher(),
-		modifiers:      make(map[string]keywordCallback),
+		modifiers:      make(map[string]modifierCallback),
 	}
 }
 

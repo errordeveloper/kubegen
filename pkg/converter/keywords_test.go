@@ -74,7 +74,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 		ReturnType: jsonparser.Null,
 		EvalPhase:  KeywordEvalPhaseA,
 		VerbName:   "Delete",
-	}, func(c *Converter, branch *BranchInfo) error {
+	}, func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 		p := branch.PathToString()
 		switch branch.kind {
 		case jsonparser.String:
@@ -157,7 +157,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 	}
 
 	conv.DefineKeyword(KeywordStringLookup,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			p := branch.PathToString()
 			switch branch.kind {
 			case jsonparser.String:
@@ -174,7 +174,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		})
 
 	conv.DefineKeyword(KeywordNumberLookup,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			p := branch.PathToString()
 			switch branch.kind {
 			case jsonparser.String:
@@ -287,7 +287,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 	}
 
 	conv.DefineKeyword(KeywordStringLookup,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			p := branch.PathToString()
 
 			switch branch.kind {
@@ -305,7 +305,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 		})
 
 	conv.DefineKeyword(KeywordNumberLookup,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			p := branch.PathToString()
 			switch branch.kind {
 			case jsonparser.String:
@@ -322,7 +322,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 		})
 
 	conv.DefineKeyword(KeywordObjectLookup,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			p := branch.PathToString()
 			var x []byte
 			if v, ok := objs[string(branch.value)]; ok {
@@ -347,7 +347,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 		})
 
 	conv.DefineKeyword(KeywordArrayLookup,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			p := branch.PathToString()
 			var x []byte
 			if v, ok := objs[string(branch.value)]; ok {
@@ -723,7 +723,7 @@ func TestKeywordLoadJSON(t *testing.T) {
 	}`)
 
 	conv.DefineKeyword(LoadObjectJSON,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -734,7 +734,7 @@ func TestKeywordLoadJSON(t *testing.T) {
 		})
 
 	conv.DefineKeyword(LoadArrayJSON,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -803,7 +803,7 @@ func TestKeywordSelect(t *testing.T) {
 	}`)
 
 	conv.DefineKeyword(LoadObjectJSON,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -814,7 +814,7 @@ func TestKeywordSelect(t *testing.T) {
 		})
 
 	conv.DefineKeyword(LoadArrayJSON,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -832,7 +832,7 @@ func TestKeywordSelect(t *testing.T) {
 	}
 
 	conv.DefineKeyword(objectSelect,
-		func(c *Converter, branch *BranchInfo) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
 			return nil
 		})
 

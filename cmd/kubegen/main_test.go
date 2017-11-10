@@ -30,7 +30,9 @@ func TestKubegenCmd(t *testing.T) {
 				t.Fatalf("failed to read from %q for command %v – %v", knownOutputFilePath, command, err)
 			}
 
-			assert.Equal(c.Stdout(), string(knownOutput))
+			testOutput := c.Stdout()
+			assert.True((len(testOutput) > 0))
+			assert.Equal(string(knownOutput), testOutput)
 		})
 	}
 }

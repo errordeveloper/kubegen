@@ -26,14 +26,19 @@ var keywordEvalPhases = [KeywordEvalPhases]KeywordEvalPhase{
 	KeywordEvalPhaseD,
 }
 
-type keywordCallbackMaker func(*Converter, *BranchInfo) error
-type keywordCallback func(*Converter) error
+type registerModifier func(*Converter, *BranchInfo, *Keyword) error
+type modifierCallback func(*Converter) error
 
 type Keyword struct {
 	ReturnType ValueType
 	EvalPhase  KeywordEvalPhase
 	VerbName   string
 	Argument   bool
+}
+
+type Modifier struct {
+	Keyword *Keyword
+	Maker   registerModifier
 }
 
 var (
@@ -104,7 +109,7 @@ func (kw *Keyword) String() string {
 	return fmt.Sprintf("kubegen.%s.%s", strings.Title(kw.ReturnType.String()), kw.VerbName)
 }
 
-func StringJoin(c *Converter, branch *BranchInfo) error {
+func StringJoin(c *Converter, branch *BranchInfo, kw *Keyword) error {
 	if branch.Kind() != Array {
 		return fmt.Errorf("must be an array")
 	}
@@ -121,7 +126,7 @@ func StringJoin(c *Converter, branch *BranchInfo) error {
 	return nil
 }
 
-func StringAsYAML(c *Converter, branch *BranchInfo) error {
+func StringAsYAML(c *Converter, branch *BranchInfo, kw *Keyword) error {
 	c.AddModifier(branch, func(c *Converter) error {
 		o := new(interface{})
 		if err := json.Unmarshal(branch.Value(), o); err != nil {
@@ -141,7 +146,7 @@ func StringAsYAML(c *Converter, branch *BranchInfo) error {
 	return nil
 }
 
-func StringAsJSON(c *Converter, branch *BranchInfo) error {
+func StringAsJSON(c *Converter, branch *BranchInfo, kw *Keyword) error {
 	c.AddModifier(branch, func(c *Converter) error {
 		if err := c.Set(branch, string(branch.Value())); err != nil {
 			return err

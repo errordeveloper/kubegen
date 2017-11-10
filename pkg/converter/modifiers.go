@@ -9,12 +9,12 @@ import (
 	"github.com/buger/jsonparser"
 )
 
-func (c *Converter) DefineKeyword(kw *Keyword, fn keywordCallbackMaker) {
-	c.keywords[kw.EvalPhase][kw.String()] = fn
+func (c *Converter) DefineKeyword(kw *Keyword, fn registerModifier) {
+	c.keywords[kw.EvalPhase][kw.String()] = Modifier{kw, fn}
 	c.keywordMatcher.update(kw)
 }
 
-func (c *Converter) AddModifier(branch *BranchInfo, fn keywordCallback) {
+func (c *Converter) AddModifier(branch *BranchInfo, fn modifierCallback) {
 	c.modifiers[branch.PathToString()] = fn
 }
 
@@ -53,8 +53,8 @@ func (m *keywordMatcher) isKeyword(key string) (string, string) {
 
 func (c *Converter) ifKeywordDoRegister(newBranch *BranchInfo, key string, errors chan error) {
 	kw, _ := c.keywordMatcher.isKeyword(key)
-	if makeModifier, ok := c.keywords[c.keywordEvalPhase][kw]; ok {
-		if err := makeModifier(c, newBranch); err != nil {
+	if modifier, ok := c.keywords[c.keywordEvalPhase][kw]; ok {
+		if err := modifier.Maker(c, newBranch, modifier.Keyword); err != nil {
 			errors <- fmt.Errorf("failed to register modifier for keyword %q – %v", key, err)
 			return
 		}
