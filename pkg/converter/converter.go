@@ -126,6 +126,15 @@ func (c *Converter) Unmarshal(obj interface{}, sourcePath string, instanceName s
 	return nil
 }
 
+func (c *Converter) ifKeywordDoRegister(newBranch *BranchInfo, key string, errors chan error) {
+	if makeModifier, ok := c.keywords[c.keywordEvalPhase][key]; ok {
+		if err := makeModifier(c, newBranch); err != nil {
+			errors <- fmt.Errorf("failed to register modifier for keyword %q – %v", key, err)
+			return
+		}
+	}
+}
+
 func (c *Converter) doIterate(parentBranch *BranchInfo, key string, value []byte, dataType ValueType, errors chan error) {
 	pathLen := len(parentBranch.path) + 1
 	newBranch := BranchInfo{
@@ -145,12 +154,8 @@ func (c *Converter) doIterate(parentBranch *BranchInfo, key string, value []byte
 		return
 	}
 	parentBranch.self[key] = &newBranch
-	if makeModifier, ok := c.keywords[c.keywordEvalPhase][key]; ok {
-		if err := makeModifier(c, &newBranch); err != nil {
-			errors <- fmt.Errorf("failed to register modifier for keyword %q – %v", key, err)
-			return
-		}
-	}
+
+	c.ifKeywordDoRegister(&newBranch, key, errors)
 
 	switch dataType {
 	case jsonparser.Object:
