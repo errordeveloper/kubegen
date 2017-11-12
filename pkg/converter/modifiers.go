@@ -9,13 +9,59 @@ import (
 	"github.com/buger/jsonparser"
 )
 
-func (c *Converter) DefineKeyword(kw *Keyword, fn registerModifier) {
-	c.keywords[kw.EvalPhase][kw.String()] = Modifier{kw, fn}
+type MakeModifier func(*Converter, *BranchInfo, *Keyword) (ModifierCallback, error)
+type ModifierCallback func(*Modifier, *Converter) error
+
+type Keyword struct {
+	ReturnType ValueType
+	EvalPhase  KeywordEvalPhase
+	VerbName   string
+	Argument   bool
+}
+
+type UnregisteredModifier struct {
+	Keyword      *Keyword
+	makeModifier MakeModifier
+}
+
+type Modifier struct {
+	Keyword          *Keyword
+	Branch           *BranchInfo
+	modifierCallback ModifierCallback
+}
+
+func (m *UnregisteredModifier) Register(c *Converter, branch *BranchInfo) (*Modifier, error) {
+	cb, err := m.makeModifier(c, branch, m.Keyword)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &Modifier{
+		Keyword:          m.Keyword,
+		Branch:           branch,
+		modifierCallback: cb,
+	}, nil
+}
+
+func (m *Modifier) Do(c *Converter) error { return m.modifierCallback(m, c) }
+
+func (c *Converter) DefineKeyword(kw *Keyword, fn MakeModifier) {
+	c.keywords[kw.EvalPhase][kw.String()] = &UnregisteredModifier{kw, fn}
 	c.keywordMatcher.update(kw)
 }
 
-func (c *Converter) AddModifier(branch *BranchInfo, fn modifierCallback) {
-	c.modifiers[branch.PathToString()] = fn
+func (c *Converter) DefineKeywordWithCallbackt(kw *Keyword, cb func() MakeModifier) {
+	fn := cb()
+	c.keywords[kw.EvalPhase][kw.String()] = &UnregisteredModifier{kw, fn}
+	c.keywordMatcher.update(kw)
+}
+
+func (c *Converter) TypeCheckModifier(branch *BranchInfo, kind ValueType, cb ModifierCallback) (ModifierCallback, error) {
+	if branch.Kind() != kind {
+		return cb, fmt.Errorf("in %q value is a %s, but must be a %s", branch.PathToString(), branch.Kind(), kind)
+	}
+	return cb, nil
 }
 
 const validKeywordFmt = `^kubegen.(%s).(%s)(\((\S+)\))?$`
@@ -54,16 +100,18 @@ func (m *keywordMatcher) isKeyword(key string) (string, string) {
 func (c *Converter) ifKeywordDoRegister(newBranch *BranchInfo, key string, errors chan error) {
 	kw, _ := c.keywordMatcher.isKeyword(key)
 	if modifier, ok := c.keywords[c.keywordEvalPhase][kw]; ok {
-		if err := modifier.Maker(c, newBranch, modifier.Keyword); err != nil {
+		registered, err := modifier.Register(c, newBranch)
+		if err != nil {
 			errors <- fmt.Errorf("failed to register modifier for keyword %q – %v", key, err)
 			return
 		}
+		c.modifiers[newBranch.PathToString()] = registered
 	}
 }
 
 func (c *Converter) callModifiersOnce() error {
-	for p, fn := range c.modifiers {
-		if err := fn(c); err != nil {
+	for p, modifier := range c.modifiers {
+		if err := modifier.Do(c); err != nil {
 			// TODO should put more info in the error (perhaps use github.com/pkg/errors)
 			return fmt.Errorf("callback on %q failed to modify the tree – %v", p, err)
 		}

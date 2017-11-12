@@ -14,40 +14,34 @@ import (
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo, kw *converter.Keyword) error {
-	v, ok := m.attributes[string(branch.Value())]
-	if !ok {
-		return fmt.Errorf("undeclared attribute %q", string(branch.Value()))
+func (i *Module) makeModifierLookup(c *converter.Converter, branch *converter.BranchInfo, _ *converter.Keyword) (converter.ModifierCallback, error) {
+	cb := func(m *converter.Modifier, c *converter.Converter) error {
+		v, ok := i.attributes[string(m.Branch.Value())]
+		if !ok {
+			return fmt.Errorf("undeclared attribute %q", string(m.Branch.Value()))
+		}
+		if err := v.typeCheck(m.Keyword); err != nil {
+			return err
+		}
+		if err := c.Set(m.Branch, v.Value); err != nil {
+			return err
+		}
+		return nil
 	}
-
-	switch branch.Kind() {
-	case converter.String:
-		c.AddModifier(branch, func(c *converter.Converter) error {
-			if err := v.typeCheck(kw); err != nil {
-				return err
-			}
-			if err := c.Set(branch, v.Value); err != nil {
-				return err
-			}
-			return nil
-		})
-	default:
-		return fmt.Errorf("in %q value is a %s, but must be a string", branch.PathToString(), branch.Kind())
-	}
-	return nil
+	return c.TypeCheckModifier(branch, converter.String, cb)
 }
 
 func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
 	conv := converter.New()
 
-	conv.DefineKeyword(converter.KeywordStringLookup, moduleContext.doLookup)
-	conv.DefineKeyword(converter.KeywordNumberLookup, moduleContext.doLookup)
-	conv.DefineKeyword(converter.KeywordObjectLookup, moduleContext.doLookup)
-	conv.DefineKeyword(converter.KeywordArrayLookup, moduleContext.doLookup)
+	conv.DefineKeyword(converter.KeywordStringLookup, moduleContext.makeModifierLookup)
+	conv.DefineKeyword(converter.KeywordNumberLookup, moduleContext.makeModifierLookup)
+	conv.DefineKeyword(converter.KeywordObjectLookup, moduleContext.makeModifierLookup)
+	conv.DefineKeyword(converter.KeywordArrayLookup, moduleContext.makeModifierLookup)
 
-	conv.DefineKeyword(converter.KeywordStringJoin, converter.StringJoin)
-	conv.DefineKeyword(converter.KeywordStringAsJSON, converter.StringAsJSON)
-	conv.DefineKeyword(converter.KeywordStringAsYAML, converter.StringAsYAML)
+	conv.DefineKeyword(converter.KeywordStringJoin, converter.MakeModifierStringJoin)
+	conv.DefineKeyword(converter.KeywordStringAsJSON, converter.MakeModifierStringAsJSON)
+	conv.DefineKeyword(converter.KeywordStringAsYAML, converter.MakeModifierStringAsYAML)
 
 	if err := conv.LoadObj(data, sourcePath, instanceName); err != nil {
 		return err

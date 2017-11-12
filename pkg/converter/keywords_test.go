@@ -74,19 +74,19 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 		ReturnType: jsonparser.Null,
 		EvalPhase:  KeywordEvalPhaseA,
 		VerbName:   "Delete",
-	}, func(c *Converter, branch *BranchInfo, _ *Keyword) error {
-		p := branch.PathToString()
+	}, func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 		switch branch.kind {
 		case jsonparser.String:
 			fallthrough
 		case jsonparser.Object:
 			// TODO panic if key exists or find a way to have unique keys
-			c.modifiers[p] = func(c *Converter) error {
+			cb := func(_ *Modifier, c *Converter) error {
 				c.Delete(branch)
 				return nil
 			}
+			return cb, nil
 		}
-		return nil
+		return nil, nil
 	})
 
 	if err := conv.loadStrict(tobj); err != nil {
@@ -157,37 +157,37 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 	}
 
 	conv.DefineKeyword(KeywordStringLookup,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			p := branch.PathToString()
 			switch branch.kind {
 			case jsonparser.String:
-				c.modifiers[p] = func(c *Converter) error {
+				cb := func(_ *Modifier, c *Converter) error {
 					if err := c.Set(branch, "TEST"); err != nil {
 						return fmt.Errorf("could not set string – %v", err)
 					}
 					return nil
 				}
+				return cb, nil
 			default:
-				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+				return nil, fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
 			}
-			return nil
 		})
 
 	conv.DefineKeyword(KeywordNumberLookup,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			p := branch.PathToString()
 			switch branch.kind {
 			case jsonparser.String:
-				c.modifiers[p] = func(c *Converter) error {
+				cb := func(_ *Modifier, c *Converter) error {
 					if err := c.Set(branch, 0); err != nil {
 						return fmt.Errorf("could not set number – %v", err)
 					}
 					return nil
 				}
+				return cb, nil
 			default:
-				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+				return nil, fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
 			}
-			return nil
 		})
 
 	for _, v := range badSyntax {
@@ -287,42 +287,42 @@ func TestKeywordLookupRecursive(t *testing.T) {
 	}
 
 	conv.DefineKeyword(KeywordStringLookup,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			p := branch.PathToString()
 
 			switch branch.kind {
 			case jsonparser.String:
-				c.modifiers[p] = func(c *Converter) error {
+				cb := func(_ *Modifier, c *Converter) error {
 					if err := c.Set(branch, "TEST_STRING"); err != nil {
 						return fmt.Errorf("could not set string – %v", err)
 					}
 					return nil
 				}
+				return cb, nil
 			default:
-				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+				return nil, fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
 			}
-			return nil
 		})
 
 	conv.DefineKeyword(KeywordNumberLookup,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			p := branch.PathToString()
 			switch branch.kind {
 			case jsonparser.String:
-				c.modifiers[p] = func(c *Converter) error {
+				cb := func(_ *Modifier, c *Converter) error {
 					if err := c.Set(branch, 12345); err != nil {
 						return fmt.Errorf("could not set number – %v", err)
 					}
 					return nil
 				}
+				return cb, nil
 			default:
-				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+				return nil, fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
 			}
-			return nil
 		})
 
 	conv.DefineKeyword(KeywordObjectLookup,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			p := branch.PathToString()
 			var x []byte
 			if v, ok := objs[string(branch.value)]; ok {
@@ -332,7 +332,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 			}
 			switch branch.kind {
 			case jsonparser.String:
-				c.modifiers[p] = func(c *Converter) error {
+				cb := func(_ *Modifier, c *Converter) error {
 					v, err := jsonparser.Set(c.data, x, branch.parent.path[1:]...)
 					if err != nil {
 						return fmt.Errorf("could not set object – %v", err)
@@ -340,14 +340,14 @@ func TestKeywordLookupRecursive(t *testing.T) {
 					c.data = v
 					return nil
 				}
+				return cb, nil
 			default:
-				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+				return nil, fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
 			}
-			return nil
 		})
 
 	conv.DefineKeyword(KeywordArrayLookup,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			p := branch.PathToString()
 			var x []byte
 			if v, ok := objs[string(branch.value)]; ok {
@@ -357,7 +357,7 @@ func TestKeywordLookupRecursive(t *testing.T) {
 			}
 			switch branch.kind {
 			case jsonparser.String:
-				c.modifiers[p] = func(c *Converter) error {
+				cb := func(_ *Modifier, c *Converter) error {
 					v, err := jsonparser.Set(c.data, x, branch.parent.path[1:]...)
 					if err != nil {
 						return fmt.Errorf("could not set array – %v", err)
@@ -365,10 +365,10 @@ func TestKeywordLookupRecursive(t *testing.T) {
 					c.data = v
 					return nil
 				}
+				return cb, nil
 			default:
-				return fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
+				return nil, fmt.Errorf("in %q value is a %s, but must be a string", p, branch.kind)
 			}
-			return nil
 		})
 
 	if err := conv.loadStrict(tobj); err != nil {
@@ -519,7 +519,7 @@ func TestKeywordJoinStrings(t *testing.T) {
 		t.Fatalf("failed to load – %v", err)
 	}
 
-	conv.DefineKeyword(KeywordStringJoin, StringJoin)
+	conv.DefineKeyword(KeywordStringJoin, MakeModifierStringJoin)
 
 	if err := conv.Run(); err != nil {
 		t.Logf("c.data=%s", string(conv.data))
@@ -578,8 +578,8 @@ func TestKeywordObjectToJSON(t *testing.T) {
 		t.Fatalf("failed to load – %v", err)
 	}
 
-	conv.DefineKeyword(KeywordStringAsJSON, StringAsJSON)
-	conv.DefineKeyword(KeywordStringAsYAML, StringAsYAML)
+	conv.DefineKeyword(KeywordStringAsJSON, MakeModifierStringAsJSON)
+	conv.DefineKeyword(KeywordStringAsYAML, MakeModifierStringAsYAML)
 
 	if err := conv.Run(); err != nil {
 		t.Logf("c.data=%s", string(conv.data))
@@ -723,7 +723,7 @@ func TestKeywordLoadJSON(t *testing.T) {
 	}`)
 
 	conv.DefineKeyword(LoadObjectJSON,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -734,7 +734,7 @@ func TestKeywordLoadJSON(t *testing.T) {
 		})
 
 	conv.DefineKeyword(LoadArrayJSON,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -803,7 +803,7 @@ func TestKeywordSelect(t *testing.T) {
 	}`)
 
 	conv.DefineKeyword(LoadObjectJSON,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -814,7 +814,7 @@ func TestKeywordSelect(t *testing.T) {
 		})
 
 	conv.DefineKeyword(LoadArrayJSON,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -832,8 +832,8 @@ func TestKeywordSelect(t *testing.T) {
 	}
 
 	conv.DefineKeyword(objectSelect,
-		func(c *Converter, branch *BranchInfo, _ *Keyword) error {
-			return nil
+		func(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
+			return nil, nil
 		})
 
 	if err := conv.LoadObj(tobj, "tobj1.json", ""); err != nil {

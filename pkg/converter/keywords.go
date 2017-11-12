@@ -26,21 +26,6 @@ var keywordEvalPhases = [KeywordEvalPhases]KeywordEvalPhase{
 	KeywordEvalPhaseD,
 }
 
-type registerModifier func(*Converter, *BranchInfo, *Keyword) error
-type modifierCallback func(*Converter) error
-
-type Keyword struct {
-	ReturnType ValueType
-	EvalPhase  KeywordEvalPhase
-	VerbName   string
-	Argument   bool
-}
-
-type Modifier struct {
-	Keyword *Keyword
-	Maker   registerModifier
-}
-
 var (
 	KeywordBooleanIf = &Keyword{
 		ReturnType: Null,
@@ -109,11 +94,8 @@ func (kw *Keyword) String() string {
 	return fmt.Sprintf("kubegen.%s.%s", strings.Title(kw.ReturnType.String()), kw.VerbName)
 }
 
-func StringJoin(c *Converter, branch *BranchInfo, kw *Keyword) error {
-	if branch.Kind() != Array {
-		return fmt.Errorf("must be an array")
-	}
-	c.AddModifier(branch, func(c *Converter) error {
+func MakeModifierStringJoin(c *Converter, branch *BranchInfo, _ *Keyword) (ModifierCallback, error) {
+	cb := func(m *Modifier, c *Converter) error {
 		x := []string{}
 		jsonparser.ArrayEach(branch.Value(), func(value []byte, dataType ValueType, offset int, err error) {
 			x = append(x, string(value))
@@ -122,14 +104,14 @@ func StringJoin(c *Converter, branch *BranchInfo, kw *Keyword) error {
 			return fmt.Errorf("could not join string – %v", err)
 		}
 		return nil
-	})
-	return nil
+	}
+	return c.TypeCheckModifier(branch, Array, cb)
 }
 
-func StringAsYAML(c *Converter, branch *BranchInfo, kw *Keyword) error {
-	c.AddModifier(branch, func(c *Converter) error {
+func MakeModifierStringAsYAML(_ *Converter, _ *BranchInfo, _ *Keyword) (ModifierCallback, error) {
+	cb := func(m *Modifier, c *Converter) error {
 		o := new(interface{})
-		if err := json.Unmarshal(branch.Value(), o); err != nil {
+		if err := json.Unmarshal(m.Branch.Value(), o); err != nil {
 			return err
 		}
 		x, err := yaml.Marshal(o)
@@ -137,23 +119,23 @@ func StringAsYAML(c *Converter, branch *BranchInfo, kw *Keyword) error {
 			return err
 		}
 		{
-			if err = c.Set(branch, string(x)); err != nil {
+			if err = c.Set(m.Branch, string(x)); err != nil {
 				return err
 			}
 			return nil
 		}
-	})
-	return nil
+	}
+	return cb, nil
 }
 
-func StringAsJSON(c *Converter, branch *BranchInfo, kw *Keyword) error {
-	c.AddModifier(branch, func(c *Converter) error {
-		if err := c.Set(branch, string(branch.Value())); err != nil {
+func MakeModifierStringAsJSON(_ *Converter, _ *BranchInfo, _ *Keyword) (ModifierCallback, error) {
+	cb := func(m *Modifier, c *Converter) error {
+		if err := c.Set(m.Branch, string(m.Branch.Value())); err != nil {
 			return err
 		}
 		return nil
-	})
-	return nil
+	}
+	return cb, nil
 }
 
 func doLoadJSON(c *Converter, branch *BranchInfo, kw *Keyword, newData []byte) error {
@@ -246,24 +228,19 @@ func doLoadJSON(c *Converter, branch *BranchInfo, kw *Keyword, newData []byte) e
 
 }
 
-func addModifierLoadJSON(c *Converter, branch *BranchInfo, kw *Keyword, jsonData []byte) error {
-	c.AddModifier(branch, func(c *Converter) error {
-		switch branch.kind {
-		case jsonparser.String:
-			return doLoadJSON(c, branch, kw, jsonData)
-		default:
-			return fmt.Errorf("in %q value is a %s, but must be a string", branch.PathToString(), branch.kind)
-		}
-	})
-	return nil
+func addModifierLoadJSON(c *Converter, branch *BranchInfo, _ *Keyword, jsonData []byte) (ModifierCallback, error) {
+	cb := func(m *Modifier, c *Converter) error {
+		return doLoadJSON(c, m.Branch, m.Keyword, jsonData)
+	}
+	return c.TypeCheckModifier(branch, String, cb)
 }
 
-// TODO: generalise the way of passing contextual arugments
+// TODO: generalise the way of passing contextual arugments - or is it better now?
 
-func MakeArrayLoadJSON(c *Converter, branch *BranchInfo, jsonData []byte) error {
+func MakeArrayLoadJSON(c *Converter, branch *BranchInfo, jsonData []byte) (ModifierCallback, error) {
 	return addModifierLoadJSON(c, branch, LoadArrayJSON, jsonData)
 }
 
-func MakeObjectLoadJSON(c *Converter, branch *BranchInfo, jsonData []byte) error {
+func MakeObjectLoadJSON(c *Converter, branch *BranchInfo, jsonData []byte) (ModifierCallback, error) {
 	return addModifierLoadJSON(c, branch, LoadObjectJSON, jsonData)
 }
