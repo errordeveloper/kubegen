@@ -235,7 +235,7 @@ There are 2 main layers in `kubegen`:
 - _bundle_ provides a way of instatiating one or more _modules_
 - _module_ is a collection of one or more YAML, JSON or HCL maifests
 
-A manifest withing a module may contain the following top-level keys:
+A manifest within a module may contain the following top-level keys:
 
 - `Parameters`
 - `Deployments`
@@ -275,14 +275,16 @@ parameter "my_replicas" {
 }
 ```
 
-All of attributes within `Deployment` or other resources use `snake_case` instead of `lowerCamel`, e.g.
+All keys under `deployment` or other resources use `snake_case` instead of `lowerCamel`, e.g.
 ```HCL
 deployment "my_deployment" {
   labels {
     app = "my-app"
   }
 
-  replicas = "<my_replicas>"
+  replicas = {
+    kubegen.Number.Lookup = "<my_replicas>"
+  }
 
   container "main" {
     image = "myorg/app"
