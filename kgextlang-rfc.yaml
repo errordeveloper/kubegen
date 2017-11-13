@@ -176,3 +176,13 @@ kubegen.If: "objectParameter.bar"
 ## file could be determined by a parameter.
 ## A parameter can be required or may have a default value, while
 ## internals always must have a value.
+
+## File Readers
+
+data:
+  kubegen.String.ReadFile: "some_binary_file"
+
+kubegen.Object.LoadJSON:
+  kubegen.String.Lookup: "json_state_file"
+
+kubegen.Object.LoadYAML: ["yaml1", "yaml2"]
