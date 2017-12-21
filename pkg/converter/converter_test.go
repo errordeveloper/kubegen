@@ -1,16 +1,14 @@
 package converter
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
-
-	"github.com/buger/jsonparser"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func assertPathKeys(pks [][]string, conv *Converter, t *testing.T) {
+func assertPathKeys(pks [][]interface{}, conv *Converter, t *testing.T) {
 	assert := assert.New(t)
 
 	for _, pk := range pks {
@@ -18,8 +16,8 @@ func assertPathKeys(pks [][]string, conv *Converter, t *testing.T) {
 		if assert.NotNil(x, fmt.Sprintf("path %v should exist", pk)) {
 			assert.Equal(len(pk)+1, len(x.path),
 				fmt.Sprintf("lenght of path to %v should be len(pk)+1", pk))
-			assert.Equal("."+strings.Join(pk, "."), strings.Join(x.path, "."),
-				fmt.Sprintf("dot-joined path to %v should be the same", pk))
+			assert.Equal(fmt.Sprintf("%#v", pk), fmt.Sprintf("%#v", x.path[1:]),
+				fmt.Sprintf("formatted path to %v should be the same", pk))
 		}
 	}
 }
@@ -75,15 +73,20 @@ func TestConverterBasic(t *testing.T) {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
-	assert.Equal(7, len(conv.tree.self),
+	assert.NotNil(conv.locator.self)
+
+	assert.Equal(7, len(conv.locator.self),
 		"converter should have a tree of length 7")
-	assert.Equal(6, len(conv.tree.self["and more"].self),
+
+	assert.NotNil(conv.locator.self["and more"])
+	assert.NotNil(conv.locator.self["and more"].self)
+	assert.Equal(6, len(conv.locator.self["and more"].self),
 		"converter should have `and more` subtree of length 6")
 
-	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "[0]").kind)
-	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "[1]").kind)
-	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "[2]").kind)
-	assert.Nil(conv.get("other", "moreThings", "[9]"))
+	assert.Equal(Object, conv.get("other", "moreThings", 0).kind)
+	assert.Equal(Object, conv.get("other", "moreThings", 1).kind)
+	assert.Equal(Object, conv.get("other", "moreThings", 2).kind)
+	assert.Nil(conv.get("other", "moreThings", 9))
 }
 
 func TestConverterOnlyObjects(t *testing.T) {
@@ -133,17 +136,17 @@ func TestConverterOnlyObjects(t *testing.T) {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
-	assert.Equal(6, len(conv.tree.self),
+	assert.Equal(6, len(conv.locator.self),
 		"converter should have a tree of length 7")
-	assert.Equal(5, len(conv.tree.self["and more"].self),
+	assert.Equal(5, len(conv.locator.self["and more"].self),
 		"converter should have `and more` subtree of length 6")
 
-	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "1").kind)
-	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "2").kind)
-	assert.Equal(jsonparser.Object, conv.get("other", "moreThings", "3").kind)
+	assert.Equal(Object, conv.get("other", "moreThings", "1").kind)
+	assert.Equal(Object, conv.get("other", "moreThings", "2").kind)
+	assert.Equal(Object, conv.get("other", "moreThings", "3").kind)
 	assert.Nil(conv.get("other", "moreThings", "0"))
 
-	pathKeys := [][]string{
+	pathKeys := [][]interface{}{
 		{"things"},
 		{"things", "a"},
 		{"things", "b"},
@@ -277,47 +280,45 @@ func TestBasicKubegenAsset(t *testing.T) {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
-	//t.Log(spew.Sdump(conv.tree))
-
-	assert.Equal(2, len(conv.tree.self["Deployments"].self),
+	assert.Equal(2, len(conv.locator.self["Deployments"].self),
 		"there are two Deployments")
-	assert.Equal(jsonparser.String, conv.tree.self["Deployments"].self["[0]"].self["name"].kind,
+	assert.Equal(String, conv.locator.self["Deployments"].self[0].self["name"].kind,
 		"there should be name in a Deployments")
-	assert.Equal(jsonparser.String, conv.tree.self["Deployments"].self["[1]"].self["name"].kind,
+	assert.Equal(String, conv.locator.self["Deployments"].self[1].self["name"].kind,
 		"there should be name in a Deployments")
 
-	assert.Equal(2, len(conv.tree.self["Services"].self),
+	assert.Equal(2, len(conv.locator.self["Services"].self),
 		"there are two Services")
-	assert.Equal(jsonparser.String, conv.tree.self["Services"].self["[0]"].self["name"].kind,
+	assert.Equal(String, conv.locator.self["Services"].self[0].self["name"].kind,
 		"there should be cart in Services")
-	assert.Equal(jsonparser.String, conv.tree.self["Services"].self["[1]"].self["name"].kind,
+	assert.Equal(String, conv.locator.self["Services"].self[1].self["name"].kind,
 		"there should be cart in Services")
 
-	pathKeys := [][]string{
+	pathKeys := [][]interface{}{
 		{"Deployments"},
 
-		{"Deployments", "[0]"},
-		{"Deployments", "[0]", "name"},
-		{"Deployments", "[0]", "replicas"},
+		{"Deployments", 0},
+		{"Deployments", 0, "name"},
+		{"Deployments", 0, "replicas"},
 
-		{"Deployments", "[0]", "containers"},
-		{"Deployments", "[0]", "containers", "[0]"},
-		{"Deployments", "[0]", "volumes"},
-		{"Deployments", "[0]", "volumes", "[0]"},
+		{"Deployments", 0, "containers"},
+		{"Deployments", 0, "containers", 0},
+		{"Deployments", 0, "volumes"},
+		{"Deployments", 0, "volumes", 0},
 
-		{"Deployments", "[1]"},
-		{"Deployments", "[1]", "name"},
-		{"Deployments", "[1]", "replicas"},
+		{"Deployments", 1},
+		{"Deployments", 1, "name"},
+		{"Deployments", 1, "replicas"},
 
 		{"Services"},
 
-		{"Services", "[0]", "ports"},
-		{"Services", "[0]", "ports", "[0]", "name"},
-		{"Services", "[0]", "annotations"},
-		{"Services", "[0]", "annotations", "prometheus.io/path"},
+		{"Services", 0, "ports"},
+		{"Services", 0, "ports", 0, "name"},
+		{"Services", 0, "annotations"},
+		{"Services", 0, "annotations", "prometheus.io/path"},
 
-		{"Services", "[1]", "ports"},
-		{"Services", "[1]", "ports", "[0]", "name"},
+		{"Services", 1, "ports"},
+		{"Services", 1, "ports", 0, "name"},
 	}
 
 	assertPathKeys(pathKeys, conv, t)
@@ -327,9 +328,18 @@ func TestConverterGet(t *testing.T) {
 	conv := New()
 	tobj := []byte(`{ "Kind": "some" }`)
 
+	tobj2 := new(map[string]interface{})
+	tobj3 := new(map[string]interface{})
+
 	if err := conv.loadStrict(tobj); err != nil {
 		t.Fatalf("failed to laod – %v", err)
 	}
+
+	json.Unmarshal(tobj, tobj2)
+
+	json.Unmarshal([]byte(`
+		{ "mash": { "count": 1 }, "chips": { "count": 2 }, "sausages": true, "gravy": { "beef": 1, "chicken": 0 }  }
+	`), tobj3)
 
 	if err := conv.run(KeywordEvalPhaseB); err != nil {
 		t.Fatalf("failed to covert – %v", err)
@@ -338,14 +348,14 @@ func TestConverterGet(t *testing.T) {
 	errors := make(chan error)
 	go func() {
 		for _, x := range []string{"1", "2", "3"} {
-			conv.doIterate(&conv.tree, x, tobj, jsonparser.Object, errors)
+			conv.doIterate(&conv.locator, x, *tobj2, Object, errors)
 		}
 
-		conv.doIterate(&conv.tree, "order", []byte(`{}`), jsonparser.Object, errors)
+		conv.doIterate(&conv.locator, "order", make(map[string]interface{}), Object, errors)
 
 		conv.doIterate(conv.get("order"), "potatoe",
-			[]byte(`{ "mash": { "count": 1 }, "chips": { "count": 2 }, "sausages": true, "gravy": { "beef": 1, "chicken": 0 }  }`),
-			jsonparser.Object, errors)
+			*tobj3,
+			Object, errors)
 
 		errors <- nil
 	}()
@@ -354,7 +364,7 @@ func TestConverterGet(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	pathKeys := [][]string{
+	pathKeys := [][]interface{}{
 		{"1", "Kind"},
 		{"2", "Kind"},
 		{"3", "Kind"},

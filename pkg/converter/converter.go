@@ -1,52 +1,44 @@
 package converter
 
-// TODO try using jsonparser, assume that root is a map
-// build a nested map without values to track the location
-// try to write some tests first
-// TODO also consider https://godoc.org/github.com/json-iterator/go
-// it should have similar methods, it'd better cause it's what
-// Kubernetes uses, and Tim has contributed a ton of tests etc :)
-
 import (
 	"encoding/json"
 	"fmt"
-	"path"
 	"strings"
-
-	"github.com/buger/jsonparser"
 
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-type BranchInfo struct {
-	kind   ValueType
-	self   branch
-	value  []byte
-	parent *BranchInfo
-	path   branchPath
+type BranchLocator struct {
+	kind       ValueType
+	self       branch
+	value      *Tree
+	parent     *BranchLocator
+	path       branchPath
+	stringPath stringBranchPath
 }
 
 type (
-	ValueType = jsonparser.ValueType
+	ValueType int
 
-	branch     = map[string]*BranchInfo
-	branchPath = []string
+	branch           = map[interface{}]*BranchLocator
+	branchPath       = []interface{}
+	stringBranchPath = []string
 
 	KeywordEvalPhase = int
 )
 
 const (
-	Null    = jsonparser.Null
-	Boolean = jsonparser.Boolean
-	Number  = jsonparser.Number
-	String  = jsonparser.String
-	Object  = jsonparser.Object
-	Array   = jsonparser.Array
+	Null = ValueType(iota)
+	Boolean
+	Number
+	String
+	Object
+	Array
 )
 
 type Converter struct {
-	tree BranchInfo
-	data []byte
+	locator BranchLocator
+	tree    *Tree
 	// TODO add module context, cause we want to be able to lookup parameters etc
 	// when we encouter a keyword, we construct a callback to do modifications
 	// as it's unsafe to do it right on the spot (that may be just because of
@@ -75,21 +67,20 @@ func New() *Converter {
 	}
 }
 
-func (c *Converter) load(data []byte) { c.data = data }
+func (c *Converter) load(data []byte) (err error) {
+	c.tree, err = loadObject(data)
+	return
+}
 
 func (c *Converter) loadStrict(data []byte) error {
 	v, err := util.EnsureJSON(data)
 	if err != nil {
 		return err
 	}
-	c.load(v)
-	return nil
+	return c.load(v)
 }
 
-// TODO util.LoadObj and Unmarshall have a lot in common
-// TODO error strings are kind of quite messy
-
-func (c *Converter) LoadObj(data []byte, sourcePath string, instanceName string) error {
+func (c *Converter) LoadObject(data []byte, sourcePath string, instanceName string) error {
 	obj := new(interface{})
 	if err := util.LoadObj(obj, data, sourcePath, instanceName); err != nil {
 		return err
@@ -98,49 +89,43 @@ func (c *Converter) LoadObj(data []byte, sourcePath string, instanceName string)
 	if err != nil {
 		return fmt.Errorf("error while re-encoding %q (%q): %v", instanceName, sourcePath, err)
 	}
-	c.load(jsonData)
+	c.tree, err = loadObject(jsonData)
+	return err
+}
+
+func (c *Converter) Unmarshal(obj interface{}) error {
+	data, err := json.Marshal(c.tree.self)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(data, obj); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (c *Converter) Unmarshal(obj interface{}, sourcePath string, instanceName string) error {
-	var errorFmt string
-
-	if instanceName != "" {
-		errorFmt = fmt.Sprintf("error while re-decoding module %q source", instanceName)
-	} else {
-		errorFmt = "error while re-decoding manifest file"
-	}
-
-	ext := path.Ext(sourcePath)
-	switch {
-	case ext == ".json" || ext == ".yaml" || ext == ".yml":
-		if err := json.Unmarshal(c.data, obj); err != nil {
-			return fmt.Errorf("%s %q (%q): %v", errorFmt, instanceName, sourcePath, err)
-		}
-	case ext == ".kg" || ext == ".hcl":
-		if err := util.NewFromHCL(obj, c.data); err != nil {
-			return fmt.Errorf("%s %q (%q): %v", errorFmt, instanceName, sourcePath, err)
-		}
-	default:
-		return fmt.Errorf("%s %q – unknown file extension", errorFmt, sourcePath)
-	}
-
-	return nil
-}
-
-func (c *Converter) doIterate(parentBranch *BranchInfo, key string, value []byte, dataType ValueType, errors chan error) {
+func (c *Converter) doIterate(parentBranch *BranchLocator, key interface{}, value interface{}, dataType ValueType, errors chan error) {
 	pathLen := len(parentBranch.path) + 1
-	newBranch := BranchInfo{
-		parent: parentBranch,
-		kind:   dataType,
-		value:  value,
-		self:   make(branch),
-		path:   make(branchPath, pathLen),
+	newBranch := BranchLocator{
+		parent:     parentBranch,
+		kind:       dataType,
+		value:      NewTree(&value),
+		self:       make(branch),
+		path:       make(branchPath, pathLen),
+		stringPath: make(stringBranchPath, pathLen),
 	}
 
 	// we have to copy the slice explicitly, as it turns append doesn't make a copy
 	copy(newBranch.path, parentBranch.path)
+	copy(newBranch.stringPath, parentBranch.stringPath)
+
+	k := formatKey(key)
+	if k == "" {
+		errors <- fmt.Errorf("key %#v is not string or int", key)
+	}
+
 	newBranch.path[pathLen-1] = key
+	newBranch.stringPath[pathLen-1] = k
 
 	if _, ok := parentBranch.self[key]; ok {
 		errors <- fmt.Errorf("key %q is already set in parent", key)
@@ -151,49 +136,47 @@ func (c *Converter) doIterate(parentBranch *BranchInfo, key string, value []byte
 	c.ifKeywordDoRegister(&newBranch, key, errors)
 
 	switch dataType {
-	case jsonparser.Object:
+	case Object:
 		handler := c.makeObjectIterator(&newBranch, errors)
 
-		if err := jsonparser.ObjectEach(value, handler); err != nil {
+		if err := newBranch.value.ObjectEach(handler); err != nil {
 			errors <- (err)
 			return
 		}
-	case jsonparser.Array:
+	case Array:
 		handler := c.makeArrayIterator(&newBranch, errors)
 
-		jsonparser.ArrayEach(value, handler)
+		if err := newBranch.value.ArrayEach(handler); err != nil {
+			errors <- (err)
+			return
+		}
 	}
 }
 
-type objectIterator func(key []byte, value []byte, dataType ValueType, offset int) error
-
-func (c *Converter) makeObjectIterator(parentBranch *BranchInfo, errors chan error) objectIterator {
-	callback := func(key []byte, value []byte, dataType ValueType, offset int) error {
-		c.doIterate(parentBranch, string(key), value, dataType, errors)
-		keys := []string{}
-		paths := [][]string{}
-		for i := range parentBranch.self {
-			keys = append(keys, i)
-			paths = append(paths, parentBranch.self[i].path)
-		}
+func (c *Converter) makeObjectIterator(parentBranch *BranchLocator, errors chan error) treeObjectIterator {
+	callback := func(key string, value interface{}, dataType ValueType, _ *Tree) error {
+		c.doIterate(parentBranch, key, value, dataType, errors)
+		/*
+			paths := [][]interface{}{}
+			for i := range parentBranch.self {
+				paths = append(paths, parentBranch.self[i].path)
+			}
+		*/
 		return nil
 	}
 	return callback
 }
 
-type arrayIterator func(value []byte, dataType ValueType, offset int, err error)
-
-func (c *Converter) makeArrayIterator(parentBranch *BranchInfo, errors chan error) arrayIterator {
-	index := 0
-	callback := func(value []byte, dataType ValueType, offset int, err error) {
-		c.doIterate(parentBranch, fmt.Sprintf("[%d]", index), value, dataType, errors)
-		index = index + 1
+func (c *Converter) makeArrayIterator(parentBranch *BranchLocator, errors chan error) treeArrayIterator {
+	callback := func(index int, value interface{}, dataType ValueType, _ *Tree) error {
+		c.doIterate(parentBranch, index, value, dataType, errors)
+		return nil
 	}
 	return callback
 }
 
-func (c *Converter) interate(errors chan error) {
-	if err := jsonparser.ObjectEach(c.data, c.makeObjectIterator(&c.tree, errors)); err != nil {
+func (c *Converter) iterate(errors chan error) {
+	if err := c.tree.ObjectEach(c.makeObjectIterator(&c.locator, errors)); err != nil {
 		errors <- (err)
 		return
 	}
@@ -201,8 +184,8 @@ func (c *Converter) interate(errors chan error) {
 }
 
 func (c *Converter) checkKind() (err error) {
-	kindUpper, errUpper := jsonparser.GetString(c.data, "Kind")
-	kindLower, errLower := jsonparser.GetString(c.data, "kind")
+	kindUpper, errUpper := c.tree.GetString("Kind")
+	kindLower, errLower := c.tree.GetString("kind")
 	if errUpper != nil && errLower != nil {
 		err = fmt.Errorf("unknown kind of object (kind unspecified)")
 	}
@@ -220,19 +203,20 @@ func (c *Converter) run(phase KeywordEvalPhase) error {
 		return err
 	}
 
-	c.tree = BranchInfo{
-		parent: nil,
-		kind:   jsonparser.Object,
-		value:  c.data,
-		self:   make(branch),
-		path:   []string{""},
+	c.locator = BranchLocator{
+		parent:     nil,
+		kind:       Object,
+		value:      c.tree,
+		self:       make(branch),
+		path:       []interface{}{nil},
+		stringPath: []string{""},
 	}
 	c.keywordEvalPhase = phase
 
 	{
 		errors := make(chan error)
 
-		go c.interate(errors)
+		go c.iterate(errors)
 
 		err := <-errors
 		if err != nil {
@@ -267,15 +251,15 @@ func (c *Converter) Run() error {
 	return nil
 }
 
-func (b *BranchInfo) get(key string) *BranchInfo {
+func (b *BranchLocator) get(key interface{}) *BranchLocator {
 	if next := b.self[key]; next != nil {
 		return next
 	}
 	return nil
 }
 
-func (c *Converter) get(path ...string) *BranchInfo {
-	branch := BranchInfo{self: c.tree.self}
+func (c *Converter) get(path ...interface{}) *BranchLocator {
+	branch := BranchLocator{self: c.locator.self}
 	for x := range path {
 		if next := branch.get(path[x]); next != nil {
 			branch = *next
@@ -286,12 +270,48 @@ func (c *Converter) get(path ...string) *BranchInfo {
 	return &branch
 }
 
-func (b *BranchInfo) Kind() ValueType { return b.kind }
+func (b *BranchLocator) Kind() ValueType { return b.kind }
 
-func (b *BranchInfo) Value() []byte { return b.value }
+func (b *BranchLocator) Value() *Tree { return b.value }
 
-func (b *BranchInfo) PathToString() string {
-	// TODO escape literal dots with something or find another join character
-	// TODO look into what JSONPath does about this, also check jq too
-	return strings.Join(b.path, ".")
+func (b *BranchLocator) StringValue() *string {
+	v, ok := b.value.self.(string)
+	if !ok {
+		return nil
+	}
+	return &v
+}
+
+func (b *BranchLocator) PathToString() string {
+	return strings.Join(b.stringPath, "")
+}
+
+func formatKey(k interface{}) string {
+	switch k.(type) {
+	case string:
+		return fmt.Sprintf("[%q]", k)
+	case int:
+		return fmt.Sprintf("[%d]", k)
+	default:
+		return ""
+	}
+}
+
+func (vt ValueType) String() string {
+	switch vt {
+	case String:
+		return "String"
+	case Number:
+		return "Number"
+	case Object:
+		return "Object"
+	case Array:
+		return "Array"
+	case Boolean:
+		return "Boolean"
+	case Null:
+		return "Null"
+	default:
+		return "Unknown"
+	}
 }

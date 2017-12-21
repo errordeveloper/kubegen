@@ -14,15 +14,21 @@ import (
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-func (i *Module) makeModifierLookup(c *converter.Converter, branch *converter.BranchInfo, _ *converter.Keyword) (converter.ModifierCallback, error) {
+func (i *Module) makeModifierLookup(c *converter.Converter, branch *converter.BranchLocator, _ *converter.Keyword) (converter.ModifierCallback, error) {
 	cb := func(m *converter.Modifier, c *converter.Converter) error {
-		v, ok := i.attributes[string(m.Branch.Value())]
+
+		k := m.Branch.StringValue()
+		if k == nil {
+			return fmt.Errorf("attribute reference is not a string – %#v", m.Branch)
+		}
+		v, ok := i.attributes[*k]
 		if !ok {
-			return fmt.Errorf("undeclared attribute %q", string(m.Branch.Value()))
+			return fmt.Errorf("undeclared attribute %q", *k)
 		}
 		if err := v.typeCheck(m.Keyword); err != nil {
 			return err
 		}
+		//fmt.Printf("attributes[%s]=(%v)\n", *k, v)
 		if err := c.Set(m.Branch, v.Value); err != nil {
 			return err
 		}
@@ -31,7 +37,7 @@ func (i *Module) makeModifierLookup(c *converter.Converter, branch *converter.Br
 	return c.TypeCheckModifier(branch, converter.String, cb)
 }
 
-func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
+func loadObjWithModuleContext(group *resources.Group, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
 	conv := converter.New()
 
 	conv.DefineKeyword(converter.KeywordStringLookup, moduleContext.makeModifierLookup)
@@ -43,18 +49,17 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 	conv.DefineKeyword(converter.KeywordStringAsJSON, converter.MakeModifierStringAsJSON)
 	conv.DefineKeyword(converter.KeywordStringAsYAML, converter.MakeModifierStringAsYAML)
 
-	if err := conv.LoadObj(data, sourcePath, instanceName); err != nil {
+	if err := conv.LoadObject(data, sourcePath, instanceName); err != nil {
 		return err
 	}
 
 	if err := conv.Run(); err != nil {
 		return err
 	}
-
-	if err := conv.Unmarshal(obj, sourcePath, instanceName); err != nil {
+	if err := conv.Unmarshal(group); err != nil {
 		return err
 	}
-
+	//fmt.Printf("obj=(%v)\n", obj)
 	return nil
 }
 
@@ -363,8 +368,13 @@ func (i *ModuleInternal) load(m *Module, instance ModuleInstance) error {
 			i.Name, instance.Name, v.Kind)
 	}
 
-	return fmt.Errorf("cannot load internal attribute %q in module %q – NOT IMPLEMENTED YET",
-		i.Name, instance.Name)
+	m.attributes[i.Name] = attribute{
+		Type:  i.Type,
+		Value: i.Value,
+		Kind:  "internal",
+	}
+
+	return nil
 }
 
 // TODO maybe this should be a more generic thing in pkg/converter, e.g. kw.TypeCheck(interface{})
@@ -432,6 +442,7 @@ func (m *Module) LoadGroups(instanceName, namespace string) (map[string]resource
 
 		groups[manifestPath] = group
 		//log.Printf("Loaded group from %q", manifestPath)
+		//log.Printf("groups[%s]=%#v", manifestPath, group)
 	}
 
 	return groups, nil

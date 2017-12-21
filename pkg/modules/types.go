@@ -52,7 +52,7 @@ type ModuleParameter struct {
 type ModuleInternal struct {
 	Name  string      `yaml:"name" json:"name" hcl:",key"`
 	Type  string      `yaml:"type" json:"type" hcl:"type"`
-	Value interface{} `yaml:"default" json:"default" hcl:"default"`
+	Value interface{} `yaml:"value" json:"value" hcl:"value"`
 }
 
 type attribute struct {
