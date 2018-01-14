@@ -1,20 +1,15 @@
 test: build
-	@$(MAKE) -C ./pkg/apps/assets test
-	@go test -v ./pkg/apps
-	@go test -v ./pkg/converter
-	@go test -v ./cmd/kubegen-experiment-appgen
+	@go test -v ./pkg/...
 	@$(MAKE) test-cmds
 
-build: install
-	@for cmd in kubegen kubegen kubegen-experiment-appgen kubegen-experiment-stack ; do go build ./cmd/$${cmd}/ ; done
-
 install:
-	@for pkg in apps resources util ; do go install ./pkg/$${pkg}/ ; done
+	@go install ./pkg/...
+
+build: install
+	@go build ./cmd/...
 
 assets:
-	@$(MAKE) -C ./pkg/apps/assets rebuild
 	@$(MAKE) -C ./cmd/kubegen/assets rebuild
-	@$(MAKE) -C ./cmd/kubegen-experiment-appgen/assets rebuild
 
 image: Boxfile
 	@docker run --rm -ti \
