@@ -29,7 +29,6 @@ type Modifier struct {
 
 func (m *UnregisteredModifier) Register(c *Converter, branch *BranchLocator) (*Modifier, error) {
 	cb, err := m.makeModifier(c, branch, m.Keyword)
-
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +40,9 @@ func (m *UnregisteredModifier) Register(c *Converter, branch *BranchLocator) (*M
 	}, nil
 }
 
-func (m *Modifier) Do(c *Converter) error { return m.modifierCallback(m, c) }
+func (m *Modifier) Do(c *Converter) error {
+	return m.modifierCallback(m, c)
+}
 
 func (c *Converter) DefineKeyword(kw *Keyword, fn MakeModifier) {
 	c.keywords[kw.EvalPhase][kw.String()] = &UnregisteredModifier{kw, fn}

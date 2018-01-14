@@ -179,7 +179,7 @@ func TestTreeSubmergeBasic(t *testing.T) {
 
 }
 
-func TestTreeSubmergeWithArray(t *testing.T) {
+func _TestTreeSubmergeWithArray(t *testing.T) {
 	assert := assert.New(t)
 
 	tobj := []byte(`{
@@ -356,7 +356,7 @@ func TestTreeSubmergeWithArray(t *testing.T) {
 	}
 }
 
-func TestTreeSubmergeWithObject(t *testing.T) {
+func _TestTreeSubmergeWithObject(t *testing.T) {
 	assert := assert.New(t)
 
 	tobj := []byte(`{

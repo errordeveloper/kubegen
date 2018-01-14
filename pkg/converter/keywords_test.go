@@ -89,12 +89,8 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 		t.Fatalf("failed to laod – %v\ntree=%s", err, conv.tree)
 	}
 
-	if err := conv.run(KeywordEvalPhaseA); err != nil {
+	if err := conv.Run(); err != nil {
 		t.Fatalf("failed to convert – %v\ntree=%s\nlocator.self=%#v", err, conv.tree, conv.locator.self)
-	}
-
-	if err := conv.callModifiersOnce(); err != nil {
-		t.Fatalf("failed to run modifiers – %v", err)
 	}
 
 	unmodified := New()
@@ -208,12 +204,8 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		t.Fatalf("failed to laod – %v\ntree=%s", err, conv.tree)
 	}
 
-	if err := conv.run(KeywordEvalPhaseB); err != nil {
+	if err := conv.Run(); err != nil {
 		t.Fatalf("failed to convert – %v\ntree=%s\nc.locator.self=%#v", err, conv.tree, conv.locator.self)
-	}
-
-	if err := conv.callModifiersOnce(); err != nil {
-		t.Fatalf("failed to run modifiers – %v", err)
 	}
 
 	{
@@ -250,7 +242,10 @@ func TestKeywordLookupSimpleObjectOnly(t *testing.T) {
 		"Kind": "Some",
 		"test1s": [{
 			"kubegen.Object.Lookup": "testInsertObj6"
-		}]
+		}],
+		"test2s": {
+			"kubegen.Object.Lookup": "testInsertObj6"
+		}
 	}`)
 
 	objs := map[string][]byte{
@@ -278,7 +273,7 @@ func TestKeywordLookupSimpleObjectOnly(t *testing.T) {
 			switch branch.kind {
 			case String:
 				cb := func(_ *Modifier, c *Converter) error {
-					if err := c.tree.Delete(branch.path[1:]...); err != nil {
+					if err := c.Delete(branch); err != nil {
 						return fmt.Errorf("could not delete %v – %v", branch.path[1:], err)
 					}
 					if err := c.tree.Submerge(x, branch.parent.path[1:]...); err != nil {
@@ -302,6 +297,16 @@ func TestKeywordLookupSimpleObjectOnly(t *testing.T) {
 
 	{
 		v, err := conv.tree.GetObject("test1s", 0)
+		assert.Nil(err)
+
+		js, err := json.Marshal(v)
+		assert.Nil(err)
+
+		assert.JSONEq(string(objs["testInsertObj6"]), string(js))
+	}
+
+	{
+		v, err := conv.tree.GetObject("test2s")
 		assert.Nil(err)
 
 		js, err := json.Marshal(v)
@@ -735,7 +740,7 @@ func TestKeywordObjectToJSON(t *testing.T) {
 
 	if err := conv.Run(); err != nil {
 		t.Logf("tree=%s", conv.tree)
-		t.Fatalf("failed to convert – %v", err)
+		t.Fatalf("failed to convert �� %v", err)
 	}
 
 	assert.Equal(0, len(conv.modifiers))
@@ -949,7 +954,7 @@ func TestKeywordSelect(t *testing.T) {
 	}
 
 	{
-		v, err := jsonparser.GetString(conv.data, "Kind")
+		v, err := conv.tree.GetString("Kind")
 		assert.Nil(err)
 		assert.Equal("Some", v)
 	}
