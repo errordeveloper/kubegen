@@ -745,6 +745,54 @@
       }
     },
     {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "cart-db"
+        },
+        "name": "cart-db",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "replicas": 2,
+        "selector": {
+          "matchLabels": {
+            "name": "cart-db"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "cart-db"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "mongo",
+                "name": "mongo",
+                "ports": [
+                  {
+                    "containerPort": 27017,
+                    "name": "mongo"
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "emptyDir": {
+                  "medium": "Memory"
+                },
+                "name": "tmp-volume"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
       "apiVersion": "v1",
       "kind": "Service",
       "metadata": {
@@ -1884,6 +1932,54 @@
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
                 }
+              }
+            ],
+            "volumes": [
+              {
+                "emptyDir": {
+                  "medium": "Memory"
+                },
+                "name": "tmp-volume"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "cart-db"
+        },
+        "name": "cart-db",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "replicas": 2,
+        "selector": {
+          "matchLabels": {
+            "name": "cart-db"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "cart-db"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "mongo",
+                "name": "mongo",
+                "ports": [
+                  {
+                    "containerPort": 27017,
+                    "name": "mongo"
+                  }
+                ]
               }
             ],
             "volumes": [
