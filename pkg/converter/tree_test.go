@@ -11,7 +11,7 @@ func TestTreeGet(t *testing.T) {
 	assert := assert.New(t)
 
 	tobj := []byte(`{
-		"Kind": "Some",		
+		"Kind": "Some",
 		"this":  true,
 		"that":  false,
 		"things": [
@@ -88,7 +88,7 @@ func TestTreeGet(t *testing.T) {
 		assert.Equal(float64(3), v)
 	}
 
-	err = tree.ObjectEach(func(key string, value interface{}, valueType ValueType, _ *Tree) error {
+	err = tree.ObjectEach(func(key string, value interface{}, valueType ValueType) error {
 		switch key {
 		case "Kind":
 			assert.Equal(String, valueType)
@@ -126,7 +126,7 @@ func TestTreeGet(t *testing.T) {
 			{
 				tree := &Tree{}
 				tree.self = value.(map[string]interface{})["moreThings"]
-				err := tree.ArrayEach(func(_ int, value interface{}, valueType ValueType, _ *Tree) error {
+				err := tree.ArrayEach(func(_ int, value interface{}, valueType ValueType) error {
 					assert.Equal(Object, valueType)
 					v := `{ "a": 1, "b": 2, "c": 3 }`
 					x, _ := json.Marshal(value)
@@ -166,7 +166,7 @@ func TestTreeGet(t *testing.T) {
 
 				tree := &Tree{}
 				tree.self = value.(map[string]interface{})["nothing"]
-				err := tree.ArrayEach(func(_ int, value interface{}, valueType ValueType, _ *Tree) error {
+				err := tree.ArrayEach(func(_ int, value interface{}, valueType ValueType) error {
 					return nil
 				})
 				assert.NotNil(err)
@@ -175,7 +175,7 @@ func TestTreeGet(t *testing.T) {
 			{
 				tree := &Tree{}
 				tree.self = value.(map[string]interface{})["nothing"].(map[string]interface{})["empty1"]
-				err := tree.ArrayEach(func(_ int, value interface{}, valueType ValueType, _ *Tree) error {
+				err := tree.ArrayEach(func(_ int, value interface{}, valueType ValueType) error {
 					t.Fatal("iterrator callback shouldn't get called")
 					return nil
 				})
@@ -185,7 +185,7 @@ func TestTreeGet(t *testing.T) {
 			{
 				tree := &Tree{}
 				tree.self = value.(map[string]interface{})["nothing"].(map[string]interface{})["empty1"]
-				err := tree.ArrayEach(func(_ int, value interface{}, valueType ValueType, _ *Tree) error {
+				err := tree.ArrayEach(func(_ int, value interface{}, valueType ValueType) error {
 					t.Fatal("iterrator callback shouldn't get called")
 					return nil
 				})

@@ -3,6 +3,7 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/errordeveloper/kubegen/pkg/util"
@@ -98,7 +99,11 @@ func (c *Converter) UnloadObject(obj interface{}, sourcePath string, instanceNam
 	if err != nil {
 		return err
 	}
-	return util.LoadObj(obj, jsonData, sourcePath, instanceName)
+	if err := util.LoadObj(obj, jsonData, sourcePath, instanceName); err != nil {
+		log.Printf("c.tree=%s", c.tree)
+		return err
+	}
+	return nil
 }
 
 func (c *Converter) MarshalJSON() ([]byte, error) { return json.Marshal(c.tree.self) }
@@ -153,21 +158,15 @@ func (c *Converter) doIterate(parentBranch *BranchLocator, key interface{}, valu
 }
 
 func (c *Converter) makeObjectIterator(parentBranch *BranchLocator, errors chan error) treeObjectIterator {
-	callback := func(key string, value interface{}, dataType ValueType, _ *Tree) error {
+	callback := func(key string, value interface{}, dataType ValueType) error {
 		c.doIterate(parentBranch, key, value, dataType, errors)
-		/*
-			paths := [][]interface{}{}
-			for i := range parentBranch.self {
-				paths = append(paths, parentBranch.self[i].path)
-			}
-		*/
 		return nil
 	}
 	return callback
 }
 
 func (c *Converter) makeArrayIterator(parentBranch *BranchLocator, errors chan error) treeArrayIterator {
-	callback := func(index int, value interface{}, dataType ValueType, _ *Tree) error {
+	callback := func(index int, value interface{}, dataType ValueType) error {
 		c.doIterate(parentBranch, index, value, dataType, errors)
 		return nil
 	}

@@ -115,7 +115,7 @@ func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
 	return &vt, nil
 }
 
-type treeObjectIterator func(key string, value interface{}, valueType ValueType, tree *Tree) error
+type treeObjectIterator func(key string, value interface{}, valueType ValueType) error
 
 // ObjectEach is for walking Object branches
 func (t *Tree) ObjectEach(fn treeObjectIterator) error {
@@ -128,14 +128,14 @@ func (t *Tree) ObjectEach(fn treeObjectIterator) error {
 		if err != nil {
 			return err
 		}
-		if err := fn(k, x[k], *vt, t.next); err != nil {
+		if err := fn(k, x[k], *vt); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-type treeArrayIterator func(index int, value interface{}, valueType ValueType, tree *Tree) error
+type treeArrayIterator func(index int, value interface{}, valueType ValueType) error
 
 // ArrayEach is for walking Array branches
 func (t *Tree) ArrayEach(fn treeArrayIterator) error {
@@ -148,7 +148,7 @@ func (t *Tree) ArrayEach(fn treeArrayIterator) error {
 		if err != nil {
 			return err
 		}
-		if err := fn(k, x[k], *vt, t.next); err != nil {
+		if err := fn(k, x[k], *vt); err != nil {
 			return err
 		}
 	}

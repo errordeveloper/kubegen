@@ -27,7 +27,7 @@ func TestConverterBasic(t *testing.T) {
 	assert := assert.New(t)
 
 	tobj := []byte(`{
-		"Kind": "Some",		
+		"Kind": "Some",
 		"this":  true,
 		"that":  false,
 		"things": [
@@ -94,7 +94,7 @@ func TestConverterOnlyObjects(t *testing.T) {
 	assert := assert.New(t)
 
 	tobj := []byte(`{
-			"Kind": "Some",		
+			"Kind": "Some",
 			"this":  true,
 			"that":  false,
 			"things": { "a": 1, "b": 2, "c": 3 },

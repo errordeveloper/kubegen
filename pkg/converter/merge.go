@@ -2,7 +2,6 @@ package converter
 
 import (
 	"fmt"
-	"reflect"
 )
 
 // getPathCutoffIndex is unused, but we have a test for it and it may come handy
@@ -20,86 +19,87 @@ func (t *Tree) getPathCutoffIndex(keys ...interface{}) int {
 	return x
 }
 
-func (t *Tree) Submerge(source *Tree, keys ...interface{}) error {
-	target, err := t.Get(keys...)
+func (t *Tree) Overlay(source *Tree, keys ...interface{}) error {
+	targetSubtree, err := t.Get(keys...)
 	if err != nil {
-		return fmt.Errorf("cannot submerge at path %v – %v", keys, err)
+		return fmt.Errorf("cannot overlay at path %v – %v", keys, err)
 	}
 
 	if source.self == nil {
 		return fmt.Errorf("source.self cannot be nil")
 	}
 
-	return target.merger(source)
+	return targetSubtree.overlay(source)
 }
 
-func (t *Tree) mergeHere(key interface{}, value interface{}) error {
-	objectMerger := func(i string, x map[string]interface{}) error {
+func (t *Tree) overlayHere(key interface{}, value interface{}) error {
+	ifObject := func(i string, x map[string]interface{}) error {
 		t.rootLock()
 		defer t.rootUnlock()
 
 		x[i] = value
 		return nil
 	}
-	arrayMerger := func(i int, x []interface{}) error {
-		t.rootLock()
-		defer t.rootUnlock()
-
+	ifArray := func(i int, x []interface{}) error {
+		// no need for a lock, as setValue will lock it
 		switch {
 		case i == len(x):
-			t.parent.setValue(append(x, value))
+			//log.Printf("appending to array – t=%v", t)
+			t.setValue(append(x, value))
+			//log.Printf("appended to array – t=%v", t)
 		case i > len(x):
+			//log.Println("extending array")
 			extLen := i - len(x)
 			ext := make([]interface{}, extLen)
 			ext[extLen-1] = value
 			t.parent.setValue(append(x, ext))
 		default:
-			return fmt.Errorf("cannot add %d to array of len %d", key, len(x))
+			return fmt.Errorf("cannot overlay %d to array of len %d", key, len(x))
 		}
 		return nil
 	}
-	if err := t.keyTypeSwitch(key, objectMerger, arrayMerger); err != nil {
+	if err := t.keyTypeSwitch(key, ifObject, ifArray); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (t *Tree) merger(source *Tree) error {
-	targetKind := reflect.ValueOf(t.self).Kind()
-	sourceKind := reflect.ValueOf(source.self).Kind()
-	if targetKind != sourceKind {
-		return fmt.Errorf("%s(%v) and %s(%v) are not the same type", targetKind, t.self, sourceKind, source.self)
-	}
-
-	iterateSource := func(k interface{}, v interface{}, vt ValueType, nextSource *Tree) error {
-		if nextSource.self == nil {
-			return fmt.Errorf("nextSource.self cannot be nil")
-		}
-
+func (t *Tree) overlay(source *Tree) error {
+	// for each key in source, attempt to overlay it onto the target
+	iterateSource := func(k interface{}, v interface{}, vt ValueType) error {
+		//log.Printf("<t:%s>.Get(<k:%v>)", t, k)
 		targetSubtree, err := t.Get(k)
 		if targetSubtree != nil && err == nil {
-			if vt == Object || vt == Array {
-				return targetSubtree.merger(nextSource)
-				// return t.merger(nextSource) behaves different, but both options are flaky for some reason
+			//log.Println("key found in target!")
+			switch vt {
+			case Object:
+				nextSource := NewTree(&v)
+				//log.Printf("<targetSubtree:%s>.overlay(<nextSource:%v>)", targetSubtree, nextSource)
+				return targetSubtree.overlay(nextSource)
+			case Array:
+				nextSource := NewTree(&v)
+				//log.Printf("<targetSubtree:%s>.overlay(<nextSource:%v>)", targetSubtree, nextSource)
+				return targetSubtree.overlay(nextSource)
+			default:
+				//log.Printf("leave k=%v of primitive type %s as is!", k, vt)
 			}
-			return nil // leave any existing key as is
-		}
-
-		if err != nil {
-			if isPathNotFound(err) {
-				return t.mergeHere(k, v)
-			}
+		} else if isPathNotFound(err) {
+			//log.Printf("<t:%s>.overlayHere(<k:%v>, <v:%v>)", t, k, v)
+			return t.overlayHere(k, v)
+		} else {
 			return err
 		}
 
-		return fmt.Errorf("cannot submerge – unexpected error")
+		return nil
 	}
 
-	ifObject := func(k string, v interface{}, vt ValueType, n *Tree) error {
-		return iterateSource(k, v, vt, n)
+	ifObject := func(k string, v interface{}, vt ValueType) error {
+		//log.Printf("iterateSourceObject(<k:%v>, <v:%v>, <vt:%s>)", k, v, vt)
+		return iterateSource(k, v, vt)
 	}
-	ifArray := func(k int, v interface{}, vt ValueType, n *Tree) error {
-		return iterateSource(k, v, vt, n)
+	ifArray := func(k int, v interface{}, vt ValueType) error {
+		//log.Printf("iterateSourceArray(<k:%v>, <v:%v>, <vt:%s>)", k, v, vt)
+		return iterateSource(k, v, vt)
 	}
 	if err := source.Each(ifObject, ifArray); err != nil {
 		return err

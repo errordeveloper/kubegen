@@ -81,11 +81,11 @@ func TestGetPathCutoffIndex(t *testing.T) {
 
 }
 
-func TestTreeSubmergeBasic(t *testing.T) {
+func TestTreeOverlayBasic(t *testing.T) {
 	assert := assert.New(t)
 
 	tobj := []byte(`{
-		"Kind": "Some",		
+		"Kind": "Some",
 		"that":  {},
 		"things": [
 			{ "a": "one", "b": "two", "c": "three" }
@@ -114,7 +114,7 @@ func TestTreeSubmergeBasic(t *testing.T) {
 	}
 
 	{
-		err := target.Submerge(source, "things", 0)
+		err := target.Overlay(source, "things", 0)
 		assert.Nil(err)
 	}
 
@@ -149,7 +149,7 @@ func TestTreeSubmergeBasic(t *testing.T) {
 	}
 
 	{
-		err := target.Submerge(source, "that")
+		err := target.Overlay(source, "that")
 		assert.Nil(err)
 
 		v, err := target.GetObject("that")
@@ -162,7 +162,7 @@ func TestTreeSubmergeBasic(t *testing.T) {
 	}
 
 	{
-		err := target.Submerge(source, "test")
+		err := target.Overlay(source, "test")
 		assert.Nil(err)
 
 		err = target.Delete("test", "kubegen.Object.Lookup")
@@ -179,7 +179,7 @@ func TestTreeSubmergeBasic(t *testing.T) {
 
 }
 
-func _TestTreeSubmergeWithArray(t *testing.T) {
+func TestTreeOverlayWithArraysAndObjects(t *testing.T) {
 	assert := assert.New(t)
 
 	tobj := []byte(`{
@@ -200,11 +200,15 @@ func _TestTreeSubmergeWithArray(t *testing.T) {
 			},
 			{
 				"testObj": { "test3": { "bar": "foo" } }
+			},
+			{
+				"testObj": { "test3": { "foo": "baz" } },
+				"testAry": []
 			}
 		]
 	}`)
 
-	sobj := []byte(`{ "testObj": { "test1": 1, "test2": 2, "test3": { "foo": "bar" } }, "testStr": "str" }`)
+	sobj := []byte(`{ "testObj": { "test1": 1, "test2": 2, "test3": { "foo": "bar" } }, "testStr": "str", "testAry": [ { "name": "eman" } ] }`)
 
 	target, err := loadObject(tobj)
 	if err != nil {
@@ -217,12 +221,12 @@ func _TestTreeSubmergeWithArray(t *testing.T) {
 	}
 
 	{
-		//{
-		err := target.Submerge(source, "test1s", 0)
-		if err != nil {
-			t.Fatal(err)
+		{
+			err := target.Overlay(source, "test1s", 0)
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
-		//}
 
 		{
 			v, err := target.GetString("test1s", 0, "kubegen.Object.Lookup")
@@ -250,12 +254,12 @@ func _TestTreeSubmergeWithArray(t *testing.T) {
 	}
 
 	{
-		//{
-		err := target.Submerge(source, "test1s", 1)
-		if err != nil {
-			t.Fatal(err)
+		{
+			err := target.Overlay(source, "test1s", 1)
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
-		//}
 
 		{
 			v, err := target.GetString("test1s", 1, "testStr")
@@ -271,18 +275,26 @@ func _TestTreeSubmergeWithArray(t *testing.T) {
 			assert.Nil(err)
 
 			assert.JSONEq(`{ "test1": 1, "test2": 2, "test3": { "foo": "bar" } }`, string(js))
-			//assert.JSONEq(`{}`, string(js))
+		}
 
+		{
+			v, err := target.GetObject("test1s", 1, "testAry", 0)
+			assert.Nil(err)
+
+			js, err := json.Marshal(v)
+			assert.Nil(err)
+
+			assert.JSONEq(`{ "name": "eman" }`, string(js))
 		}
 	}
 
 	{
-		//{
-		err := target.Submerge(source, "test1s", 2)
-		if err != nil {
-			t.Fatal(err)
+		{
+			err := target.Overlay(source, "test1s", 2)
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
-		//}
 
 		{
 			v, err := target.GetString("test1s", 2, "testStr")
@@ -298,17 +310,16 @@ func _TestTreeSubmergeWithArray(t *testing.T) {
 			assert.Nil(err)
 
 			assert.JSONEq(`{ "test0": 0, "test1": 1, "test2": 2, "test3": { "foo": "bar" } }`, string(js))
-			//assert.JSONEq(`{ "test0": 0 }`, string(js))
 		}
 	}
 
 	{
-		//{
-		err := target.Submerge(source, "test1s", 3)
-		if err != nil {
-			t.Fatal(err)
+		{
+			err := target.Overlay(source, "test1s", 3)
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
-		//}
 
 		{
 			v, err := target.GetString("test1s", 3, "testStr")
@@ -323,19 +334,17 @@ func _TestTreeSubmergeWithArray(t *testing.T) {
 			js, err := json.Marshal(v)
 			assert.Nil(err)
 
-			assert.JSONEq(`{ "test0": 0, "test1": 1, "test2": "2x2", "test3": {"foo":"bar"} }`, string(js))
-			//assert.JSONEq(`{ "test0": 0, "test2": "2x2" }`, string(js))
-
+			assert.JSONEq(`{ "test0": 0, "test1": 1, "test2": "2x2", "test3": { "foo": "bar" } }`, string(js))
 		}
 	}
 
 	{
-		//{
-		err := target.Submerge(source, "test1s", 4)
-		if err != nil {
-			t.Fatal(err)
+		{
+			err := target.Overlay(source, "test1s", 4)
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
-		//}
 
 		{
 			v, err := target.GetString("test1s", 4, "testStr")
@@ -350,13 +359,43 @@ func _TestTreeSubmergeWithArray(t *testing.T) {
 			js, err := json.Marshal(v)
 			assert.Nil(err)
 
-			assert.JSONEq(`{"test1": 1, "test2":2, "test3": { "bar": "foo"}}`, string(js))
-			//assert.JSONEq(`{ "test3": { "bar": "foo" } }`, string(js))
+			assert.JSONEq(`{"test1": 1, "test2":2, "test3": { "bar": "foo", "foo": "bar" } }`, string(js))
 		}
+	}
+
+	{
+		{
+			err := target.Overlay(source, "test1s", 5)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		{
+			v, err := target.GetObject("test1s", 5, "testObj")
+			assert.Nil(err)
+
+			js, err := json.Marshal(v)
+			assert.Nil(err)
+
+			assert.JSONEq(`{"test1": 1, "test2":2, "test3": { "foo": "baz" } }`, string(js))
+		}
+
+		/* TODO
+		{
+			v, err := target.GetObject("test1s", 5, "testAry")
+			assert.Nil(err)
+
+			js, err := json.Marshal(v)
+			assert.Nil(err)
+
+			assert.JSONEq(`[ { "name": "eman" } ]`, string(js))
+		}
+		*/
 	}
 }
 
-func _TestTreeSubmergeWithObject(t *testing.T) {
+func TestTreeOverlayWithObjectOnly(t *testing.T) {
 	assert := assert.New(t)
 
 	tobj := []byte(`{
@@ -394,10 +433,10 @@ func _TestTreeSubmergeWithObject(t *testing.T) {
 	}
 
 	{
-		//{
-		err := target.Submerge(source, "test1s", "0")
-		assert.Nil(err)
-		//}
+		{
+			err := target.Overlay(source, "test1s", "0")
+			assert.Nil(err)
+		}
 
 		{
 			v, err := target.GetString("test1s", "0", "kubegen.Object.Lookup")
@@ -425,10 +464,10 @@ func _TestTreeSubmergeWithObject(t *testing.T) {
 	}
 
 	{
-		//{
-		err := target.Submerge(source, "test1s", "1")
-		assert.Nil(err)
-		//}
+		{
+			err := target.Overlay(source, "test1s", "1")
+			assert.Nil(err)
+		}
 
 		{
 			v, err := target.GetString("test1s", "1", "testStr")
@@ -444,16 +483,14 @@ func _TestTreeSubmergeWithObject(t *testing.T) {
 			assert.Nil(err)
 
 			assert.JSONEq(`{ "test1": 1, "test2": 2, "test3": { "foo": "bar" } }`, string(js))
-			//assert.JSONEq(`{}`, string(js))
-
 		}
 	}
 
 	{
-		//{
-		err := target.Submerge(source, "test1s", "2")
-		assert.Nil(err)
-		//}
+		{
+			err := target.Overlay(source, "test1s", "2")
+			assert.Nil(err)
+		}
 
 		{
 			v, err := target.GetString("test1s", "2", "testStr")
@@ -469,60 +506,52 @@ func _TestTreeSubmergeWithObject(t *testing.T) {
 			assert.Nil(err)
 
 			assert.JSONEq(`{ "test0": 0, "test1": 1, "test2": 2, "test3": { "foo": "bar" } }`, string(js))
-			//assert.JSONEq(`{ "test0": 0 }`, string(js))
 		}
 	}
 
-	/*
+	{
 		{
-			//{
-			err := target.Submerge(source, "test1s", "3")
+			err := target.Overlay(source, "test1s", "3")
 			assert.Nil(err)
-			//}
-
-			{
-				v, err := target.GetString("test1s", "3", "testStr")
-				assert.Nil(err)
-				assert.Equal("str", v)
-			}
-
-			{
-				v, err := target.GetObject("test1s", "3", "testObj")
-				assert.Nil(err)
-
-				js, err := json.Marshal(v)
-				assert.Nil(err)
-
-				assert.JSONEq(`{ "test0": 0, "test1": 1, "test2": "2x2", "test3": {"foo":"bar"} }`, string(js))
-				//assert.JSONEq(`{ "test0": 0, "test2": "2x2" }`, string(js))
-
-			}
 		}
-	*/
 
-	/*
 		{
-			//{
-			err := target.Submerge(source, "test1s", "4")
+			v, err := target.GetString("test1s", "3", "testStr")
 			assert.Nil(err)
-			//}
-
-			{
-				v, err := target.GetString("test1s", "4", "testStr")
-				assert.Nil(err)
-				assert.Equal("str", v)
-			}
-
-			{
-				v, err := target.GetObject("test1s", "4", "testObj")
-				assert.Nil(err)
-
-				js, err := json.Marshal(v)
-				assert.Nil(err)
-
-				assert.JSONEq(`{"test1": 1, "test2": 2, "test3": { "bar": "foo" }}`, string(js))
-				//assert.JSONEq(`{ "test3": { "bar": "foo" } }`, string(js))
-			}
+			assert.Equal("str", v)
 		}
-	*/
+
+		{
+			v, err := target.GetObject("test1s", "3", "testObj")
+			assert.Nil(err)
+
+			js, err := json.Marshal(v)
+			assert.Nil(err)
+
+			assert.JSONEq(`{ "test0": 0, "test1": 1, "test2": "2x2", "test3": {"foo":"bar"} }`, string(js))
+		}
+	}
+
+	{
+		{
+			err := target.Overlay(source, "test1s", "4")
+			assert.Nil(err)
+		}
+
+		{
+			v, err := target.GetString("test1s", "4", "testStr")
+			assert.Nil(err)
+			assert.Equal("str", v)
+		}
+
+		{
+			v, err := target.GetObject("test1s", "4", "testObj")
+			assert.Nil(err)
+
+			js, err := json.Marshal(v)
+			assert.Nil(err)
+
+			assert.JSONEq(`{"test1": 1, "test2": 2, "test3": { "bar": "foo", "foo": "bar"  }}`, string(js))
+		}
+	}
 }

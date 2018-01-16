@@ -95,7 +95,7 @@ func (kw *Keyword) String() string {
 func MakeModifierStringJoin(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
 		x := []string{}
-		branch.Value().ArrayEach(func(_ int, value interface{}, dataType ValueType, _ *Tree) error {
+		branch.Value().ArrayEach(func(_ int, value interface{}, dataType ValueType) error {
 			x = append(x, fmt.Sprintf("%v", value))
 			return nil
 		})

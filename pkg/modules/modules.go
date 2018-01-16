@@ -28,8 +28,14 @@ func (i *Module) makeModifierLookup(c *converter.Converter, branch *converter.Br
 		if err := v.typeCheck(m.Keyword); err != nil {
 			return err
 		}
-		if err := c.Set(m.Branch, v.Value); err != nil {
-			return err
+		if m.Keyword.ReturnType == converter.Array || m.Keyword.ReturnType == converter.Object {
+			if err := c.Overlay(m.Branch, v.Value); err != nil {
+				return err
+			}
+		} else {
+			if err := c.Set(m.Branch, v.Value); err != nil {
+				return err
+			}
 		}
 		return nil
 	}

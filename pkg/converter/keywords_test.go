@@ -276,7 +276,7 @@ func TestKeywordLookupSimpleObjectOnly(t *testing.T) {
 					if err := c.Delete(branch); err != nil {
 						return fmt.Errorf("could not delete %v – %v", branch.path[1:], err)
 					}
-					if err := c.tree.Submerge(x, branch.parent.path[1:]...); err != nil {
+					if err := c.tree.Overlay(x, branch.parent.path[1:]...); err != nil {
 						return fmt.Errorf("could not set object %v – %v", branch.parent.path[1:], err)
 					}
 					return nil
@@ -334,42 +334,42 @@ func _TestKeywordLookupRecursive(t *testing.T) {
 			"kubegen.Object.Lookup": "testInsertObj1"
 		}
 	}`)
-	/*
-		tobj := []byte(`{
-			"Kind": "Some",
-			"test1s": {
-				"kubegen.String.Lookup": "test1val"
+	/* TODO
+	tobj := []byte(`{
+		"Kind": "Some",
+		"test1s": {
+			"kubegen.String.Lookup": "test1val"
+		},
+		"test2n": {
+			"kubegen.Number.Lookup": "test2val"
+		},
+		"test3m": {
+			"kubegen.Array.Lookup": "testInsertArray1"
+		},
+		"test4o": {
+			"kubegen.Object.Lookup": "testInsertObj1"
+		},
+		"test5o": {
+			"kubegen.Object.Lookup": "testInsertObj9"
+		},
+		"test6o": [
+			{
+				"kubegen.Object.Lookup": "testInsertObj6",
+				"testObj": { "test0": 0 }
 			},
-			"test2n": {
-				"kubegen.Number.Lookup": "test2val"
+			{
+				"kubegen.Object.Lookup": "testInsertObj6"
 			},
-			"test3m": {
-				"kubegen.Array.Lookup": "testInsertArray1"
+			{
+				"kubegen.Object.Lookup": "testInsertObj6",
+				"testObj": {}
 			},
-			"test4o": {
-				"kubegen.Object.Lookup": "testInsertObj1"
-			},
-			"test5o": {
-				"kubegen.Object.Lookup": "testInsertObj9"
-			},
-			"test6o": [
-				{
-					"kubegen.Object.Lookup": "testInsertObj6",
-					"testObj": { "test0": 0 }
-				},
-				{
-					"kubegen.Object.Lookup": "testInsertObj6"
-				},
-				{
-					"kubegen.Object.Lookup": "testInsertObj6",
-					"testObj": {}
-				},
-				{
-					"kubegen.Object.Lookup": "testInsertObj6",
-					"testStr": ""
-				}
-			]
-		}`)
+			{
+				"kubegen.Object.Lookup": "testInsertObj6",
+				"testStr": ""
+			}
+		]
+	}`)
 	*/
 
 	objs := map[string][]byte{
@@ -445,7 +445,7 @@ func _TestKeywordLookupRecursive(t *testing.T) {
 			switch branch.kind {
 			case String:
 				cb := func(_ *Modifier, c *Converter) error {
-					err := c.tree.Submerge(x, branch.parent.path[1:]...)
+					err := c.tree.Overlay(x, branch.parent.path[1:]...)
 					if err != nil {
 						return fmt.Errorf("could not set object %v – %v", branch.parent.path[1:], err)
 					}
@@ -478,7 +478,7 @@ func _TestKeywordLookupRecursive(t *testing.T) {
 			switch branch.kind {
 			case String:
 				cb := func(_ *Modifier, c *Converter) error {
-					err := c.tree.Submerge(x, branch.parent.path[1:]...)
+					err := c.tree.Overlay(x, branch.parent.path[1:]...)
 					if err != nil {
 						return fmt.Errorf("could not set array – %v", err)
 					}
