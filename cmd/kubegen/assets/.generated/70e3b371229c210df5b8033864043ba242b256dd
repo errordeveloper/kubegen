@@ -1908,7 +1908,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/cart:0.4.0",
+                "image": "gcr.io/prod-sockshop/cart:0.4.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -2058,7 +2058,7 @@
                     "value": "http://zipkin:9411/api/v1/spans"
                   }
                 ],
-                "image": "docker.io/weaveworksdemos/catalogue:0.3.0",
+                "image": "gcr.io/prod-sockshop/catalogue:0.3.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -2124,7 +2124,7 @@
                     "value": "fake_password"
                   }
                 ],
-                "image": "docker.io/weaveworksdemos/catalogue-db:0.3.0",
+                "image": "gcr.io/prod-sockshop/catalogue-db:0.3.0",
                 "name": "catalogue-db",
                 "ports": [
                   {
@@ -2216,7 +2216,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/front-end:0.3.1",
+                "image": "gcr.io/prod-sockshop/front-end:0.3.1",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/",
@@ -2308,7 +2308,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/orders:0.4.2",
+                "image": "gcr.io/prod-sockshop/orders:0.4.2",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -2410,7 +2410,7 @@
                     "value": "http://zipkin:9411/api/v1/spans"
                   }
                 ],
-                "image": "docker.io/weaveworksdemos/payment:0.4.1",
+                "image": "gcr.io/prod-sockshop/payment:0.4.1",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -2535,7 +2535,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/queue-master:0.3.0",
+                "image": "gcr.io/prod-sockshop/queue-master:0.3.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -2646,7 +2646,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/shipping:0.4.0",
+                "image": "gcr.io/prod-sockshop/shipping:0.4.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -2752,7 +2752,7 @@
                     "value": "http://zipkin:9411/api/v1/spans"
                   }
                 ],
-                "image": "docker.io/weaveworksdemos/user:0.4.0",
+                "image": "gcr.io/prod-sockshop/user:0.4.0",
                 "livenessProbe": {
                   "httpGet": {
                     "path": "/health",
@@ -2808,7 +2808,7 @@
           "spec": {
             "containers": [
               {
-                "image": "docker.io/weaveworksdemos/user-db:0.3.0",
+                "image": "gcr.io/prod-sockshop/user-db:0.3.0",
                 "name": "user-db",
                 "ports": [
                   {

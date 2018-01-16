@@ -11,3 +11,5 @@ Modules:
     Namespace: "sock-shop-prod"
     SourceDir: "modules/sockshop"
     OutputDir: "sockshop-prod.d"
+    Parameters:
+      image_registry: "gcr.io/prod-sockshop"
