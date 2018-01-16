@@ -134,6 +134,15 @@ func (c *Converter) Set(branch *BranchLocator, value interface{}) error {
 	return nil
 }
 
+func (c *Converter) Submerge(branch *BranchLocator, value interface{}) error {
+	if err := c.Delete(branch); err != nil {
+		return err
+	}
+	if err := c.tree.Submerge(NewTree(&value), branch.parent.path[1:]...); err != nil {
+		return fmt.Errorf("failed to submerge `%q:%s` [%v] – %v", branch.PathToString(), branch.path, value, err)
+	}
+	return nil
+}
 func (c *Converter) Delete(branch *BranchLocator) error {
 	if err := c.tree.Delete(branch.path[1:]...); err != nil {
 		return fmt.Errorf("failed to delete `%q` [%v] – %v", branch.PathToString(), branch.path, err)
