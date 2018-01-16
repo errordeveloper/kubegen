@@ -45,14 +45,15 @@ var (
 		EvalPhase:  KeywordEvalPhaseB,
 		VerbName:   "Lookup",
 	}
+
 	KeywordArrayLookup = &Keyword{
 		ReturnType: Array,
-		EvalPhase:  KeywordEvalPhaseB,
+		EvalPhase:  KeywordEvalPhaseC,
 		VerbName:   "Lookup",
 	}
 	KeywordObjectLookup = &Keyword{
 		ReturnType: Object,
-		EvalPhase:  KeywordEvalPhaseB,
+		EvalPhase:  KeywordEvalPhaseC,
 		VerbName:   "Lookup",
 	}
 
@@ -117,7 +118,7 @@ func MakeModifierStringAsYAML(_ *Converter, _ *BranchLocator, _ *Keyword) (Modif
 			return err
 		}
 		{
-			if err = c.Set(m.Branch, string(x)); err != nil {
+			if err := c.Set(m.Branch, string(x)); err != nil {
 				return err
 			}
 			return nil
