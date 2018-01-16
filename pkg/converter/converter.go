@@ -93,16 +93,15 @@ func (c *Converter) LoadObject(data []byte, sourcePath string, instanceName stri
 	return err
 }
 
-func (c *Converter) Unmarshal(obj interface{}) error {
-	data, err := json.Marshal(c.tree.self)
+func (c *Converter) UnloadObject(obj interface{}, sourcePath string, instanceName string) error {
+	jsonData, err := json.Marshal(c.tree.self)
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(data, obj); err != nil {
-		return err
-	}
-	return nil
+	return util.LoadObj(obj, jsonData, sourcePath, instanceName)
 }
+
+func (c *Converter) MarshalJSON() ([]byte, error) { return json.Marshal(c.tree.self) }
 
 func (c *Converter) doIterate(parentBranch *BranchLocator, key interface{}, value interface{}, dataType ValueType, errors chan error) {
 	pathLen := len(parentBranch.path) + 1

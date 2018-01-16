@@ -28,7 +28,6 @@ func (i *Module) makeModifierLookup(c *converter.Converter, branch *converter.Br
 		if err := v.typeCheck(m.Keyword); err != nil {
 			return err
 		}
-		//fmt.Printf("attributes[%s]=(%v)\n", *k, v)
 		if err := c.Set(m.Branch, v.Value); err != nil {
 			return err
 		}
@@ -52,14 +51,12 @@ func loadObjWithModuleContext(group *resources.Group, data []byte, sourcePath st
 	if err := conv.LoadObject(data, sourcePath, instanceName); err != nil {
 		return err
 	}
-
 	if err := conv.Run(); err != nil {
 		return err
 	}
-	if err := conv.Unmarshal(group); err != nil {
+	if err := conv.UnloadObject(group, sourcePath, instanceName); err != nil {
 		return err
 	}
-	//fmt.Printf("obj=(%v)\n", obj)
 	return nil
 }
 
