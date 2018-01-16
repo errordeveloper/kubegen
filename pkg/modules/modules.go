@@ -9,13 +9,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/errordeveloper/kubegen/pkg/converter"
+	"github.com/errordeveloper/kubegen/pkg/macroproc"
 	"github.com/errordeveloper/kubegen/pkg/resources"
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-func (i *Module) makeModifierLookup(c *converter.Converter, branch *converter.BranchLocator, _ *converter.Keyword) (converter.ModifierCallback, error) {
-	cb := func(m *converter.Modifier, c *converter.Converter) error {
+func (i *Module) makeLookupModifier(c *macroproc.Converter, branch *macroproc.BranchLocator, _ *macroproc.Macro) (macroproc.ModifierCallback, error) {
+	cb := func(m *macroproc.Modifier, c *macroproc.Converter) error {
 
 		k := m.Branch.StringValue()
 		if k == nil {
@@ -25,10 +25,10 @@ func (i *Module) makeModifierLookup(c *converter.Converter, branch *converter.Br
 		if !ok {
 			return fmt.Errorf("undeclared attribute %q", *k)
 		}
-		if err := v.typeCheck(m.Keyword); err != nil {
+		if err := v.typeCheck(m.Macro); err != nil {
 			return err
 		}
-		if m.Keyword.ReturnType == converter.Array || m.Keyword.ReturnType == converter.Object {
+		if m.Macro.ReturnType == macroproc.Array || m.Macro.ReturnType == macroproc.Object {
 			if err := c.Overlay(m.Branch, v.Value); err != nil {
 				return err
 			}
@@ -39,28 +39,28 @@ func (i *Module) makeModifierLookup(c *converter.Converter, branch *converter.Br
 		}
 		return nil
 	}
-	return c.TypeCheckModifier(branch, converter.String, cb)
+	return c.TypeCheckModifier(branch, macroproc.String, cb)
 }
 
 func loadObjWithModuleContext(group *resources.Group, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
-	conv := converter.New()
+	mp := macroproc.New()
 
-	conv.DefineKeyword(converter.KeywordStringLookup, moduleContext.makeModifierLookup)
-	conv.DefineKeyword(converter.KeywordNumberLookup, moduleContext.makeModifierLookup)
-	conv.DefineKeyword(converter.KeywordObjectLookup, moduleContext.makeModifierLookup)
-	conv.DefineKeyword(converter.KeywordArrayLookup, moduleContext.makeModifierLookup)
+	mp.DefineMacro(macroproc.MacroStringLookup, moduleContext.makeLookupModifier)
+	mp.DefineMacro(macroproc.MacroNumberLookup, moduleContext.makeLookupModifier)
+	mp.DefineMacro(macroproc.MacroObjectLookup, moduleContext.makeLookupModifier)
+	mp.DefineMacro(macroproc.MacroArrayLookup, moduleContext.makeLookupModifier)
 
-	conv.DefineKeyword(converter.KeywordStringJoin, converter.MakeModifierStringJoin)
-	conv.DefineKeyword(converter.KeywordStringAsJSON, converter.MakeModifierStringAsJSON)
-	conv.DefineKeyword(converter.KeywordStringAsYAML, converter.MakeModifierStringAsYAML)
+	mp.DefineMacro(macroproc.MacroStringJoin, macroproc.MakeModifierStringJoin)
+	mp.DefineMacro(macroproc.MacroStringAsJSON, macroproc.MakeModifierStringAsJSON)
+	mp.DefineMacro(macroproc.MacroStringAsYAML, macroproc.MakeModifierStringAsYAML)
 
-	if err := conv.LoadObject(data, sourcePath, instanceName); err != nil {
+	if err := mp.LoadObject(data, sourcePath, instanceName); err != nil {
 		return err
 	}
-	if err := conv.Run(); err != nil {
+	if err := mp.Run(); err != nil {
 		return err
 	}
-	if err := conv.UnloadObject(group, sourcePath, instanceName); err != nil {
+	if err := mp.UnloadObject(group, sourcePath, instanceName); err != nil {
 		return err
 	}
 	return nil
@@ -380,16 +380,16 @@ func (i *ModuleInternal) load(m *Module, instance ModuleInstance) error {
 	return nil
 }
 
-// TODO maybe this should be a more generic thing in pkg/converter, e.g. kw.TypeCheck(interface{})
-func (i *attribute) typeCheck(kw *converter.Keyword) error {
-	rt := strings.Title(kw.ReturnType.String())
+// TODO maybe this should be a more generic thing in pkg/macroproc, e.g. macro.TypeCheck(interface{})
+func (i *attribute) typeCheck(macro *macroproc.Macro) error {
+	rt := strings.Title(macro.ReturnType.String())
 	cannotConvertError := fmt.Errorf("cannot convert %s type to % for %q", i.Type, rt)
 	if i.Type != rt {
 		return cannotConvertError
 	}
 
-	switch kw.ReturnType {
-	case converter.Number:
+	switch macro.ReturnType {
+	case macroproc.Number:
 		switch i.Value.(type) {
 		case int:
 			break
@@ -398,7 +398,7 @@ func (i *attribute) typeCheck(kw *converter.Keyword) error {
 		default:
 			return cannotConvertError
 		}
-	case converter.String:
+	case macroproc.String:
 		switch i.Value.(type) {
 		case string:
 			break

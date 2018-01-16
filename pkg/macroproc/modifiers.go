@@ -1,4 +1,4 @@
-package converter
+package macroproc
 
 import (
 	"fmt"
@@ -6,35 +6,35 @@ import (
 	"strings"
 )
 
-type MakeModifier func(*Converter, *BranchLocator, *Keyword) (ModifierCallback, error)
+type MakeModifier func(*Converter, *BranchLocator, *Macro) (ModifierCallback, error)
 type ModifierCallback func(*Modifier, *Converter) error
 
-type Keyword struct {
+type Macro struct {
 	ReturnType ValueType
-	EvalPhase  KeywordEvalPhase
+	EvalPhase  MacrosEvalPhase
 	VerbName   string
 	Argument   bool
 }
 
 type UnregisteredModifier struct {
-	Keyword      *Keyword
+	Macro        *Macro
 	makeModifier MakeModifier
 }
 
 type Modifier struct {
-	Keyword          *Keyword
+	Macro            *Macro
 	Branch           *BranchLocator
 	modifierCallback ModifierCallback
 }
 
 func (m *UnregisteredModifier) Register(c *Converter, branch *BranchLocator) (*Modifier, error) {
-	cb, err := m.makeModifier(c, branch, m.Keyword)
+	cb, err := m.makeModifier(c, branch, m.Macro)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Modifier{
-		Keyword:          m.Keyword,
+		Macro:            m.Macro,
 		Branch:           branch,
 		modifierCallback: cb,
 	}, nil
@@ -44,15 +44,15 @@ func (m *Modifier) Do(c *Converter) error {
 	return m.modifierCallback(m, c)
 }
 
-func (c *Converter) DefineKeyword(kw *Keyword, fn MakeModifier) {
-	c.keywords[kw.EvalPhase][kw.String()] = &UnregisteredModifier{kw, fn}
-	c.keywordMatcher.update(kw)
+func (c *Converter) DefineMacro(m *Macro, fn MakeModifier) {
+	c.macros[m.EvalPhase][m.String()] = &UnregisteredModifier{m, fn}
+	c.macroMatcher.update(m)
 }
 
-func (c *Converter) DefineKeywordWithCallbackt(kw *Keyword, cb func() MakeModifier) {
+func (c *Converter) DefineMacroWithCallbackt(m *Macro, cb func() MakeModifier) {
 	fn := cb()
-	c.keywords[kw.EvalPhase][kw.String()] = &UnregisteredModifier{kw, fn}
-	c.keywordMatcher.update(kw)
+	c.macros[m.EvalPhase][m.String()] = &UnregisteredModifier{m, fn}
+	c.macroMatcher.update(m)
 }
 
 func (c *Converter) TypeCheckModifier(branch *BranchLocator, kind ValueType, cb ModifierCallback) (ModifierCallback, error) {
@@ -62,32 +62,32 @@ func (c *Converter) TypeCheckModifier(branch *BranchLocator, kind ValueType, cb 
 	return cb, nil
 }
 
-const validKeywordFmt = `^kubegen.(%s).(%s)(\((\S+)\))?$`
+const validMacroFmt = `^kubegen.(%s).(%s)(\((\S+)\))?$`
 
-type keywordMatcher struct {
+type macroMatcher struct {
 	validTypes []string
 	validVerbs []string
 	currentExp *regexp.Regexp
 }
 
-func newKeywordMatcher() *keywordMatcher {
-	return &keywordMatcher{
-		currentExp: regexp.MustCompile(fmt.Sprintf(validKeywordFmt, `\w`, `\w`)),
+func newMacroMatcher() *macroMatcher {
+	return &macroMatcher{
+		currentExp: regexp.MustCompile(fmt.Sprintf(validMacroFmt, `\w`, `\w`)),
 	}
 }
 
-func (m *keywordMatcher) update(kw *Keyword) {
-	m.validTypes = append(m.validTypes, strings.Title(kw.ReturnType.String()))
-	m.validVerbs = append(m.validVerbs, kw.VerbName)
+func (m *macroMatcher) update(macro *Macro) {
+	m.validTypes = append(m.validTypes, strings.Title(macro.ReturnType.String()))
+	m.validVerbs = append(m.validVerbs, macro.VerbName)
 
 	m.currentExp = regexp.MustCompile(
-		fmt.Sprintf(validKeywordFmt,
+		fmt.Sprintf(validMacroFmt,
 			strings.Join(m.validTypes, "|"),
 			strings.Join(m.validVerbs, "|"),
 		))
 }
 
-func (m *keywordMatcher) isKeyword(key interface{}) (string, bool) {
+func (m *macroMatcher) isMacro(key interface{}) (string, bool) {
 	k, ok := key.(string)
 	if !ok {
 		return k, false
@@ -99,17 +99,17 @@ func (m *keywordMatcher) isKeyword(key interface{}) (string, bool) {
 	return k, true
 }
 
-func (c *Converter) ifKeywordDoRegister(newBranch *BranchLocator, key interface{}, errors chan error) {
-	kw, _ := c.keywordMatcher.isKeyword(key)
+func (c *Converter) ifMacroDoRegister(newBranch *BranchLocator, key interface{}, errors chan error) {
+	m, _ := c.macroMatcher.isMacro(key)
 	// TODO using second return value makes our tests fail
 	// we still have work todo here to use regexp matcher properly
 	//if !ok {
 	//	return
 	//}
-	if modifier, ok := c.keywords[c.keywordEvalPhase][kw]; ok {
+	if modifier, ok := c.macros[c.macrosEvalPhase][m]; ok {
 		registered, err := modifier.Register(c, newBranch)
 		if err != nil {
-			errors <- fmt.Errorf("failed to register modifier for keyword %q – %v", key, err)
+			errors <- fmt.Errorf("failed to register modifier for macro %q – %v", key, err)
 			return
 		}
 		c.modifiers[newBranch.PathToString()] = registered

@@ -1,4 +1,4 @@
-package converter
+package macroproc
 
 import (
 	"encoding/json"
@@ -9,90 +9,90 @@ import (
 )
 
 const (
-	KeywordEvalPhaseA = iota
-	KeywordEvalPhaseB
-	KeywordEvalPhaseC
-	KeywordEvalPhaseD
-	KeywordEvalPhases
+	MacrosEvalPhaseA = iota
+	MacrosEvalPhaseB
+	MacrosEvalPhaseC
+	MacrosEvalPhaseD
+	MacrosEvalPhases
 )
 
-var keywordEvalPhases = [KeywordEvalPhases]KeywordEvalPhase{
-	KeywordEvalPhaseA,
-	KeywordEvalPhaseB,
-	KeywordEvalPhaseC,
-	KeywordEvalPhaseD,
+var macrosEvalPhases = [MacrosEvalPhases]MacrosEvalPhase{
+	MacrosEvalPhaseA,
+	MacrosEvalPhaseB,
+	MacrosEvalPhaseC,
+	MacrosEvalPhaseD,
 }
 
 var (
-	KeywordBooleanIf = &Keyword{
+	MacroBooleanIf = &Macro{
 		ReturnType: Null,
-		EvalPhase:  KeywordEvalPhaseA,
+		EvalPhase:  MacrosEvalPhaseA,
 		VerbName:   "If",
 	}
 
-	KeywordBooleanLookup = &Keyword{
+	MacroBooleanLookup = &Macro{
 		ReturnType: Boolean,
-		EvalPhase:  KeywordEvalPhaseB,
+		EvalPhase:  MacrosEvalPhaseB,
 		VerbName:   "Lookup",
 	}
-	KeywordStringLookup = &Keyword{
+	MacroStringLookup = &Macro{
 		ReturnType: String,
-		EvalPhase:  KeywordEvalPhaseB,
+		EvalPhase:  MacrosEvalPhaseB,
 		VerbName:   "Lookup",
 	}
-	KeywordNumberLookup = &Keyword{
+	MacroNumberLookup = &Macro{
 		ReturnType: Number,
-		EvalPhase:  KeywordEvalPhaseB,
+		EvalPhase:  MacrosEvalPhaseB,
 		VerbName:   "Lookup",
 	}
 
-	KeywordArrayLookup = &Keyword{
+	MacroArrayLookup = &Macro{
 		ReturnType: Array,
-		EvalPhase:  KeywordEvalPhaseC,
+		EvalPhase:  MacrosEvalPhaseC,
 		VerbName:   "Lookup",
 	}
-	KeywordObjectLookup = &Keyword{
+	MacroObjectLookup = &Macro{
 		ReturnType: Object,
-		EvalPhase:  KeywordEvalPhaseC,
+		EvalPhase:  MacrosEvalPhaseC,
 		VerbName:   "Lookup",
 	}
 
-	KeywordStringJoin = &Keyword{
+	MacroStringJoin = &Macro{
 		ReturnType: String,
-		EvalPhase:  KeywordEvalPhaseC,
+		EvalPhase:  MacrosEvalPhaseC,
 		VerbName:   "Join",
 	}
 
-	KeywordStringAsJSON = &Keyword{
+	MacroStringAsJSON = &Macro{
 		ReturnType: String,
-		EvalPhase:  KeywordEvalPhaseD,
+		EvalPhase:  MacrosEvalPhaseD,
 		VerbName:   "AsJSON",
 	}
-	KeywordStringAsYAML = &Keyword{
+	MacroStringAsYAML = &Macro{
 		ReturnType: String,
-		EvalPhase:  KeywordEvalPhaseD,
+		EvalPhase:  MacrosEvalPhaseD,
 		VerbName:   "AsYAML",
 	}
 
-	LoadObjectJSON = &Keyword{
+	LoadObjectJSON = &Macro{
 		ReturnType: Object,
-		EvalPhase:  KeywordEvalPhaseA,
+		EvalPhase:  MacrosEvalPhaseA,
 		VerbName:   "LoadJSON",
 	}
 
-	LoadArrayJSON = &Keyword{
+	LoadArrayJSON = &Macro{
 		ReturnType: Array,
-		EvalPhase:  KeywordEvalPhaseA,
+		EvalPhase:  MacrosEvalPhaseA,
 		VerbName:   "LoadJSON",
 	}
 )
 
-func (kw *Keyword) String() string {
+func (m *Macro) String() string {
 	// TODO maybe add args if given, so we get nicer error messages?
-	return fmt.Sprintf("kubegen.%s.%s", kw.ReturnType.String(), kw.VerbName)
+	return fmt.Sprintf("kubegen.%s.%s", m.ReturnType.String(), m.VerbName)
 }
 
-func MakeModifierStringJoin(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+func MakeModifierStringJoin(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
 		x := []string{}
 		branch.Value().ArrayEach(func(_ int, value interface{}, dataType ValueType) error {
@@ -107,7 +107,7 @@ func MakeModifierStringJoin(c *Converter, branch *BranchLocator, _ *Keyword) (Mo
 	return c.TypeCheckModifier(branch, Array, cb)
 }
 
-func MakeModifierStringAsYAML(_ *Converter, _ *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+func MakeModifierStringAsYAML(_ *Converter, _ *BranchLocator, _ *Macro) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
 		o := new(interface{})
 		if err := json.Unmarshal(m.Branch.Value().Bytes(), o); err != nil {
@@ -127,7 +127,7 @@ func MakeModifierStringAsYAML(_ *Converter, _ *BranchLocator, _ *Keyword) (Modif
 	return cb, nil
 }
 
-func MakeModifierStringAsJSON(_ *Converter, _ *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+func MakeModifierStringAsJSON(_ *Converter, _ *BranchLocator, _ *Macro) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
 		if err := c.Set(m.Branch, m.Branch.Value().String()); err != nil {
 			return err
@@ -137,7 +137,7 @@ func MakeModifierStringAsJSON(_ *Converter, _ *BranchLocator, _ *Keyword) (Modif
 	return cb, nil
 }
 
-func doLoadJSON(c *Converter, branch *BranchLocator, kw *Keyword, newData []byte) error {
+func doLoadJSON(c *Converter, branch *BranchLocator, m *Macro, newData []byte) error {
 	/*
 		var (
 			err         error
@@ -149,7 +149,7 @@ func doLoadJSON(c *Converter, branch *BranchLocator, kw *Keyword, newData []byte
 		)
 
 		isRoot := (len(branch.path[1:]) == 1)
-		switch kw.ReturnType {
+		switch m.ReturnType {
 		case Object:
 			if isRoot {
 				_, oldDataType, _, err = jsonparser.Get(c.data)
@@ -188,7 +188,7 @@ func doLoadJSON(c *Converter, branch *BranchLocator, kw *Keyword, newData []byte
 			return fmt.Errorf("cannot unmarshal new data – %v", err)
 		}
 
-		switch kw.ReturnType {
+		switch m.ReturnType {
 		case Object:
 			//if err := mergo.MergeWithOverwrite(&oldObj, newObj.(map[string]interface{})); err != nil {
 			if err := mergo.Merge(&oldObj, newObj.(map[string]interface{})); err != nil {
@@ -208,7 +208,7 @@ func doLoadJSON(c *Converter, branch *BranchLocator, kw *Keyword, newData []byte
 
 		c.Delete(branch)
 
-		switch kw.ReturnType {
+		switch m.ReturnType {
 		case Object:
 			if isRoot {
 				if c.data, err = util.EnsureJSON(newData); err != nil {
@@ -219,7 +219,7 @@ func doLoadJSON(c *Converter, branch *BranchLocator, kw *Keyword, newData []byte
 		}
 
 		if c.data, err = jsonparser.Set(c.data, newData, branch.parent.path[1:]...); err != nil {
-			return fmt.Errorf("could not set %s value of %s – %v", kw.ReturnType.String(), branch.parent.PathToString(), err)
+			return fmt.Errorf("could not set %s value of %s – %v", m.ReturnType.String(), branch.parent.PathToString(), err)
 		}
 		if c.data, err = util.EnsureJSON(c.data); err != nil {
 			return err
@@ -228,9 +228,9 @@ func doLoadJSON(c *Converter, branch *BranchLocator, kw *Keyword, newData []byte
 	return nil
 }
 
-func addModifierLoadJSON(c *Converter, branch *BranchLocator, _ *Keyword, jsonData []byte) (ModifierCallback, error) {
+func addModifierLoadJSON(c *Converter, branch *BranchLocator, _ *Macro, jsonData []byte) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
-		return doLoadJSON(c, m.Branch, m.Keyword, jsonData)
+		return doLoadJSON(c, m.Branch, m.Macro, jsonData)
 	}
 	return c.TypeCheckModifier(branch, String, cb)
 }

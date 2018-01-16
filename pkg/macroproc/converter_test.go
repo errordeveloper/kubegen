@@ -1,4 +1,4 @@
-package converter
+package macroproc
 
 import (
 	"encoding/json"
@@ -69,7 +69,7 @@ func TestConverterBasic(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.run(KeywordEvalPhaseB); err != nil {
+	if err := conv.run(MacrosEvalPhaseB); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -132,7 +132,7 @@ func TestConverterOnlyObjects(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.run(KeywordEvalPhaseB); err != nil {
+	if err := conv.run(MacrosEvalPhaseB); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -276,7 +276,7 @@ func TestBasicKubegenAsset(t *testing.T) {
 		t.Fatalf("failed to laod – %v", err)
 	}
 
-	if err := conv.run(KeywordEvalPhaseB); err != nil {
+	if err := conv.run(MacrosEvalPhaseB); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 
@@ -341,7 +341,7 @@ func TestConverterGet(t *testing.T) {
 		{ "mash": { "count": 1 }, "chips": { "count": 2 }, "sausages": true, "gravy": { "beef": 1, "chicken": 0 }  }
 	`), tobj3)
 
-	if err := conv.run(KeywordEvalPhaseB); err != nil {
+	if err := conv.run(MacrosEvalPhaseB); err != nil {
 		t.Fatalf("failed to covert – %v", err)
 	}
 

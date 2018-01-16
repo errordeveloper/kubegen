@@ -1,4 +1,4 @@
-package converter
+package macroproc
 
 import (
 	"encoding/json"
@@ -25,7 +25,7 @@ type (
 	branchPath       = []interface{}
 	stringBranchPath = []string
 
-	KeywordEvalPhase = int
+	MacrosEvalPhase = int
 )
 
 const (
@@ -41,14 +41,14 @@ type Converter struct {
 	locator BranchLocator
 	tree    *Tree
 	// TODO add module context, cause we want to be able to lookup parameters etc
-	// when we encouter a keyword, we construct a callback to do modifications
+	// when we encouter a macro, we construct a callback to do modifications
 	// as it's unsafe to do it right on the spot (that may be just because of
 	// how our parser works)
 	// TODO we will have to use regex matchers here actually, we can keep keys
 	// as string and use compiledRegexp.String()
-	keywords         [KeywordEvalPhases]map[string]*UnregisteredModifier
-	keywordMatcher   *keywordMatcher
-	keywordEvalPhase KeywordEvalPhase
+	macros          [MacrosEvalPhases]map[string]*UnregisteredModifier
+	macroMatcher    *macroMatcher
+	macrosEvalPhase MacrosEvalPhase
 	// modifiers are actual modifiers mapped by dot-joined path
 	// TODO we probably want to do something better here, as dot-joined path
 	// doesn't guarantee uniqueness (TBD, also cosider escaping literal dots)
@@ -57,14 +57,14 @@ type Converter struct {
 
 func New() *Converter {
 	return &Converter{
-		keywords: [KeywordEvalPhases]map[string]*UnregisteredModifier{
-			KeywordEvalPhaseA: make(map[string]*UnregisteredModifier),
-			KeywordEvalPhaseB: make(map[string]*UnregisteredModifier),
-			KeywordEvalPhaseC: make(map[string]*UnregisteredModifier),
-			KeywordEvalPhaseD: make(map[string]*UnregisteredModifier),
+		macros: [MacrosEvalPhases]map[string]*UnregisteredModifier{
+			MacrosEvalPhaseA: make(map[string]*UnregisteredModifier),
+			MacrosEvalPhaseB: make(map[string]*UnregisteredModifier),
+			MacrosEvalPhaseC: make(map[string]*UnregisteredModifier),
+			MacrosEvalPhaseD: make(map[string]*UnregisteredModifier),
 		},
-		keywordMatcher: newKeywordMatcher(),
-		modifiers:      make(map[string]*Modifier),
+		macroMatcher: newMacroMatcher(),
+		modifiers:    make(map[string]*Modifier),
 	}
 }
 
@@ -137,7 +137,7 @@ func (c *Converter) doIterate(parentBranch *BranchLocator, key interface{}, valu
 	}
 	parentBranch.self[key] = &newBranch
 
-	c.ifKeywordDoRegister(&newBranch, key, errors)
+	c.ifMacroDoRegister(&newBranch, key, errors)
 
 	switch dataType {
 	case Object:
@@ -194,7 +194,7 @@ func (c *Converter) checkKind() (err error) {
 	return
 }
 
-func (c *Converter) run(phase KeywordEvalPhase) error {
+func (c *Converter) run(phase MacrosEvalPhase) error {
 	// it is okay to check this here, so we fail early,
 	// however we should abstract deep checks more specifically
 	if err := c.checkKind(); err != nil {
@@ -209,7 +209,7 @@ func (c *Converter) run(phase KeywordEvalPhase) error {
 		path:       []interface{}{nil},
 		stringPath: []string{""},
 	}
-	c.keywordEvalPhase = phase
+	c.macrosEvalPhase = phase
 
 	{
 		errors := make(chan error)
@@ -226,7 +226,7 @@ func (c *Converter) run(phase KeywordEvalPhase) error {
 }
 
 func (c *Converter) Run() error {
-	eval := func(phase KeywordEvalPhase) error {
+	eval := func(phase MacrosEvalPhase) error {
 		for {
 			if err := c.run(phase); err != nil {
 				return err
@@ -240,7 +240,7 @@ func (c *Converter) Run() error {
 		}
 	}
 
-	for phase := range keywordEvalPhases {
+	for phase := range macrosEvalPhases {
 		if err := eval(phase); err != nil {
 			return err
 		}

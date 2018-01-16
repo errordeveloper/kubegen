@@ -1,4 +1,4 @@
-package converter
+package macroproc
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestKeywordModifiersDeletion(t *testing.T) {
+func TestMacroModifiersDeletion(t *testing.T) {
 	conv := New()
 
 	tobj := []byte(`{
@@ -63,15 +63,15 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 	assert := assert.New(t)
 
 	assert.NotEqual(tobj, umobj,
-		"object without modifier keywords should be different")
+		"object without modifier macros should be different")
 	assert.True(len(tobj) > len(umobj),
-		"object without modifier keywords should be larger")
+		"object without modifier macros should be larger")
 
-	conv.DefineKeyword(&Keyword{
+	conv.DefineMacro(&Macro{
 		ReturnType: Null,
-		EvalPhase:  KeywordEvalPhaseA,
+		EvalPhase:  MacrosEvalPhaseA,
 		VerbName:   "Delete",
-	}, func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	}, func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 		switch branch.kind {
 		case String:
 			fallthrough
@@ -99,15 +99,15 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 	}
 
 	assert.Equal(unmodified.tree.Len(), conv.tree.Len(),
-		"new object should be the same len as one without modifier keywords")
+		"new object should be the same len as one without modifier macros")
 
 	assert.JSONEq(unmodified.tree.String(), conv.tree.String(),
-		"new object should be exactly the same as one without modifier keywords")
+		"new object should be exactly the same as one without modifier macros")
 
-	assert.Equal(0, len(unmodified.keywords[KeywordEvalPhaseA]),
-		"object without modifier keywords has no keyword handlers")
+	assert.Equal(0, len(unmodified.macros[MacrosEvalPhaseA]),
+		"object without modifier macros has no macro handlers")
 	assert.Equal(0, len(unmodified.modifiers),
-		"object without modifier keywords has no keyword callbacks")
+		"object without modifier macros has no macro callbacks")
 
 	reloaded := New()
 	if err := unmodified.loadStrict(conv.tree.Bytes()); err != nil {
@@ -115,7 +115,7 @@ func TestKeywordModifiersDeletion(t *testing.T) {
 	}
 }
 
-func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
+func TestMacroErrorsAndModifiersLookup(t *testing.T) {
 	conv := New()
 
 	assert := assert.New(t)
@@ -148,8 +148,8 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 		[]byte(`{ "Kind": "Some", "test6nf": { "kubegen.Number.Lookup": {} } }`),
 	}
 
-	conv.DefineKeyword(KeywordStringLookup,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(MacroStringLookup,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			p := branch.PathToString()
 			switch branch.kind {
 			case String:
@@ -165,8 +165,8 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 			}
 		})
 
-	conv.DefineKeyword(KeywordNumberLookup,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(MacroNumberLookup,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			p := branch.PathToString()
 			switch branch.kind {
 			case String:
@@ -184,7 +184,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 
 	for _, v := range badSyntax {
 		conv2 := New()
-		conv2.keywords = conv.keywords
+		conv2.macros = conv.macros
 		var err error
 		err = conv2.loadStrict(v)
 		assert.NotNil(err)
@@ -192,11 +192,11 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 
 	for _, v := range badModfiersOrObjecs {
 		conv2 := New()
-		conv2.keywords = conv.keywords
+		conv2.macros = conv.macros
 		var err error
 		err = conv2.loadStrict(v)
 		assert.Nil(err)
-		err = conv2.run(KeywordEvalPhaseB)
+		err = conv2.run(MacrosEvalPhaseB)
 		assert.NotNil(err)
 	}
 
@@ -233,7 +233,7 @@ func TestKeywordErrorsAndModifiersLookup(t *testing.T) {
 	}
 }
 
-func TestKeywordLookupSimpleObjectOnly(t *testing.T) {
+func TestMacroLookupSimpleObjectOnly(t *testing.T) {
 	conv := New()
 
 	assert := assert.New(t)
@@ -252,8 +252,8 @@ func TestKeywordLookupSimpleObjectOnly(t *testing.T) {
 		"testInsertObj6": []byte(`{ "testObj": { "test1": 1, "test2": 2 }, "testStr": "str" }`),
 	}
 
-	conv.DefineKeyword(KeywordObjectLookup,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(MacroObjectLookup,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			p := branch.PathToString()
 			var js []byte
 			k := branch.StringValue()
@@ -316,7 +316,7 @@ func TestKeywordLookupSimpleObjectOnly(t *testing.T) {
 	}
 }
 
-func _TestKeywordLookupRecursive(t *testing.T) {
+func _TestMacroLookupRecursive(t *testing.T) {
 	conv := New()
 
 	assert := assert.New(t)
@@ -389,8 +389,8 @@ func _TestKeywordLookupRecursive(t *testing.T) {
 		"testInsertObj6":   []byte(`{ "testObj": { "test1": 1, "test2": 2 }, "testStr": "str" }`),
 	}
 
-	conv.DefineKeyword(KeywordStringLookup,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(MacroStringLookup,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			p := branch.PathToString()
 
 			switch branch.kind {
@@ -407,8 +407,8 @@ func _TestKeywordLookupRecursive(t *testing.T) {
 			}
 		})
 
-	conv.DefineKeyword(KeywordNumberLookup,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(MacroNumberLookup,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			p := branch.PathToString()
 			switch branch.kind {
 			case String:
@@ -424,8 +424,8 @@ func _TestKeywordLookupRecursive(t *testing.T) {
 			}
 		})
 
-	conv.DefineKeyword(KeywordObjectLookup,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(MacroObjectLookup,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			p := branch.PathToString()
 			var js []byte
 			k := branch.StringValue()
@@ -457,8 +457,8 @@ func _TestKeywordLookupRecursive(t *testing.T) {
 			}
 		})
 
-	conv.DefineKeyword(KeywordArrayLookup,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(MacroArrayLookup,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			p := branch.PathToString()
 			var js []byte
 			k := branch.StringValue()
@@ -658,7 +658,7 @@ func _TestKeywordLookupRecursive(t *testing.T) {
 
 }
 
-func TestKeywordJoinStrings(t *testing.T) {
+func TestMacroJoinStrings(t *testing.T) {
 	conv := New()
 
 	assert := assert.New(t)
@@ -677,7 +677,7 @@ func TestKeywordJoinStrings(t *testing.T) {
 		t.Fatalf("failed to load – %v", err)
 	}
 
-	conv.DefineKeyword(KeywordStringJoin, MakeModifierStringJoin)
+	conv.DefineMacro(MacroStringJoin, MakeModifierStringJoin)
 
 	if err := conv.Run(); err != nil {
 		t.Logf("tree=%s", conv.tree)
@@ -693,7 +693,7 @@ func TestKeywordJoinStrings(t *testing.T) {
 	}
 }
 
-func TestKeywordObjectToJSON(t *testing.T) {
+func TestMacroObjectToJSON(t *testing.T) {
 	conv := New()
 
 	assert := assert.New(t)
@@ -735,8 +735,8 @@ func TestKeywordObjectToJSON(t *testing.T) {
 		t.Fatalf("failed to load – %v", err)
 	}
 
-	conv.DefineKeyword(KeywordStringAsJSON, MakeModifierStringAsJSON)
-	conv.DefineKeyword(KeywordStringAsYAML, MakeModifierStringAsYAML)
+	conv.DefineMacro(MacroStringAsJSON, MakeModifierStringAsJSON)
+	conv.DefineMacro(MacroStringAsYAML, MakeModifierStringAsYAML)
 
 	if err := conv.Run(); err != nil {
 		t.Logf("tree=%s", conv.tree)
@@ -764,19 +764,19 @@ func TestKeywordObjectToJSON(t *testing.T) {
 	}
 }
 
-func TestKeywordToString(t *testing.T) {
+func TestMacroToString(t *testing.T) {
 	assert := assert.New(t)
 
-	kw := &Keyword{
+	m := &Macro{
 		ReturnType: String,
-		EvalPhase:  KeywordEvalPhaseA,
+		EvalPhase:  MacrosEvalPhaseA,
 		VerbName:   "FooBar",
 	}
 
-	assert.Equal("kubegen.String.FooBar", kw.String())
+	assert.Equal("kubegen.String.FooBar", m.String())
 }
 
-func _TestKeywordLoadJSON(t *testing.T) {
+func _TestMacroLoadJSON(t *testing.T) {
 	conv := New()
 
 	assert := assert.New(t)
@@ -810,8 +810,8 @@ func _TestKeywordLoadJSON(t *testing.T) {
 			}
 	}`)
 
-	conv.DefineKeyword(LoadObjectJSON,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(LoadObjectJSON,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			var newData []byte
 			k := branch.StringValue()
 			if v, ok := tfiles[*k]; ok {
@@ -822,8 +822,8 @@ func _TestKeywordLoadJSON(t *testing.T) {
 			return MakeObjectLoadJSON(c, branch, newData)
 		})
 
-	conv.DefineKeyword(LoadArrayJSON,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(LoadArrayJSON,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			var newData []byte
 			k := branch.StringValue()
 			if v, ok := tfiles[*k]; ok {
@@ -894,7 +894,7 @@ func TestAllAttributes(t *testing.T) {
 */
 
 /*
-func TestKeywordSelect(t *testing.T) {
+func TestMacroSelect(t *testing.T) {
 	conv := New()
 
 	assert := assert.New(t)
@@ -910,8 +910,8 @@ func TestKeywordSelect(t *testing.T) {
 		}
 	}`)
 
-	conv.DefineKeyword(LoadObjectJSON,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(LoadObjectJSON,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -921,8 +921,8 @@ func TestKeywordSelect(t *testing.T) {
 			return MakeObjectLoadJSON(c, branch, newData)
 		})
 
-	conv.DefineKeyword(LoadArrayJSON,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(LoadArrayJSON,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			var newData []byte
 			if v, ok := tfiles[string(branch.value)]; ok {
 				newData = v
@@ -932,15 +932,15 @@ func TestKeywordSelect(t *testing.T) {
 			return MakeArrayLoadJSON(c, branch, newData)
 		})
 
-	objectSelect := &Keyword{
+	objectSelect := &Macro{
 		ReturnType: Array,
-		EvalPhase:  KeywordEvalPhaseA,
+		EvalPhase:  MacrosEvalPhaseA,
 		VerbName:   "LoadJSON",
 		Argument:   true,
 	}
 
-	conv.DefineKeyword(objectSelect,
-		func(c *Converter, branch *BranchLocator, _ *Keyword) (ModifierCallback, error) {
+	conv.DefineMacro(objectSelect,
+		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			return nil, nil
 		})
 

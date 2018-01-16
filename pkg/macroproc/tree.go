@@ -1,4 +1,4 @@
-package converter
+package macroproc
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 
 // Tree holds arbitrary JSON object and allows
 // for walking and manipulating it (as needed
-// for the controller package)
+// for this package)
 type Tree struct {
 	mutex    sync.Mutex
 	self     interface{}
