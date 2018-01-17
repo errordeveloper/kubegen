@@ -40,7 +40,7 @@ func (i *Secret) Convert(localGroup *Group) (*v1.Secret, error) {
 	for _, v := range i.ReadFromFiles {
 		data, err := ioutil.ReadFile(v)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read Secret %q data from file %q – %v", v, err)
+			return nil, fmt.Errorf("cannot read Secret data from file %q – %v", v, err)
 		}
 		secret.Data[v] = data
 	}

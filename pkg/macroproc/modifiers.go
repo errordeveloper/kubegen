@@ -109,7 +109,7 @@ func (c *Converter) ifMacroDoRegister(newBranch *BranchLocator, key interface{},
 	if modifier, ok := c.macros[c.macrosEvalPhase][m]; ok {
 		registered, err := modifier.Register(c, newBranch)
 		if err != nil {
-			errors <- fmt.Errorf("failed to register modifier for macro %q – %v", key, err)
+			errors <- fmt.Errorf("failed to register modifier for macro %v – %v", key, err)
 			return
 		}
 		c.modifiers[newBranch.PathToString()] = registered
@@ -129,7 +129,7 @@ func (c *Converter) callModifiersOnce() error {
 
 func (c *Converter) Set(branch *BranchLocator, value interface{}) error {
 	if err := c.tree.Set(value, branch.parent.path[1:]...); err != nil {
-		return fmt.Errorf("failed to set `%q:%s` [%v] – %v", branch.PathToString(), branch.path, value, err)
+		return fmt.Errorf("failed to set %v – %v", value, err)
 	}
 	return nil
 }
@@ -139,13 +139,13 @@ func (c *Converter) Overlay(branch *BranchLocator, value interface{}) error {
 		return err
 	}
 	if err := c.tree.Overlay(NewTree(&value), branch.parent.path[1:]...); err != nil {
-		return fmt.Errorf("failed to overlay `%q:%s` [%v] – %v", branch.PathToString(), branch.path, value, err)
+		return fmt.Errorf("failed to overlay %v onto %v – %v", value, branch.parent.value, err)
 	}
 	return nil
 }
 func (c *Converter) Delete(branch *BranchLocator) error {
 	if err := c.tree.Delete(branch.path[1:]...); err != nil {
-		return fmt.Errorf("failed to delete `%q` [%v] – %v", branch.PathToString(), branch.path, err)
+		return fmt.Errorf("failed to delete %v – %v", branch.value, err)
 	}
 	return nil
 }

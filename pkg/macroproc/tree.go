@@ -121,7 +121,7 @@ type treeObjectIterator func(key string, value interface{}, valueType ValueType)
 func (t *Tree) ObjectEach(fn treeObjectIterator) error {
 	x, ok := t.self.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("%s is not map[string]interface{}", reflect.ValueOf(t.self).Kind())
+		return fmt.Errorf("%s is not map[string]interface{} (ObjectEach)", reflect.ValueOf(t.self).Kind())
 	}
 	for k := range x {
 		vt, err := t.makeNext(k, x[k])
@@ -141,7 +141,7 @@ type treeArrayIterator func(index int, value interface{}, valueType ValueType) e
 func (t *Tree) ArrayEach(fn treeArrayIterator) error {
 	x, ok := t.self.([]interface{})
 	if !ok {
-		return fmt.Errorf("%s is not []interface{}", reflect.ValueOf(t.self).Kind())
+		return fmt.Errorf("%s is not []interface{} (ArrayEach)", reflect.ValueOf(t.self).Kind())
 	}
 	for k := range x {
 		vt, err := t.makeNext(k, x[k])
@@ -180,13 +180,13 @@ func (t *Tree) keyTypeSwitch(key interface{}, ifObject objectValueCallback, ifAr
 	case string:
 		x, ok := t.self.(map[string]interface{})
 		if !ok {
-			return fmt.Errorf("%s is not map[string]interface{}", reflect.ValueOf(t.self).Kind())
+			return fmt.Errorf("%s is not map[string]interface{} (keyTypeSwitch)", reflect.ValueOf(t.self).Kind())
 		}
 		return ifObject(key.(string), x)
 	case int:
 		x, ok := t.self.([]interface{})
 		if !ok {
-			return fmt.Errorf("%s is not []interface{}", reflect.ValueOf(t.self).Kind())
+			return fmt.Errorf("%s is not []interface{} (keyTypeSwitch)", reflect.ValueOf(t.self).Kind())
 		}
 		return ifArray(key.(int), x)
 	default:

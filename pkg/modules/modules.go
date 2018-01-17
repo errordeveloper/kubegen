@@ -383,7 +383,7 @@ func (i *ModuleInternal) load(m *Module, instance ModuleInstance) error {
 // TODO maybe this should be a more generic thing in pkg/macroproc, e.g. macro.TypeCheck(interface{})
 func (i *attribute) typeCheck(macro *macroproc.Macro) error {
 	rt := strings.Title(macro.ReturnType.String())
-	cannotConvertError := fmt.Errorf("cannot convert %s type to % for %q", i.Type, rt)
+	cannotConvertError := fmt.Errorf("cannot convert type %s to %s for %q", i.Type, rt, macro)
 	if i.Type != rt {
 		return cannotConvertError
 	}
