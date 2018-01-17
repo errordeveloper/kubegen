@@ -381,9 +381,8 @@ func TestTreeOverlayWithArraysAndObjects(t *testing.T) {
 			assert.JSONEq(`{"test1": 1, "test2":2, "test3": { "foo": "baz" } }`, string(js))
 		}
 
-		/* TODO
 		{
-			v, err := target.GetObject("test1s", 5, "testAry")
+			v, err := target.GetArray("test1s", 5, "testAry")
 			assert.Nil(err)
 
 			js, err := json.Marshal(v)
@@ -391,7 +390,6 @@ func TestTreeOverlayWithArraysAndObjects(t *testing.T) {
 
 			assert.JSONEq(`[ { "name": "eman" } ]`, string(js))
 		}
-		*/
 	}
 }
 

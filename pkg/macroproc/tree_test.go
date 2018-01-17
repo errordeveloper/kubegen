@@ -419,5 +419,109 @@ func TestTreeDeleteArrayElements(t *testing.T) {
 	js, err := json.Marshal(tree.self)
 	assert.Nil(err)
 	assert.JSONEq(result, string(js))
+}
 
+func TestArrayAppend(t *testing.T) {
+	assert := assert.New(t)
+
+	tobj := []byte(`{
+		"a1": ["0", 1, 2, 3],
+		"a2": [10, 20, 30],
+		"o": {
+			"a3": ["100", "200", "300"],
+			"a4": [null, true]
+		}
+	}`)
+
+	tree, err := loadObject(tobj)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Nil(tree.SetString("-1.0000", "a1", 0))
+	assert.Nil(tree.SetFloat(9.9, "a1", 1))
+	assert.Nil(tree.SetBoolean(false, "a1", 2))
+
+	assert.Nil(tree.SetFloat(-20.2201, "a2", 1))
+
+	assert.Nil(tree.SetFloat(-30.3301005, "o", "a3", 1))
+	assert.Nil(tree.SetArray(make([]interface{}, 0), "o", "a4", 1))
+
+	{
+
+		result := `{
+			"a1": ["-1.0000", 9.9, false, 3],
+			"a2": [10, -20.2201, 30],
+			"o": {
+				"a3": ["100", -30.3301005, "300"],
+				"a4": [null, []]
+			}
+		}`
+
+		js, err := json.Marshal(tree.self)
+		assert.Nil(err)
+		assert.JSONEq(result, string(js))
+	}
+
+	assert.Nil(tree.SetArray([]interface{}{"str", 0, -1.0}, "o", "a4", 1))
+
+	{
+
+		result := `{
+			"a1": ["-1.0000", 9.9, false, 3],
+			"a2": [10, -20.2201, 30],
+			"o": {
+				"a3": ["100", -30.3301005, "300"],
+				"a4": [null, ["str", 0, -1.0]]
+			}
+		}`
+
+		js, err := json.Marshal(tree.self)
+		assert.Nil(err)
+		assert.JSONEq(result, string(js))
+	}
+
+	{
+		v, err := tree.GetArray("o", "a4", 1)
+		assert.Nil(err)
+		assert.Nil(tree.SetArray(append(v, -2.1), "o", "a4", 1))
+	}
+
+	{
+
+		result := `{
+			"a1": ["-1.0000", 9.9, false, 3],
+			"a2": [10, -20.2201, 30],
+			"o": {
+				"a3": ["100", -30.3301005, "300"],
+				"a4": [null, ["str", 0, -1.0, -2.1]]
+			}
+		}`
+
+		js, err := json.Marshal(tree.self)
+		assert.Nil(err)
+		assert.JSONEq(result, string(js))
+	}
+
+	{
+		v, err := tree.Get("o", "a4", 1)
+		assert.Nil(err)
+		v.setValue(append(v.self.([]interface{}), 3.2))
+	}
+
+	{
+
+		result := `{
+			"a1": ["-1.0000", 9.9, false, 3],
+			"a2": [10, -20.2201, 30],
+			"o": {
+				"a3": ["100", -30.3301005, "300"],
+				"a4": [null, ["str", 0, -1.0, -2.1, 3.2]]
+			}
+		}`
+
+		js, err := json.Marshal(tree.self)
+		assert.Nil(err)
+		assert.JSONEq(result, string(js))
+	}
 }

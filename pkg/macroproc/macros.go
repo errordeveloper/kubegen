@@ -45,15 +45,14 @@ var (
 		EvalPhase:  MacrosEvalPhaseB,
 		VerbName:   "Lookup",
 	}
-
 	MacroArrayLookup = &Macro{
 		ReturnType: Array,
-		EvalPhase:  MacrosEvalPhaseC,
+		EvalPhase:  MacrosEvalPhaseB,
 		VerbName:   "Lookup",
 	}
 	MacroObjectLookup = &Macro{
 		ReturnType: Object,
-		EvalPhase:  MacrosEvalPhaseC,
+		EvalPhase:  MacrosEvalPhaseB,
 		VerbName:   "Lookup",
 	}
 

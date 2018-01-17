@@ -3,7 +3,6 @@ package macroproc
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/errordeveloper/kubegen/pkg/util"
@@ -49,9 +48,7 @@ type Converter struct {
 	macros          [MacrosEvalPhases]map[string]*UnregisteredModifier
 	macroMatcher    *macroMatcher
 	macrosEvalPhase MacrosEvalPhase
-	// modifiers are actual modifiers mapped by dot-joined path
-	// TODO we probably want to do something better here, as dot-joined path
-	// doesn't guarantee uniqueness (TBD, also cosider escaping literal dots)
+	// modifiers are actual modifiers mapped by path
 	modifiers map[string]*Modifier
 }
 
@@ -100,7 +97,7 @@ func (c *Converter) UnloadObject(obj interface{}, sourcePath string, instanceNam
 		return err
 	}
 	if err := util.LoadObj(obj, jsonData, sourcePath, instanceName); err != nil {
-		log.Printf("c.tree=%s", c.tree)
+		// log.Printf("c.tree=%s", c.tree)
 		return err
 	}
 	return nil
@@ -234,13 +231,14 @@ func (c *Converter) Run() error {
 			if len(c.modifiers) == 0 {
 				return nil
 			}
+			// log.Println(c.modifiers)
 			if err := c.callModifiersOnce(); err != nil {
 				return err
 			}
 		}
 	}
-
 	for phase := range macrosEvalPhases {
+		// log.Printf("len(c.modifiers)=%d eval(<phase:%d>)", len(c.modifiers), phase)
 		if err := eval(phase); err != nil {
 			return err
 		}

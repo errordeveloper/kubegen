@@ -173,7 +173,7 @@ func (t *Tree) Each(ifObject treeObjectIterator, ifArray treeArrayIterator) erro
 }
 
 type objectValueCallback func(i string, x map[string]interface{}) error
-type arrayValueCallback func(i int, x []interface{}) error
+type arrayValueCallback func(i int, x *[]interface{}) error
 
 func (t *Tree) keyTypeSwitch(key interface{}, ifObject objectValueCallback, ifArray arrayValueCallback) error {
 	switch key.(type) {
@@ -188,12 +188,11 @@ func (t *Tree) keyTypeSwitch(key interface{}, ifObject objectValueCallback, ifAr
 		if !ok {
 			return fmt.Errorf("%s is not []interface{} (keyTypeSwitch)", reflect.ValueOf(t.self).Kind())
 		}
-		return ifArray(key.(int), x)
+		return ifArray(key.(int), &x)
 	default:
 		return fmt.Errorf("key %#v is not string or number – path not found", key)
 	}
 }
-
 func (t *Tree) moveTo(index int, keys []interface{}) (*Tree, error) {
 	k := keys[index]
 	var next *Tree
@@ -224,19 +223,21 @@ func (t *Tree) moveTo(index int, keys []interface{}) (*Tree, error) {
 		return nil
 	}
 
-	ifArray := func(k int, x []interface{}) error {
-		if len(x)-1 < k {
+	ifArray := func(k int, x *[]interface{}) error {
+		if len(*x)-1 < k {
 			return fmt.Errorf("key %d in poisition %d is out of range for array – %v path not found", k, index, keys)
 		}
-		next.self = x[k]
+		next.self = (*x)[k]
 		next.key = k
 		next.setValue = func(newValue interface{}) {
 			t.rootLock()
-			x[k] = newValue
+			//log.Printf("x=%v k=%v newValue=%v", x, k, newValue)
+			(*x)[k] = newValue
+			//log.Printf("x=%v", x)
 			t.rootUnlock()
 		}
 		next.delete = func() {
-			next.parent.setValue(append(x[:k], x[k+1:]...))
+			next.parent.setValue(append((*x)[:k], (*x)[k+1:]...))
 		}
 		return nil
 	}
@@ -249,6 +250,9 @@ func (t *Tree) moveTo(index int, keys []interface{}) (*Tree, error) {
 
 func isPathNotFound(err error) bool {
 	return strings.HasSuffix(fmt.Sprintf("%v", err), "path not found")
+}
+func isObjectNotArray(err error) bool {
+	return strings.HasSuffix(fmt.Sprintf("%v", err), "map is not []interface{} (keyTypeSwitch)")
 }
 
 // Get fetches sub-tree at a given path

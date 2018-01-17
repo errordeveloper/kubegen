@@ -19,6 +19,7 @@ func (t *Tree) getPathCutoffIndex(keys ...interface{}) int {
 	return x
 }
 
+// Overlay source tree onto
 func (t *Tree) Overlay(source *Tree, keys ...interface{}) error {
 	targetSubtree, err := t.Get(keys...)
 	if err != nil {
@@ -32,74 +33,96 @@ func (t *Tree) Overlay(source *Tree, keys ...interface{}) error {
 	return targetSubtree.overlay(source)
 }
 
-func (t *Tree) overlayHere(key interface{}, value interface{}) error {
-	ifObject := func(i string, x map[string]interface{}) error {
+func (t *Tree) overlayHere(newKey interface{}, newValue interface{}) error {
+	ifObject := func(k string, v map[string]interface{}) error {
+		// log.Printf("=> <t:%v>.overlayHereObject(<newKey:%v>, <newValue:%v>)", t, newKey, newValue)
 		t.rootLock()
 		defer t.rootUnlock()
 
-		x[i] = value
+		v[k] = newValue
+		// log.Printf("<= <t:%v>.overlayHereObject(<newKey:%v>, <newValue:%v>)", t, newKey, newValue)
 		return nil
 	}
-	ifArray := func(i int, x []interface{}) error {
-		// no need for a lock, as setValue will lock it
+	ifArray := func(k int, v *[]interface{}) error {
+		// log.Printf("=> <t:%v>.overlayHereArray(<newKey:%v>, <newValue:%v>)", t, newKey, newValue)
+		// no need for t.rootLock as t.setValue takes the lock
+
 		switch {
-		case i == len(x):
-			//log.Printf("appending to array – t=%v", t)
-			t.setValue(append(x, value))
-			//log.Printf("appended to array – t=%v", t)
-		case i > len(x):
-			//log.Println("extending array")
-			extLen := i - len(x)
-			ext := make([]interface{}, extLen)
-			ext[extLen-1] = value
-			t.parent.setValue(append(x, ext))
+		case k == len(*v):
+			// log.Printf("appending to array – t=%v", t)
+			t.setValue(append(*v, newValue))
+		// arrays are always iterated in the same order, so we shouldn't need this
+		/*
+			case k > len(*v):
+					// log.Printf("extending array – t=%v", t)
+					extLen := k - len(*v)
+					ext := make([]interface{}, extLen)
+					ext[extLen-1] = newValue
+					t.setValue(append(*v, ext...))
+		*/
 		default:
-			return fmt.Errorf("cannot overlay %d to array of len %d", key, len(x))
+			return fmt.Errorf("cannot overlay array of len %d", len(*v))
 		}
+		// log.Printf("<= <t:%v>.overlayHereArray(<newKey:%v>, <newValue:%v>)", t, newKey, newValue)
 		return nil
 	}
-	if err := t.keyTypeSwitch(key, ifObject, ifArray); err != nil {
+	if err := t.keyTypeSwitch(newKey, ifObject, ifArray); err != nil {
 		return err
 	}
 	return nil
 }
 
+func (t *Tree) replaceEmptiedObjectWithArray(source *Tree) error {
+	// log.Printf("=> <t:%s>.replaceEmptiedObjectWithArray(<source:%v>)", t, source)
+
+	if v, ok := t.self.(map[string]interface{}); ok {
+		switch {
+		case len(v) == 0:
+			// log.Println("new array with one element")
+			t.setValue(source.self.([]interface{}))
+		default:
+			return fmt.Errorf("cannot replace non-empty object with an array")
+		}
+	}
+	// log.Printf("<= <t:%s>.replaceEmptiedObjectWithArray(<source:%v>)", t, source)
+	// we must return a nil here, otherwise we iterate over this again an get an error
+	return nil
+	// TODO perhaps we are still have some stale state, but this generally works
+	// return fmt.Errorf("cannot replace %s with an array", reflect.ValueOf(t.self).Kind())
+}
+
 func (t *Tree) overlay(source *Tree) error {
 	// for each key in source, attempt to overlay it onto the target
-	iterateSource := func(k interface{}, v interface{}, vt ValueType) error {
-		//log.Printf("<t:%s>.Get(<k:%v>)", t, k)
-		targetSubtree, err := t.Get(k)
+	iterateSource := func(key interface{}, value interface{}, vt ValueType) error {
+		// log.Printf("<t:%s>.Get(<k:%v>)", t, key)
+		targetSubtree, err := t.Get(key)
 		if targetSubtree != nil && err == nil {
-			//log.Println("key found in target!")
-			switch vt {
-			case Object:
-				nextSource := NewTree(&v)
-				//log.Printf("<targetSubtree:%s>.overlay(<nextSource:%v>)", targetSubtree, nextSource)
+			// iterate over non-primitive types, otherwise leave source as is
+			if vt == Object || vt == Array {
+				nextSource := NewTree(&value)
+				// log.Printf("<targetSubtree:%s>.overlay(<nextSource:%v>)", targetSubtree, nextSource)
 				return targetSubtree.overlay(nextSource)
-			case Array:
-				nextSource := NewTree(&v)
-				//log.Printf("<targetSubtree:%s>.overlay(<nextSource:%v>)", targetSubtree, nextSource)
-				return targetSubtree.overlay(nextSource)
-			default:
-				//log.Printf("leave k=%v of primitive type %s as is!", k, vt)
 			}
 		} else if isPathNotFound(err) {
-			//log.Printf("<t:%s>.overlayHere(<k:%v>, <v:%v>)", t, k, v)
-			return t.overlayHere(k, v)
+			// when key is missing, add it
+			return t.overlayHere(key, value)
+		} else if isObjectNotArray(err) {
+			// very common case of { "kubegen.Array.Lookup": "someParam" } => [ <someParamValue> ]
+			return t.replaceEmptiedObjectWithArray(source)
 		} else {
 			return err
 		}
-
+		//fmt.Printf("return <t:%s>.overlay(<source:%s>)", t, source)
 		return nil
 	}
 
-	ifObject := func(k string, v interface{}, vt ValueType) error {
-		//log.Printf("iterateSourceObject(<k:%v>, <v:%v>, <vt:%s>)", k, v, vt)
-		return iterateSource(k, v, vt)
+	ifObject := func(key string, value interface{}, vt ValueType) error {
+		//log.Printf("iterateSourceObject(<k:%v>, <v:%v>, <vt:%s>)", key, value, vt)
+		return iterateSource(key, value, vt)
 	}
-	ifArray := func(k int, v interface{}, vt ValueType) error {
-		//log.Printf("iterateSourceArray(<k:%v>, <v:%v>, <vt:%s>)", k, v, vt)
-		return iterateSource(k, v, vt)
+	ifArray := func(key int, value interface{}, vt ValueType) error {
+		//log.Printf("iterateSourceArray(<k:%v>, <v:%v>, <vt:%s>)", key, value, vt)
+		return iterateSource(key, value, vt)
 	}
 	if err := source.Each(ifObject, ifArray); err != nil {
 		return err

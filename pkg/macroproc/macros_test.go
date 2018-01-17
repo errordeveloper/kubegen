@@ -171,7 +171,7 @@ func TestMacroErrorsAndModifiersLookup(t *testing.T) {
 			switch branch.kind {
 			case String:
 				cb := func(_ *Modifier, c *Converter) error {
-					if err := c.Set(branch, 0); err != nil {
+					if err := c.Set(branch, 1); err != nil {
 						return fmt.Errorf("could not set number – %v", err)
 					}
 					return nil
@@ -223,13 +223,13 @@ func TestMacroErrorsAndModifiersLookup(t *testing.T) {
 	{
 		v, err := conv.tree.GetInt("test3n")
 		assert.Nil(err)
-		assert.Equal(0, v)
+		assert.Equal(1, v)
 	}
 
 	{
 		v, err := conv.tree.GetInt("test4n")
 		assert.Nil(err)
-		assert.Equal(0, v)
+		assert.Equal(1, v)
 	}
 }
 
@@ -273,11 +273,8 @@ func TestMacroLookupSimpleObjectOnly(t *testing.T) {
 			switch branch.kind {
 			case String:
 				cb := func(_ *Modifier, c *Converter) error {
-					if err := c.Delete(branch); err != nil {
-						return fmt.Errorf("could not delete %v – %v", branch.path[1:], err)
-					}
-					if err := c.tree.Overlay(x, branch.parent.path[1:]...); err != nil {
-						return fmt.Errorf("could not set object %v – %v", branch.parent.path[1:], err)
+					if err := c.Overlay(branch, x.self); err != nil {
+						return fmt.Errorf("%v – c.tree=%s", err, c.tree)
 					}
 					return nil
 				}
@@ -316,25 +313,11 @@ func TestMacroLookupSimpleObjectOnly(t *testing.T) {
 	}
 }
 
-func _TestMacroLookupRecursive(t *testing.T) {
+func TestMacroLookupRecursive(t *testing.T) {
 	conv := New()
 
 	assert := assert.New(t)
 
-	tobj := []byte(`{
-		"Kind": "Some",
-		"test1s": {
-			"kubegen.String.Lookup": "test1val",
-			"foo": {}
-		},
-		"test2n": {
-			"kubegen.Number.Lookup": "test2val"
-		},
-		"test4o": {
-			"kubegen.Object.Lookup": "testInsertObj1"
-		}
-	}`)
-	/* TODO
 	tobj := []byte(`{
 		"Kind": "Some",
 		"test1s": {
@@ -370,7 +353,6 @@ func _TestMacroLookupRecursive(t *testing.T) {
 			}
 		]
 	}`)
-	*/
 
 	objs := map[string][]byte{
 		"testInsertObj1": []byte(`{
@@ -385,14 +367,13 @@ func _TestMacroLookupRecursive(t *testing.T) {
 		}`),
 		"testInsertObj2":   []byte(`{ "bar": "TEST_VAL4" }`),
 		"testInsertObj3":   []byte(`{ "kubegen.Object.Lookup": "testInsertObj4" }`),
-		"testInsertArray1": []byte(`[{ "kubegen.Number.Lookup": "test3val" },{ "kubegen.String.Lookup": "test3val" },{ "kubegen.Object.Lookup": "testInsertObj2" }]`),
+		"testInsertArray1": []byte(`[{ "a": { "kubegen.Number.Lookup": "test3valN" }},{ "kubegen.String.Lookup": "test3valS" },{ "kubegen.Object.Lookup": "testInsertObj2" }]`),
 		"testInsertObj6":   []byte(`{ "testObj": { "test1": 1, "test2": 2 }, "testStr": "str" }`),
 	}
 
 	conv.DefineMacro(MacroStringLookup,
 		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			p := branch.PathToString()
-
 			switch branch.kind {
 			case String:
 				cb := func(_ *Modifier, c *Converter) error {
@@ -435,7 +416,7 @@ func _TestMacroLookupRecursive(t *testing.T) {
 			if v, ok := objs[*k]; ok {
 				js = v
 			} else {
-				js = []byte("{ }")
+				js = []byte(`{ "empty": true }`)
 			}
 			x, err := loadObject(js)
 			if err != nil {
@@ -445,9 +426,8 @@ func _TestMacroLookupRecursive(t *testing.T) {
 			switch branch.kind {
 			case String:
 				cb := func(_ *Modifier, c *Converter) error {
-					err := c.tree.Overlay(x, branch.parent.path[1:]...)
-					if err != nil {
-						return fmt.Errorf("could not set object %v – %v", branch.parent.path[1:], err)
+					if err := c.Overlay(branch, x.self); err != nil {
+						return fmt.Errorf("%v – c.tree=%s", err, c.tree)
 					}
 					return nil
 				}
@@ -478,9 +458,8 @@ func _TestMacroLookupRecursive(t *testing.T) {
 			switch branch.kind {
 			case String:
 				cb := func(_ *Modifier, c *Converter) error {
-					err := c.tree.Overlay(x, branch.parent.path[1:]...)
-					if err != nil {
-						return fmt.Errorf("could not set array – %v", err)
+					if err := c.Overlay(branch, x.self); err != nil {
+						return fmt.Errorf("%v – c.tree=%s", err, c.tree)
 					}
 					return nil
 				}
@@ -514,7 +493,7 @@ func _TestMacroLookupRecursive(t *testing.T) {
 		v, err := conv.tree.GetValue("test3m")
 		assert.Nil(err)
 
-		a := fmt.Sprintf(`[12345,"TEST_STRING",%s]`, objs["testInsertObj2"])
+		a := fmt.Sprintf(`[{"a":12345},"TEST_STRING",%s]`, objs["testInsertObj2"])
 
 		js, err := json.Marshal(v)
 		assert.Nil(err)
@@ -529,7 +508,7 @@ func _TestMacroLookupRecursive(t *testing.T) {
 		js, err := json.Marshal(v)
 		assert.Nil(err)
 
-		assert.JSONEq("{}", string(js))
+		assert.JSONEq(`{ "empty": true }`, string(js))
 	}
 
 	{
@@ -548,7 +527,7 @@ func _TestMacroLookupRecursive(t *testing.T) {
 		v, err := conv.tree.GetArray("test3m")
 		assert.Nil(err)
 
-		a := fmt.Sprintf(`[12345,"TEST_STRING",%s]`, objs["testInsertObj2"])
+		a := fmt.Sprintf(`[{"a":12345},"TEST_STRING",%s]`, objs["testInsertObj2"])
 
 		js, err := json.Marshal(v)
 		assert.Nil(err)
@@ -591,7 +570,7 @@ func _TestMacroLookupRecursive(t *testing.T) {
 		js, err := json.Marshal(v)
 		assert.Nil(err)
 
-		assert.JSONEq("{}", string(js))
+		assert.JSONEq(`{ "empty": true }`, string(js))
 	}
 
 	{
@@ -601,7 +580,7 @@ func _TestMacroLookupRecursive(t *testing.T) {
 		js, err := json.Marshal(v)
 		assert.Nil(err)
 
-		assert.JSONEq("{}", string(js))
+		assert.JSONEq(`{ "empty": true }`, string(js))
 	}
 
 	{
@@ -633,7 +612,7 @@ func _TestMacroLookupRecursive(t *testing.T) {
 		js, err := json.Marshal(v)
 		assert.Nil(err)
 
-		assert.JSONEq("{}", string(js))
+		assert.JSONEq(`{ "empty": true }`, string(js))
 	}
 
 	{
@@ -643,7 +622,7 @@ func _TestMacroLookupRecursive(t *testing.T) {
 		js, err := json.Marshal(v)
 		assert.Nil(err)
 
-		assert.JSONEq("{}", string(js))
+		assert.JSONEq(`{ "empty": true }`, string(js))
 	}
 
 	{
@@ -653,9 +632,8 @@ func _TestMacroLookupRecursive(t *testing.T) {
 		js, err := json.Marshal(v)
 		assert.Nil(err)
 
-		assert.JSONEq(`{ "testObj": { "test1": 1, "test2": 2 }, "testStr": "str" }`, string(js))
+		assert.JSONEq(`{ "testObj": { "test0": 0, "test1": 1, "test2": 2 }, "testStr": "str" }`, string(js))
 	}
-
 }
 
 func TestMacroJoinStrings(t *testing.T) {
