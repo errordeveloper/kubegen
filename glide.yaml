@@ -17,24 +17,21 @@ import:
   - pkg/util/intstr
 - package: "github.com/spf13/cobra"
 - package: "github.com/hashicorp/hcl"
-- package: "github.com/imdario/mergo"
-  version: "6633656"
 - package: "github.com/docker/docker/pkg/term"
   version: "40af569"
 - package: "github.com/d4l3k/go-highlight"
   repo: "https://github.com/errordeveloper/go-highlight"
   version: "ce3036b16fa0fdcee2a3f3a58d15c377a9b60093"
-- package: "github.com/errordeveloper/testcli"
-- package: "github.com/stretchr/testify"
-- package: "github.com/davecgh/go-spew"
-  version: "04cdfd42973bb9c8589fd6a731800cf222fde1a9"
-  subpackages:
-  - spew
 - package: "github.com/jinzhu/copier"
   version: "8bfca8a"
 - package: "github.com/ulule/deepcopier"
   version: "4a5401c"
-- package: "github.com/guregu/null"
-- package: "github.com/lib/pq"
-- package: "github.com/oleiade/reflections"
 - package: "github.com/equinox-io/equinox"
+- package: "github.com/davecgh/go-spew"
+  # must be set here to enforce what we need for testify
+  # and not what client-go pulls in
+  version: "04cdfd42973bb9c8589fd6a731800cf222fde1a9"
+  subpackages: [spew]
+testImports:
+- package: "github.com/errordeveloper/testcli"
+- package: "github.com/stretchr/testify"

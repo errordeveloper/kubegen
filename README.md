@@ -3,6 +3,16 @@
 Kubernetes resource definitions are too verbose, and there is no built-in framework for reusability.
 Writing good resource templates is hard, whether you are rolling your own or using Helm.
 
+`kubegen` reduces the verbosity of Kubernetes resource definitions, and adds macros for templating.
+
+You can use JSON, YAML and HCL as configuration format for `kubegen` sources, and organise files in
+modules, which you can bundle together.
+
+The macro syntax is not different from configuration format of choice, thereby any tools that handle
+a given format can be used in conjunction with `kubegen`.  The macros are restricted to very basic
+operations, such as parameter lookup and joining arrays into strings. Branching and merging is likely
+to be added, but isn't supported at present.
+
 ***The aim of this project is to make it easier to write reusable Kubernetes resource definitions.***
 
 > It should be useful as is, but it's ambition is to drive the community towards an improvement
@@ -235,7 +245,7 @@ There are 2 main layers in `kubegen`:
 - _bundle_ provides a way of instatiating one or more _modules_
 - _module_ is a collection of one or more YAML, JSON or HCL maifests
 
-A manifest withing a module may contain the following top-level keys:
+A manifest within a module may contain the following top-level keys:
 
 - `Parameters`
 - `Deployments`
@@ -275,14 +285,16 @@ parameter "my_replicas" {
 }
 ```
 
-All of attributes within `Deployment` or other resources use `snake_case` instead of `lowerCamel`, e.g.
+All keys under `deployment` or other resources use `snake_case` instead of `lowerCamel`, e.g.
 ```HCL
 deployment "my_deployment" {
   labels {
     app = "my-app"
   }
 
-  replicas = "<my_replicas>"
+  replicas = {
+    kubegen.Number.Lookup = "my_replicas"
+  }
 
   container "main" {
     image = "myorg/app"

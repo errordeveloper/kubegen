@@ -65,6 +65,53 @@
       }
     },
     {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "cart-db"
+        },
+        "name": "cart-db"
+      },
+      "spec": {
+        "replicas": 2,
+        "selector": {
+          "matchLabels": {
+            "name": "cart-db"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "cart-db"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "mongo",
+                "name": "mongo",
+                "ports": [
+                  {
+                    "containerPort": 27017,
+                    "name": "mongo"
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "emptyDir": {
+                  "medium": "Memory"
+                },
+                "name": "tmp-volume"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
       "apiVersion": "v1",
       "kind": "Service",
       "metadata": {

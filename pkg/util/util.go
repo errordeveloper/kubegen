@@ -175,3 +175,11 @@ func LoadObj(obj interface{}, data []byte, sourcePath string, instanceName strin
 
 	return nil
 }
+
+func EnsureJSON(data []byte) ([]byte, error) {
+	obj := new(interface{})
+	if err := json.Unmarshal(data, obj); err != nil {
+		return data, fmt.Errorf("invalid JSON data – %v", err)
+	}
+	return json.Marshal(obj)
+}

@@ -21,19 +21,19 @@ type ModuleInstance struct {
 	SourceDir  string                 `yaml:"SourceDir" json:"SourceDir" hcl:"source_dir"`
 	OutputDir  string                 `yaml:"OutputDir" json:"OutputDir" hcl:"output_dir"`
 	Parameters map[string]interface{} `yaml:"Parameters,omitempty" json:"Parameters,omitempty" hcl:"parameters"`
-	Partials   map[string]interface{} `yaml:"Partials,omitempty" json:"Partials,omitempty" hcl:"partials"`
+	Internals  map[string]interface{} `yaml:"Internals,omitempty" json:"Internals,omitempty" hcl:"internals"`
 }
 
 type valueLookupFunc func() []byte
 
 type Module struct {
-	Kind             string                     `yaml:"Kind" json:"Kind" hcl:"kind"`
-	Parameters       []ModuleParameter          `yaml:"Parameters,omitempty" json:"Parameters,omitempty" hcl:"parameter"`
-	Partials         []ModulePartial            `yaml:"Partials,omitempty" json:"Partials,omitempty" hcl:"partial"`
-	manifests        map[string][]byte          `yaml:"-" json:"-" hcl:"-"`
-	path             string                     `yaml:"-" json:"-" hcl:"-"`
-	lookupFuncs      map[string]valueLookupFunc `yaml:"-" json:"-" hcl:"-"`
-	IncludeManifests []RawResource              `yaml:"Include" json:"Include" hcl:"include"`
+	Kind             string               `yaml:"Kind" json:"Kind" hcl:"kind"`
+	Parameters       []ModuleParameter    `yaml:"Parameters,omitempty" json:"Parameters,omitempty" hcl:"parameter"`
+	Internals        []ModuleInternal     `yaml:"Internals,omitempty" json:"Internals,omitempty" hcl:"internals"`
+	manifests        map[string][]byte    `yaml:"-" json:"-" hcl:"-"`
+	path             string               `yaml:"-" json:"-" hcl:"-"`
+	attributes       map[string]attribute `yaml:"-" json:"-" hcl:"-"`
+	IncludeManifests []RawResource        `yaml:"Include" json:"Include" hcl:"include"`
 }
 
 // TODO conditionally laod "raw" files
@@ -49,7 +49,14 @@ type ModuleParameter struct {
 	Default  interface{} `yaml:"default" json:"default" hcl:"default"`
 }
 
-type ModulePartial struct {
-	Name string `yaml:"name" json:"name" hcl:",key"`
-	Spec map[string]interface{}
+type ModuleInternal struct {
+	Name  string      `yaml:"name" json:"name" hcl:",key"`
+	Type  string      `yaml:"type" json:"type" hcl:"type"`
+	Value interface{} `yaml:"value" json:"value" hcl:"value"`
+}
+
+type attribute struct {
+	Type  string      `yaml:"type" json:"type" hcl:"type"`
+	Value interface{} `yaml:"value" json:"value" hcl:"value"`
+	Kind  string      `yaml:"kind" json:"kind" hcl:"kind"`
 }

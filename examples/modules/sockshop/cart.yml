@@ -44,9 +44,9 @@ Deployments:
     emptyDir:
       medium: Memory
 
-#- name: cart-db
-#  kubegen.fromPartial: mongo
-#  replicas: 2
+- name: cart-db
+  kubegen.Object.Lookup: mongo
+  replicas: 2
 
 Services:
 

@@ -9,91 +9,60 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/errordeveloper/kubegen/pkg/converter"
+	"github.com/errordeveloper/kubegen/pkg/macroproc"
 	"github.com/errordeveloper/kubegen/pkg/resources"
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
 
-func (m *Module) doLookup(c *converter.Converter, branch *converter.BranchInfo, kind string) error {
-	funcs := make(map[string]valueLookupFunc, 3)
+func (i *Module) makeLookupModifier(c *macroproc.Converter, branch *macroproc.BranchLocator, _ *macroproc.Macro) (macroproc.ModifierCallback, error) {
+	cb := func(m *macroproc.Modifier, c *macroproc.Converter) error {
 
-	if _, ok := m.lookupFuncs[string(branch.Value())]; !ok {
-		return fmt.Errorf("undeclared parameter %q", string(branch.Value()))
-	}
-
-	// TODO this is pretty raw right now, we should refactor it, types are actually ignored
-
-	funcs["String"] = func() []byte {
-		return m.lookupFuncs[string(branch.Value())]()
-	}
-
-	funcs["Number"] = func() []byte {
-		return m.lookupFuncs[string(branch.Value())]()
-	}
-
-	funcs["Object"] = func() []byte {
-		return m.lookupFuncs[string(branch.Value())]()
-	}
-
-	switch branch.Kind() {
-	case converter.String:
-		x := funcs[kind]()
-
-		c.AddModifier(branch, func(c *converter.Converter) error {
-			if err := c.Replace(branch, x); err != nil {
+		k := m.Branch.StringValue()
+		if k == nil {
+			return fmt.Errorf("attribute reference is not a string – %#v", m.Branch)
+		}
+		v, ok := i.attributes[*k]
+		if !ok {
+			return fmt.Errorf("undeclared attribute %q", *k)
+		}
+		if err := v.typeCheck(m.Macro); err != nil {
+			return err
+		}
+		if m.Macro.ReturnType == macroproc.Array || m.Macro.ReturnType == macroproc.Object {
+			if err := c.Overlay(m.Branch, v.Value); err != nil {
 				return err
 			}
-			return nil
-		})
-	default:
-		return fmt.Errorf("in %q value is a %s, but must be a string", branch.PathToString(), branch.Kind())
+		} else {
+			if err := c.Set(m.Branch, v.Value); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
-	return nil
+	return c.TypeCheckModifier(branch, macroproc.String, cb)
 }
 
-func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
-	conv := converter.New()
+func loadObjWithModuleContext(group *resources.Group, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
+	mp := macroproc.New()
 
-	conv.DefineKeyword(converter.KeywordStringLookup,
-		func(c *converter.Converter, branch *converter.BranchInfo) error {
-			if err := moduleContext.doLookup(c, branch, "String"); err != nil {
-				return err
-			}
-			return nil
-		})
+	mp.DefineMacro(macroproc.MacroStringLookup, moduleContext.makeLookupModifier)
+	mp.DefineMacro(macroproc.MacroNumberLookup, moduleContext.makeLookupModifier)
+	mp.DefineMacro(macroproc.MacroObjectLookup, moduleContext.makeLookupModifier)
+	mp.DefineMacro(macroproc.MacroArrayLookup, moduleContext.makeLookupModifier)
 
-	conv.DefineKeyword(converter.KeywordNumberLookup,
-		func(c *converter.Converter, branch *converter.BranchInfo) error {
-			if err := moduleContext.doLookup(c, branch, "Number"); err != nil {
-				return err
-			}
-			return nil
-		})
+	mp.DefineMacro(macroproc.MacroStringJoin, macroproc.MakeModifierStringJoin)
+	mp.DefineMacro(macroproc.MacroStringAsJSON, macroproc.MakeModifierStringAsJSON)
+	mp.DefineMacro(macroproc.MacroStringAsYAML, macroproc.MakeModifierStringAsYAML)
 
-	conv.DefineKeyword(converter.KeywordObjectLookup,
-		func(c *converter.Converter, branch *converter.BranchInfo) error {
-			if err := moduleContext.doLookup(c, branch, "Object"); err != nil {
-				return err
-			}
-			return nil
-		})
-
-	conv.DefineKeyword(converter.KeywordStringJoin, converter.StringJoin)
-	conv.DefineKeyword(converter.KeywordStringAsJSON, converter.StringAsJSON)
-	conv.DefineKeyword(converter.KeywordStringAsYAML, converter.StringAsYAML)
-
-	if err := conv.LoadObj(data, sourcePath, instanceName); err != nil {
+	if err := mp.LoadObject(data, sourcePath, instanceName); err != nil {
 		return err
 	}
-
-	if err := conv.Run(); err != nil {
+	if err := mp.Run(); err != nil {
 		return err
 	}
-
-	if err := conv.Unmarshal(obj, sourcePath, instanceName); err != nil {
+	if err := mp.UnloadObject(group, sourcePath, instanceName); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -146,7 +115,7 @@ func (b *Bundle) LoadModules(selectNames []string) error {
 			b.Modules[n].Namespace = b.Namespace
 		}
 
-		if err := m.LoadParameters(i); err != nil {
+		if err := m.LoadAttributes(i); err != nil {
 			return err
 		}
 
@@ -269,9 +238,9 @@ func NewModule(dir, instanceName string) (*Module, error) {
 				"error loading file %q in module %q – unrecognised `Kind: %q`, must be %q",
 				file.Name(), dir, m.Kind, ModuleKind)
 		}
-		// Parameters and partials are scoped globally, here we collect them
+		// Parameters and Internals are scoped globally, here we collect them
 		module.Parameters = append(module.Parameters, m.Parameters...)
-		module.Partials = append(module.Partials, m.Partials...)
+		module.Internals = append(module.Internals, m.Internals...)
 		// The module itself isn't something we can parse 100% yet, so we only store it as a string
 		module.manifests[manifestPath] = data
 	}
@@ -279,7 +248,7 @@ func NewModule(dir, instanceName string) (*Module, error) {
 	return module, nil
 }
 
-func (i *ModuleParameter) makeValueLookupFunc(instance ModuleInstance) (func() []byte, error) {
+func (i *ModuleParameter) load(m *Module, instance ModuleInstance) error {
 	undefinedNonOptionalParameterError := fmt.Errorf(
 		"module %q must set parameter %q (of type %s)",
 		instance.Name, i.Name, i.Type)
@@ -298,6 +267,11 @@ func (i *ModuleParameter) makeValueLookupFunc(instance ModuleInstance) (func() [
 		"parameter %q in module %q of type %q must either be required or provide a default value",
 		i.Name, instance.Name, i.Type)
 
+	if v, ok := m.attributes[i.Name]; ok {
+		return fmt.Errorf("cannot declare parameter %q in module %q (attribute already defined as %q), already defined",
+			i.Name, instance.Name, v.Kind)
+	}
+
 	switch i.Type {
 	case "Number":
 		// all numeric values from YAML are parsed as float64, but Kubernetes API mostly wants int32
@@ -312,10 +286,10 @@ func (i *ModuleParameter) makeValueLookupFunc(instance ModuleInstance) (func() [
 				case int:
 					value = int32(v.(int))
 				default:
-					return nil, wrongParameterTypeError(v)
+					return wrongParameterTypeError(v)
 				}
 			} else {
-				return nil, undefinedNonOptionalParameterError
+				return undefinedNonOptionalParameterError
 			}
 		} else {
 			if isSet {
@@ -325,21 +299,26 @@ func (i *ModuleParameter) makeValueLookupFunc(instance ModuleInstance) (func() [
 				case int:
 					value = int32(v.(int))
 				default:
-					return nil, wrongParameterTypeError(v)
+					return wrongParameterTypeError(v)
 				}
 			} else {
 				if i.Default == nil {
-					return nil, defaultValueNotSetError
+					return defaultValueNotSetError
 				}
 				switch i.Default.(type) {
 				case string:
 					value = int32(i.Default.(float64))
 				default:
-					return nil, wrongParameterTypeError(v)
+					return wrongParameterTypeError(v)
 				}
 			}
 		}
-		return func() []byte { return []byte(fmt.Sprintf("%d", value)) }, nil
+		m.attributes[i.Name] = attribute{
+			Type:  i.Type,
+			Value: value,
+			Kind:  "parameter",
+		}
+		return nil
 	case "String":
 		var value string
 		v, isSet := instance.Parameters[i.Name]
@@ -349,10 +328,10 @@ func (i *ModuleParameter) makeValueLookupFunc(instance ModuleInstance) (func() [
 				case string:
 					value = v.(string)
 				default:
-					return nil, wrongParameterTypeError(v)
+					return wrongParameterTypeError(v)
 				}
 			} else {
-				return nil, undefinedNonOptionalParameterError
+				return undefinedNonOptionalParameterError
 			}
 		} else {
 			// TODO warn if we see an empty string here as it is most likely an issue...
@@ -361,35 +340,91 @@ func (i *ModuleParameter) makeValueLookupFunc(instance ModuleInstance) (func() [
 				case string:
 					value = v.(string)
 				default:
-					return nil, wrongParameterTypeError(v)
+					return wrongParameterTypeError(v)
 				}
 			} else {
 				if i.Default == nil {
-					return nil, defaultValueNotSetError
+					return defaultValueNotSetError
 				}
 				switch i.Default.(type) {
 				case string:
 					value = i.Default.(string)
 				default:
-					return nil, wrongParameterTypeError(v)
+					return wrongParameterTypeError(v)
 				}
 			}
 		}
-		return func() []byte { return []byte(fmt.Sprintf("%q", value)) }, nil
+		m.attributes[i.Name] = attribute{
+			Type:  i.Type,
+			Value: value,
+			Kind:  "parameter",
+		}
+		return nil
 	default:
-		return nil, unknownParameterTypeError
+		return unknownParameterTypeError
 	}
 }
 
-func (m *Module) LoadParameters(instance ModuleInstance) error {
-	m.lookupFuncs = make(map[string]valueLookupFunc, len(m.Parameters))
+func (i *ModuleInternal) load(m *Module, instance ModuleInstance) error {
+	if v, ok := m.attributes[i.Name]; ok {
+		return fmt.Errorf("cannot declare internal %q in module %q (attribute already defined as %q), already defined",
+			i.Name, instance.Name, v.Kind)
+	}
+
+	m.attributes[i.Name] = attribute{
+		Type:  i.Type,
+		Value: i.Value,
+		Kind:  "internal",
+	}
+
+	return nil
+}
+
+// TODO maybe this should be a more generic thing in pkg/macroproc, e.g. macro.TypeCheck(interface{})
+func (i *attribute) typeCheck(macro *macroproc.Macro) error {
+	rt := strings.Title(macro.ReturnType.String())
+	cannotConvertError := fmt.Errorf("cannot convert type %s to %s for %q", i.Type, rt, macro)
+	if i.Type != rt {
+		return cannotConvertError
+	}
+
+	switch macro.ReturnType {
+	case macroproc.Number:
+		switch i.Value.(type) {
+		case int:
+			break
+		case float64:
+			break
+		default:
+			return cannotConvertError
+		}
+	case macroproc.String:
+		switch i.Value.(type) {
+		case string:
+			break
+		default:
+			return cannotConvertError
+		}
+	}
+
+	return nil
+}
+
+func (m *Module) LoadAttributes(instance ModuleInstance) error {
+	m.attributes = make(map[string]attribute, len(m.Parameters))
+
 	for _, parameter := range m.Parameters {
-		valFunc, err := parameter.makeValueLookupFunc(instance)
-		if err != nil {
+		if err := parameter.load(m, instance); err != nil {
 			return err
 		}
-		m.lookupFuncs[parameter.Name] = valFunc
 	}
+
+	for _, internal := range m.Internals {
+		if err := internal.load(m, instance); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -410,6 +445,7 @@ func (m *Module) LoadGroups(instanceName, namespace string) (map[string]resource
 
 		groups[manifestPath] = group
 		//log.Printf("Loaded group from %q", manifestPath)
+		//log.Printf("groups[%s]=%#v", manifestPath, group)
 	}
 
 	return groups, nil

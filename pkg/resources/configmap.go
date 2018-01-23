@@ -40,7 +40,7 @@ func (i *ConfigMap) Convert(localGroup *Group) (*v1.ConfigMap, error) {
 	for _, v := range i.ReadFromFiles {
 		data, err := ioutil.ReadFile(v)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read ConfigMap %q data from file %q – %v", v, err)
+			return nil, fmt.Errorf("cannot read ConfigMap data from file %q – %v", v, err)
 		}
 		configMap.Data[v] = string(data)
 	}
