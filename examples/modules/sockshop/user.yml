@@ -37,33 +37,13 @@ Deployments:
       periodSeconds: 3
 
 - name: user-db
-  replicas: 1
+  kubegen.Object.Lookup: mongo
   containers:
   - name: user-db
     image:
       kubegen.String.Join:
       - kubegen.String.Lookup: image_registry
       - /user-db:0.3.0
-
-    ports:
-    - name: mongo
-      containerPort: 27017
-    securityContext:
-      capabilities:
-        drop:
-          - all
-        add:
-          - CHOWN
-          - SETGID
-          - SETUID
-      readOnlyRootFilesystem: true
-    volumeMounts:
-    - mountPath: /tmp
-      name: tmp-volume
-  volumes:
-    - name: tmp-volume
-      emptyDir:
-        medium: Memory
 
 Services:
 

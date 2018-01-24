@@ -46,7 +46,6 @@ Deployments:
 
 - name: cart-db
   kubegen.Object.Lookup: mongo
-  replicas: 2
 
 Services:
 

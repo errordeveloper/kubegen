@@ -9,7 +9,8 @@ Internals:
       - name: mongo
         image: mongo
         ports:
-        - containerPort: 27017
+        - name: mongo
+          containerPort: 27017
         securityContext:
           capabilities:
             drop:

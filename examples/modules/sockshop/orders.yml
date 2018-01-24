@@ -44,8 +44,8 @@ Deployments:
       emptyDir:
         medium: Memory
 
-#- name: orders-db
-#  kubegen.fromPartial: mongo
+- name: orders-db
+  kubegen.Object.Lookup: mongo
 
 Services:
 
@@ -55,6 +55,6 @@ Services:
   ports:
   - name: http
 
-#- name: orders-db
-#  ports:
-#  - name: mongo
+- name: orders-db
+  ports:
+  - name: mongo

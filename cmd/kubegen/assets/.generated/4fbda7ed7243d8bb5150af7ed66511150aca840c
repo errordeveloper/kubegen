@@ -76,7 +76,7 @@
         "namespace": "sock-shop-test"
       },
       "spec": {
-        "replicas": 2,
+        "replicas": 1,
         "selector": {
           "matchLabels": {
             "name": "cart-db"
@@ -466,6 +466,54 @@
       }
     },
     {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "orders-db"
+        },
+        "name": "orders-db",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "orders-db"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "orders-db"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "mongo",
+                "name": "mongo",
+                "ports": [
+                  {
+                    "containerPort": 27017,
+                    "name": "mongo"
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "emptyDir": {
+                  "medium": "Memory"
+                },
+                "name": "tmp-volume"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
       "apiVersion": "v1",
       "kind": "Service",
       "metadata": {
@@ -488,6 +536,29 @@
         ],
         "selector": {
           "name": "orders"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "orders-db"
+        },
+        "name": "orders-db",
+        "namespace": "sock-shop-test"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "mongo",
+            "port": 27017,
+            "targetPort": "mongo"
+          }
+        ],
+        "selector": {
+          "name": "orders-db"
         }
       }
     }
@@ -1278,7 +1349,7 @@
         "namespace": "sock-shop-prod"
       },
       "spec": {
-        "replicas": 2,
+        "replicas": 1,
         "selector": {
           "matchLabels": {
             "name": "cart-db"
@@ -1668,6 +1739,54 @@
       }
     },
     {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "name": "orders-db"
+        },
+        "name": "orders-db",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "name": "orders-db"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "orders-db"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "mongo",
+                "name": "mongo",
+                "ports": [
+                  {
+                    "containerPort": 27017,
+                    "name": "mongo"
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "emptyDir": {
+                  "medium": "Memory"
+                },
+                "name": "tmp-volume"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
       "apiVersion": "v1",
       "kind": "Service",
       "metadata": {
@@ -1690,6 +1809,29 @@
         ],
         "selector": {
           "name": "orders"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "orders-db"
+        },
+        "name": "orders-db",
+        "namespace": "sock-shop-prod"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "mongo",
+            "port": 27017,
+            "targetPort": "mongo"
+          }
+        ],
+        "selector": {
+          "name": "orders-db"
         }
       }
     }
