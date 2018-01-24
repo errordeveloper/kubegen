@@ -38,6 +38,7 @@ Deployments:
 
 - name: user-db
   kubegen.Object.Lookup: mongo
+  ## override first container image set in 'mongo' object
   containers:
   - name: user-db
     image:
