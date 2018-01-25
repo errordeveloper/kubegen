@@ -1,7 +1,9 @@
 package resources
 
 import (
-	"k8s.io/client-go/pkg/api/v1"
+	corev1 "k8s.io/api/core/v1"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // This package is designed for direct HCL API for Kubernetes objects,
@@ -21,6 +23,7 @@ type Group struct {
 	StatefulSets []StatefulSet `yaml:"StatefulSet" hcl:"statefulset"`
 	ConfigMaps   []ConfigMap   `yaml:"ConfigMaps" hcl:"configmap"`
 	Secrets      []Secret      `yaml:"Secrets" hcl:"secret"`
+	AnyResources []AnyResource `yaml:"Resources" hcl:"resources"`
 }
 
 type Metadata struct {
@@ -29,18 +32,20 @@ type Metadata struct {
 	Namespace   string            `yaml:"namespace,omitempty" hcl:"namespace"`
 }
 
+type AnyResource struct{ Object interface{} }
+
 type Service struct {
 	Name                     string `yaml:"name" hcl:",key" deepcopier:"skip"`
 	Metadata                 `yaml:",inline" hcl:",squash" deepcopier:"skip"`
-	Selector                 map[string]string  `yaml:"selector,omitempty" hcl:"selector" deepcopier:"skip"`
-	Type                     v1.ServiceType     `yaml:"type,omitempty" hcl:"type"`
-	Ports                    []ServicePort      `yaml:"ports,omitempty" hcl:"port" deepcopier:"skip"`
-	ClusterIP                string             `yaml:"clusterIP,omitempty" hcl:"cluster_ip"`
-	ExternalIPs              []string           `yaml:"externalIPs,omitempty" hcl:"external_ips"`
-	ExternalName             string             `yaml:"externalName,omitempty" hcl:"external_name"`
-	SessionAffinity          v1.ServiceAffinity `yaml:"sessionAffinity,omitempty" hcl:"session_affinity"`
-	LoadBalancerIP           string             `yaml:"loadBalancerIP,omitempty" hcl:"load_balancer_ip"`
-	LoadBalancerSourceRanges []string           `yaml:"loadBalancerSourceRanges,omitempty" hcl:"load_balancer_source_ranges"`
+	Selector                 map[string]string      `yaml:"selector,omitempty" hcl:"selector" deepcopier:"skip"`
+	Type                     corev1.ServiceType     `yaml:"type,omitempty" hcl:"type"`
+	Ports                    []ServicePort          `yaml:"ports,omitempty" hcl:"port" deepcopier:"skip"`
+	ClusterIP                string                 `yaml:"clusterIP,omitempty" hcl:"cluster_ip"`
+	ExternalIPs              []string               `yaml:"externalIPs,omitempty" hcl:"external_ips"`
+	ExternalName             string                 `yaml:"externalName,omitempty" hcl:"external_name"`
+	SessionAffinity          corev1.ServiceAffinity `yaml:"sessionAffinity,omitempty" hcl:"session_affinity"`
+	LoadBalancerIP           string                 `yaml:"loadBalancerIP,omitempty" hcl:"load_balancer_ip"`
+	LoadBalancerSourceRanges []string               `yaml:"loadBalancerSourceRanges,omitempty" hcl:"load_balancer_source_ranges"`
 }
 
 type Deployment struct {
@@ -78,8 +83,8 @@ type StatefulSet struct {
 	Selector             map[string]string `yaml:"selector,omitempty" hcl:"selector" deepcopier:"skip"`
 	Replicas             int32             `yaml:"replicas,omitempty" hcl:"replicas" deepcopier:"skip"`
 	Pod                  `yaml:",inline" hcl:",squash" deepcopier:"skip"`
-	VolumeClaimTemplates []v1.PersistentVolumeClaim `yaml:"volumeClaimTemplates,omitempty" hcl:"volume_claim" deepcopier:"skip"`
-	ServiceName          string                     `yaml:"serviceName,omitempty" hcl:"service_name"`
+	VolumeClaimTemplates []corev1.PersistentVolumeClaim `yaml:"volumeClaimTemplates,omitempty" hcl:"volume_claim" deepcopier:"skip"`
+	ServiceName          string                         `yaml:"serviceName,omitempty" hcl:"service_name"`
 }
 
 type ConfigMap struct {
@@ -96,31 +101,31 @@ type Secret struct {
 	Data       map[string][]byte `yaml:"data,omitempty" hcl:"data"`
 	StringData map[string]string `json:"stringData,omitempty" hcl:"string_data"`
 	// TODO: kubegen.String.ReadFile
-	ReadFromFiles []string      `yaml:"readFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
-	Type          v1.SecretType `yaml:"type,omitempty" hcl:"type"`
+	ReadFromFiles []string          `yaml:"readFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
+	Type          corev1.SecretType `yaml:"type,omitempty" hcl:"type"`
 }
 
 type Pod struct {
-	Annotations                   map[string]string   `yaml:"podAnnotations,omitempty" hcl:"pod_annotations" deepcopier:"skip"`
-	Volumes                       []Volume            `yaml:"volumes,omitempty" hcl:"volume" deepcopier:"skip"`
-	InitContainers                []Container         `yaml:"initContainers,omitempty" hcl:"init_container" deepcopier:"skip"`
-	Containers                    []Container         `yaml:"containers,omitempty" hcl:"container" deepcopier:"skip"`
-	RestartPolicy                 v1.RestartPolicy    `yaml:"restartPolicy,omitempty" hcl:"restart_policy"`
-	TerminationGracePeriodSeconds *int64              `yaml:"terminationGracePeriodSeconds,omitempty" hcl:"termination_grace_period_seconds"`
-	ActiveDeadlineSeconds         *int64              `yaml:"activeDeadlineSeconds,omitempty" hcl:"active_deadline_seconds"`
-	DNSPolicy                     v1.DNSPolicy        `yaml:"dnsPolicy,omitempty" hcl:"dns_policy"`
-	NodeSelector                  map[string]string   `yaml:"nodeSelector,omitempty" hcl:"node_selector"`
-	ServiceAccountName            string              `yaml:"serviceAccountName,omitempty" hcl:"service_account_name"`
-	NodeName                      string              `yaml:"nodeName,omitempty" hcl:"node_name"`
-	HostNetwork                   bool                `yaml:"hostNetwork,omitempty" hcl:"host_network"`
-	HostPID                       bool                `yaml:"hostPID,omitempty" hcl:"host_pid"`
-	HostIPC                       bool                `yaml:"hostIPC,omitempty" hcl:"host_ipc"`
-	SecurityContext               *PodSecurityContext `yaml:"securityContext,omitempty" hcl:"security_context" deepcopier:"skip"`
-	ImagePullSecrets              []string            `yaml:"imagePullSecrets,omitempty" hcl:"image_pull_secrets"`
-	Hostname                      string              `yaml:"hostname,omitempty" hcl:"hostname"`
-	Subdomain                     string              `yaml:"subdomain,omitempty" hcl:"subdomain"`
-	Affinity                      *v1.Affinity        `yaml:"affinity,omitempty" hcl:"affinity"`
-	SchedulerName                 string              `yaml:"schedulerName,omitempty" hcl:"scheduler_name"`
+	Annotations                   map[string]string    `yaml:"podAnnotations,omitempty" hcl:"pod_annotations" deepcopier:"skip"`
+	Volumes                       []Volume             `yaml:"volumes,omitempty" hcl:"volume" deepcopier:"skip"`
+	InitContainers                []Container          `yaml:"initContainers,omitempty" hcl:"init_container" deepcopier:"skip"`
+	Containers                    []Container          `yaml:"containers,omitempty" hcl:"container" deepcopier:"skip"`
+	RestartPolicy                 corev1.RestartPolicy `yaml:"restartPolicy,omitempty" hcl:"restart_policy"`
+	TerminationGracePeriodSeconds *int64               `yaml:"terminationGracePeriodSeconds,omitempty" hcl:"termination_grace_period_seconds"`
+	ActiveDeadlineSeconds         *int64               `yaml:"activeDeadlineSeconds,omitempty" hcl:"active_deadline_seconds"`
+	DNSPolicy                     corev1.DNSPolicy     `yaml:"dnsPolicy,omitempty" hcl:"dns_policy"`
+	NodeSelector                  map[string]string    `yaml:"nodeSelector,omitempty" hcl:"node_selector"`
+	ServiceAccountName            string               `yaml:"serviceAccountName,omitempty" hcl:"service_account_name"`
+	NodeName                      string               `yaml:"nodeName,omitempty" hcl:"node_name"`
+	HostNetwork                   bool                 `yaml:"hostNetwork,omitempty" hcl:"host_network"`
+	HostPID                       bool                 `yaml:"hostPID,omitempty" hcl:"host_pid"`
+	HostIPC                       bool                 `yaml:"hostIPC,omitempty" hcl:"host_ipc"`
+	SecurityContext               *PodSecurityContext  `yaml:"securityContext,omitempty" hcl:"security_context" deepcopier:"skip"`
+	ImagePullSecrets              []string             `yaml:"imagePullSecrets,omitempty" hcl:"image_pull_secrets"`
+	Hostname                      string               `yaml:"hostname,omitempty" hcl:"hostname"`
+	Subdomain                     string               `yaml:"subdomain,omitempty" hcl:"subdomain"`
+	Affinity                      *corev1.Affinity     `yaml:"affinity,omitempty" hcl:"affinity"`
+	SchedulerName                 string               `yaml:"schedulerName,omitempty" hcl:"scheduler_name"`
 }
 
 type Container struct {
@@ -131,36 +136,36 @@ type Container struct {
 	WorkingDir string          `yaml:"workDir,omitempty" hcl:"work_dir"`
 	Ports      []ContainerPort `yaml:"ports,omitempty" hcl:"port" deepcopier:"skip"`
 	// EnvFrom []EnvFromSource
-	Env                      map[string]string           `yaml:"env,omitempty" hcl:"env" deepcopier:"skip"`
-	Resources                ResourceRequirements        `yaml:"resources,omitempty" hcl:"resources" deepcopier:"skip"`
-	Mounts                   []Mount                     `yaml:"volumeMounts,omitempty" hcl:"mount" deepcopier:"skip"`
-	LivenessProbe            *Probe                      `yaml:"livenessProbe,omitempty" hcl:"liveness_probe" deepcopier:"skip"`
-	ReadinessProbe           *Probe                      `yaml:"readinessProbe,omitempty" hcl:"readiness_probe" deepcopier:"skip"`
-	Lifecycle                *Lifecycle                  `yaml:"lifecycle,omitempty" hcl:"lifecycle" deepcopier:"skip"`
-	TerminationMessagePath   string                      `yaml:"terminationMessagePath,omitempty" hcl:"termination_message_path"`
-	TerminationMessagePolicy v1.TerminationMessagePolicy `yaml:"terminationMessagePolicy,omitempty" hcl:"termination_message_policy"`
-	ImagePullPolicy          v1.PullPolicy               `yaml:"imagePullPolicy,omitempty" hcl:"image_pull_policy"`
-	SecurityContext          *SecurityContext            `yaml:"securityContext,omitempty" hcl:"security_context" deepcopier:"skip"`
-	Stdin                    bool                        `yaml:"stdin,omitempty" hcl:"stdin"`
-	StdinOnce                bool                        `yaml:"stdinOnce,omitempty" hcl:"stdin_once"`
-	TTY                      bool                        `yaml:"tty,omitempty" hcl:"tty"`
+	Env                      map[string]string               `yaml:"env,omitempty" hcl:"env" deepcopier:"skip"`
+	Resources                ResourceRequirements            `yaml:"resources,omitempty" hcl:"resources" deepcopier:"skip"`
+	VolumeMounts             []VolumeMount                   `yaml:"volumeMounts,omitempty" hcl:"mount" deepcopier:"skip"`
+	LivenessProbe            *Probe                          `yaml:"livenessProbe,omitempty" hcl:"liveness_probe" deepcopier:"skip"`
+	ReadinessProbe           *Probe                          `yaml:"readinessProbe,omitempty" hcl:"readiness_probe" deepcopier:"skip"`
+	Lifecycle                *Lifecycle                      `yaml:"lifecycle,omitempty" hcl:"lifecycle" deepcopier:"skip"`
+	TerminationMessagePath   string                          `yaml:"terminationMessagePath,omitempty" hcl:"termination_message_path"`
+	TerminationMessagePolicy corev1.TerminationMessagePolicy `yaml:"terminationMessagePolicy,omitempty" hcl:"termination_message_policy"`
+	ImagePullPolicy          corev1.PullPolicy               `yaml:"imagePullPolicy,omitempty" hcl:"image_pull_policy"`
+	SecurityContext          *SecurityContext                `yaml:"securityContext,omitempty" hcl:"security_context" deepcopier:"skip"`
+	Stdin                    bool                            `yaml:"stdin,omitempty" hcl:"stdin"`
+	StdinOnce                bool                            `yaml:"stdinOnce,omitempty" hcl:"stdin_once"`
+	TTY                      bool                            `yaml:"tty,omitempty" hcl:"tty"`
 }
 
 type ContainerPort struct {
-	Name          string      `yaml:"name" hcl:",key"`
-	HostPort      int32       `yaml:"hostPort,omitempty" hcl:"host_port"`
-	ContainerPort int32       `yaml:"containerPort,omitempty" hcl:"container_port"`
-	Protocol      v1.Protocol `yaml:"protocol,omitempty" hcl:"protocol"`
-	HostIP        string      `yaml:"hostIP,omitempty" hcl:"host_ip"`
+	Name          string          `yaml:"name" hcl:",key"`
+	HostPort      int32           `yaml:"hostPort,omitempty" hcl:"host_port"`
+	ContainerPort int32           `yaml:"containerPort,omitempty" hcl:"container_port"`
+	Protocol      corev1.Protocol `yaml:"protocol,omitempty" hcl:"protocol"`
+	HostIP        string          `yaml:"hostIP,omitempty" hcl:"host_ip"`
 }
 
 type ServicePort struct {
-	Name           string      `yaml:"name" hcl:",key"`
-	Port           int32       `yaml:"port,omitempty" hcl:"port"`
-	Protocol       v1.Protocol `yaml:"protocol,omitempty" hcl:"protocol"`
-	TargetPort     int32       `yaml:"targetPort,omitempty" hcl:"target_port"`
-	TargetPortName string      `yaml:"targetPortName,omitempty" hcl:"target_port_name"`
-	NodePort       int32       `yaml:"nodePort,omitempty" hcl:"node_port"`
+	Name           string          `yaml:"name" hcl:",key"`
+	Port           int32           `yaml:"port,omitempty" hcl:"port"`
+	Protocol       corev1.Protocol `yaml:"protocol,omitempty" hcl:"protocol"`
+	TargetPort     int32           `yaml:"targetPort,omitempty" hcl:"target_port"`
+	TargetPortName string          `yaml:"targetPortName,omitempty" hcl:"target_port_name"`
+	NodePort       int32           `yaml:"nodePort,omitempty" hcl:"node_port"`
 }
 
 type Volume struct {
@@ -177,11 +182,13 @@ type VolumeSource struct {
 }
 
 type HostPathVolumeSource struct {
-	Path string `yaml:"path,omitempty" hcl:"path"`
+	Path string               `yaml:"path,omitempty" hcl:"path"`
+	Type *corev1.HostPathType `yaml:"type,omitempty" hcl:"type"`
 }
 
 type EmptyDirVolumeSource struct {
-	Medium v1.StorageMedium `yaml:"medium,omitempty" hcl:"medium"`
+	Medium    corev1.StorageMedium `yaml:"medium,omitempty" hcl:"medium"`
+	SizeLimit *resource.Quantity   `yaml:"sizeLimit,omitempty" hcl:"sizeLimit"`
 }
 
 type SecretVolumeSource struct {
@@ -208,11 +215,12 @@ type KeyToPath struct {
 	Mode *int32 `yaml:"mode,omitempty" hcl:"mode"`
 }
 
-type Mount struct {
-	Name      string `yaml:"name" hcl:",key"`
-	ReadOnly  bool   `yaml:"readOnly,omitempty" hcl:"read_only"`
-	MountPath string `yaml:"mountPath,omitempty" hcl:"mount_path"`
-	SubPath   string `yaml:"subPath,omitempty" hcl:sub_path"`
+type VolumeMount struct {
+	Name             string                       `yaml:"name" hcl:",key"`
+	ReadOnly         bool                         `yaml:"readOnly,omitempty" hcl:"read_only"`
+	MountPath        string                       `yaml:"mountPath,omitempty" hcl:"mount_path"`
+	SubPath          string                       `yaml:"subPath,omitempty" hcl:sub_path"`
+	MountPropagation *corev1.MountPropagationMode `yaml:"mountPropagation,omitempty" hcl:"mount_propagation"`
 }
 
 type Probe struct {
@@ -244,7 +252,7 @@ type HTTPGetAction struct {
 	Port        int32             `yaml:"port,omitempty" hcl:"port" deepcopier:"skip"`
 	PortName    string            `yaml:"portName,omitempty" hcl:"port_name" deepcopier:"skip"`
 	Host        string            `yaml:"host,omitempty" hcl:"host"`
-	Scheme      v1.URIScheme      `yaml:"scheme,omitempty" hcl:"scheme"`
+	Scheme      corev1.URIScheme  `yaml:"scheme,omitempty" hcl:"scheme"`
 	HTTPHeaders map[string]string `yaml:"headers,omitempty" hcl:"headers" deepcopier:"skip"`
 }
 
@@ -254,20 +262,20 @@ type TCPSocketAction struct {
 }
 
 type SecurityContext struct {
-	Capabilities           *Capabilities      `yaml:"capabilities,omitempty" hcl:"capabilities"`
-	Privileged             *bool              `yaml:"privileged,omitempty" hcl:"privileged"`
-	SELinuxOptions         *v1.SELinuxOptions `yaml:"seLinuxOptions,omitempty" hcl:"selinux_options"`
-	RunAsUser              *int64             `yaml:"runAsUser,omitempty" hcl:"run_as_user"`
-	RunAsNonRoot           *bool              `yaml:"runAsNonRoot,omitempty" hcl:"run_as_non_root"`
-	ReadOnlyRootFilesystem *bool              `yaml:"readOnlyRootFilesystem,omitempty" hcl:"read_only_root_filesystem"`
+	Capabilities           *Capabilities          `yaml:"capabilities,omitempty" hcl:"capabilities"`
+	Privileged             *bool                  `yaml:"privileged,omitempty" hcl:"privileged"`
+	SELinuxOptions         *corev1.SELinuxOptions `yaml:"seLinuxOptions,omitempty" hcl:"selinux_options"`
+	RunAsUser              *int64                 `yaml:"runAsUser,omitempty" hcl:"run_as_user"`
+	RunAsNonRoot           *bool                  `yaml:"runAsNonRoot,omitempty" hcl:"run_as_non_root"`
+	ReadOnlyRootFilesystem *bool                  `yaml:"readOnlyRootFilesystem,omitempty" hcl:"read_only_root_filesystem"`
 }
 
 type PodSecurityContext struct {
-	SELinuxOptions     *v1.SELinuxOptions `yaml:"seLinuxOptions,omitempty" hcl:"selinux_options"`
-	RunAsUser          *int64             `yaml:"runAsUser,omitempty" hcl:"run_as_user"`
-	RunAsNonRoot       *bool              `yaml:"runAsNonRoot,omitempty" hcl:"run_as_non_root"`
-	SupplementalGroups []int64            `yaml:"supplementalGroups,omitempty" hcl:"supplemental_groups"`
-	FSGroup            *int64             `yaml:"fsGroup,omitempty" hcl:"fs_group"`
+	SELinuxOptions     *corev1.SELinuxOptions `yaml:"seLinuxOptions,omitempty" hcl:"selinux_options"`
+	RunAsUser          *int64                 `yaml:"runAsUser,omitempty" hcl:"run_as_user"`
+	RunAsNonRoot       *bool                  `yaml:"runAsNonRoot,omitempty" hcl:"run_as_non_root"`
+	SupplementalGroups []int64                `yaml:"supplementalGroups,omitempty" hcl:"supplemental_groups"`
+	FSGroup            *int64                 `yaml:"fsGroup,omitempty" hcl:"fs_group"`
 }
 
 type SELinuxOptions struct {
@@ -278,8 +286,8 @@ type SELinuxOptions struct {
 }
 
 type Capabilities struct {
-	Add  []v1.Capability `yaml:"add,omitempty" hcl:"add"`
-	Drop []v1.Capability `yaml:"drop,omitempty" hcl:"drop"`
+	Add  []corev1.Capability `yaml:"add,omitempty" hcl:"add"`
+	Drop []corev1.Capability `yaml:"drop,omitempty" hcl:"drop"`
 }
 
 type ResourceRequirements struct {

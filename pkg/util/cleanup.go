@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+
 	"github.com/ghodss/yaml"
 )
 
@@ -68,6 +69,7 @@ func cleanupInnerSpec(item map[string]interface{}) {
 	deleteSubKeyIfValueIsEmptyMap(item, "status", "loadBalancer")
 
 	deleteSubKeyIfValueIsEmptyMap(item, "spec", "strategy")
+	deleteSubKeyIfValueIsEmptyMap(item, "spec", "updateStrategy")
 
 	if spec, ok := getMap(item, "spec"); ok {
 		if template, ok := getMap(spec, "template"); ok {

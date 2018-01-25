@@ -3,9 +3,10 @@ package resources
 import (
 	"fmt"
 
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/pkg/apis/apps/v1beta1"
 
 	"github.com/ulule/deepcopier"
 )
@@ -18,7 +19,7 @@ func (i StatefulSet) ToObject(localGroup *Group) (runtime.Object, error) {
 	return runtime.Object(obj), nil
 }
 
-func (i *StatefulSet) Convert(localGroup *Group) (*v1beta1.StatefulSet, error) {
+func (i *StatefulSet) Convert(localGroup *Group) (*appsv1.StatefulSet, error) {
 	meta := i.Metadata.Convert(i.Name, localGroup)
 
 	pod, err := MakePod(meta, i.Pod)
@@ -26,7 +27,7 @@ func (i *StatefulSet) Convert(localGroup *Group) (*v1beta1.StatefulSet, error) {
 		return nil, fmt.Errorf("unable to define pod for StatefulSet %q – %v", i.Name, err)
 	}
 
-	statefulSetSpec := v1beta1.StatefulSetSpec{
+	statefulSetSpec := appsv1.StatefulSetSpec{
 		Template: *pod,
 		Replicas: &i.Replicas,
 	}
@@ -43,10 +44,10 @@ func (i *StatefulSet) Convert(localGroup *Group) (*v1beta1.StatefulSet, error) {
 		statefulSetSpec.VolumeClaimTemplates = append(statefulSetSpec.VolumeClaimTemplates, volumeClaim)
 	}
 
-	statefulSet := v1beta1.StatefulSet{
+	statefulSet := appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "StatefulSet",
-			APIVersion: "extensions/v1beta1",
+			APIVersion: "apps/v1",
 		},
 		ObjectMeta: meta,
 		Spec:       statefulSetSpec,

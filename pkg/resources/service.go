@@ -3,10 +3,11 @@ package resources
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/pkg/api/v1"
 
 	"github.com/ulule/deepcopier"
 )
@@ -70,11 +71,11 @@ func (i *Group) findPortByName(serviceName, portName string) (*ContainerPort, er
 	return &matchingPorts[0], nil
 }
 
-func (i *Service) Convert(localGroup *Group) (*v1.Service, error) {
+func (i *Service) Convert(localGroup *Group) (*corev1.Service, error) {
 	meta := i.Metadata.Convert(i.Name, localGroup)
 
-	serviceSpec := v1.ServiceSpec{
-		Ports: []v1.ServicePort{},
+	serviceSpec := corev1.ServiceSpec{
+		Ports: []corev1.ServicePort{},
 	}
 
 	deepcopier.Copy(i).To(&serviceSpec)
@@ -90,7 +91,7 @@ func (i *Service) Convert(localGroup *Group) (*v1.Service, error) {
 	// TODO validate ports are defined withing the group?
 	// TODO validate labels for a given selector are defined withing the group?
 	for _, port := range i.Ports {
-		p := v1.ServicePort{
+		p := corev1.ServicePort{
 			Name:     port.Name,
 			Port:     port.Port,
 			NodePort: port.NodePort,
@@ -138,7 +139,7 @@ func (i *Service) Convert(localGroup *Group) (*v1.Service, error) {
 		serviceSpec.Type = "NodePort"
 	}
 
-	service := v1.Service{
+	service := corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
 			APIVersion: "v1",

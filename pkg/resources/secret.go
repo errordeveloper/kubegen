@@ -5,9 +5,10 @@ import (
 
 	"io/ioutil"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/pkg/api/v1"
 
 	"github.com/ulule/deepcopier"
 )
@@ -20,10 +21,10 @@ func (i Secret) ToObject(localGroup *Group) (runtime.Object, error) {
 	return runtime.Object(obj), nil
 }
 
-func (i *Secret) Convert(localGroup *Group) (*v1.Secret, error) {
+func (i *Secret) Convert(localGroup *Group) (*corev1.Secret, error) {
 	meta := i.Metadata.Convert(i.Name, localGroup)
 
-	secret := v1.Secret{
+	secret := corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
