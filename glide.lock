@@ -1,8 +1,8 @@
-hash: 2a9d858e657b884be388db36c0ce507c7e2831cb50b5ec38a1679f333a12877b
-updated: 2018-01-25T13:23:24.370222Z
+hash: 1e2498afd3330e9017402c7cdac609d7647018f0087dffbad50c36c24755b8d5
+updated: 2018-01-25T17:46:33.528712Z
 imports:
 - name: github.com/Azure/go-ansiterm
-  version: 388960b655244e76e24c75f48631564eaefade62
+  version: 19f72df4d05d31cbe1c56bfc8045c96babff6c7e
   subpackages:
   - winterm
 - name: github.com/d4l3k/go-highlight
@@ -25,7 +25,7 @@ imports:
   subpackages:
   - log
 - name: github.com/equinox-io/equinox
-  version: 6f97d0d3970881d3e53dd6f547a41109eb055e54
+  version: f24972fa72facf59d05c91c848b65eac38815915
   subpackages:
   - internal/go-update
   - internal/go-update/internal/binarydist
@@ -35,7 +35,7 @@ imports:
 - name: github.com/errordeveloper/testcli
   version: c3cf1050baf4b6f38358757401d041e83a758c8a
 - name: github.com/fatih/color
-  version: bf82308e8c8546dc2b945157173eb8a959ae9505
+  version: 5df930a27be2502f99b292b7cc09ebad4d0891f4
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/gijsbers/go-pcre
@@ -58,9 +58,9 @@ imports:
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/guregu/null
-  version: 5d2d1e5a9e25088fb9cc0b0f7cb566250eb42bba
+  version: e81d6d8d57747b34d7c5fe0d20ebf57692f04ea9
 - name: github.com/hashicorp/hcl
-  version: 392dba7d905ed5d04a5794ba89f558b27e2ba1ca
+  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -77,7 +77,7 @@ imports:
 - name: github.com/json-iterator/go
   version: 36b14963da70d11297d313183d7e6388c8510e1e
 - name: github.com/lib/pq
-  version: 23da1db4f16d9658a86ae9b717c245fc078f10f1
+  version: 19c8e9ad00952ce0c64489b60e8df88bb16dd514
   subpackages:
   - oid
 - name: github.com/mailru/easyjson
@@ -87,9 +87,11 @@ imports:
   - jlexer
   - jwriter
 - name: github.com/mattn/go-colorable
-  version: 6c903ff4aa50920ca86087a280590b36b3152b9c
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
-  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+  version: 57fdcb988a5c543893cc61bce354a6e24ab70022
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/oleiade/reflections
   version: 0e86b3c98b2ff33e30c85cfe97d9a63d439fe7eb
 - name: github.com/pkg/errors
@@ -99,13 +101,21 @@ imports:
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/Sirupsen/logrus
-  version: 10f801ebc38b33738c9d17d50860f484a0988ff5
+  version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
+  repo: https://github.com/sirupsen/logrus
+  vcs: git
+- name: github.com/sirupsen/logrus
+  version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
 - name: github.com/spf13/cobra
   version: f62e98d28ab7ad31d707ba837a966378465c7b57
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/ulule/deepcopier
   version: 4a5401c69d001e4ca11bed2a53816ca580ea5f4a
+- name: golang.org/x/crypto
+  version: 81e90905daefcd6fd217b62423c0908922eadb30
+  subpackages:
+  - ssh/terminal
 - name: golang.org/x/net
   version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
@@ -173,8 +183,11 @@ imports:
 - name: k8s.io/apimachinery
   version: 180eddb345a5be3a157cea1c624700ad5bd27b8f
   subpackages:
+  - pkg/api/meta
   - pkg/api/resource
   - pkg/apis/meta/v1
+  - pkg/apis/meta/v1/unstructured
+  - pkg/apis/meta/v1alpha1
   - pkg/conversion
   - pkg/conversion/queryparams
   - pkg/fields
@@ -206,7 +219,9 @@ imports:
   subpackages:
   - kubernetes
   - kubernetes/scheme
+  - third_party/forked/golang/template
   - tools/clientcmd
+  - util/jsonpath
 - name: k8s.io/kube-openapi
   version: 39a7bf85c140f972372c2a0d1ee40adbf0c8bfe1
   subpackages:
@@ -222,6 +237,6 @@ testImports:
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: 890a5c3458b43e6104ff5da8dfa139d013d77544
+  version: f6abca593680b2315d2075e0f5e2a9751e3f431a
   subpackages:
   - assert

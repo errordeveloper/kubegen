@@ -17,6 +17,9 @@ import:
   subpackages:
   - pkg/printers
 - package: "github.com/spf13/cobra"
+  version: "f62e98d28ab7ad31d707ba837a966378465c7b57"
+- package: "github.com/spf13/pflag"
+  version: "9ff6c6923cfffbcd502984b8e0c80539a94968b7"
 - package: "github.com/hashicorp/hcl"
 - package: "github.com/docker/docker/pkg/term"
   version: "40af569"
@@ -28,11 +31,21 @@ import:
 - package: "github.com/ulule/deepcopier"
   version: "4a5401c"
 - package: "github.com/equinox-io/equinox"
+
+
+# must be done like this, see https://github.com/sirupsen/logrus/issues/553#issuecomment-306591437
+- package: "github.com/sirupsen/logrus"
+  version: "v1.0.4"
+- package: "github.com/Sirupsen/logrus"
+  version: "v1.0.4"
+  repo: "https://github.com/sirupsen/logrus"
+  vcs: "git"
+
+# must be set here to enforce what we need for testify and not what client-go pulls in
 - package: "github.com/davecgh/go-spew"
-  # must be set here to enforce what we need for testify
-  # and not what client-go pulls in
   version: "04cdfd42973bb9c8589fd6a731800cf222fde1a9"
   subpackages: [spew]
+
 testImports:
 - package: "github.com/errordeveloper/testcli"
 - package: "github.com/stretchr/testify"
