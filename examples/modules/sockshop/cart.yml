@@ -55,6 +55,6 @@ Services:
   ports:
   - name: http
 
-#- name: cart-db
-#  ports:
-#  - name: mongo
+- name: cart-db
+  ports:
+  - name: mongo
