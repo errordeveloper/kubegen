@@ -24,7 +24,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -93,7 +93,7 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "DaemonSet",
       "metadata": {
         "labels": {
@@ -186,7 +186,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -260,7 +260,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "DaemonSet",
       "metadata": {
         "labels": {

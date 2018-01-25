@@ -9,7 +9,7 @@
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -44,11 +44,14 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -71,6 +74,9 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
@@ -91,6 +97,20 @@ items:
       targetPort: http
     selector:
       name: cart
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: cart-db
+    name: cart-db
+    namespace: sock-shop-test
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: cart-db
 kind: List
 
 ---
@@ -103,7 +123,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -141,7 +161,7 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -209,7 +229,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -275,7 +295,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -310,11 +330,14 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -337,6 +360,9 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
@@ -383,7 +409,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -447,7 +473,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -470,7 +496,7 @@ items:
           ports:
           - containerPort: 5672
             name: rabbitmq
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -547,7 +573,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -582,6 +608,9 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
@@ -614,7 +643,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -654,7 +683,7 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -677,6 +706,9 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
@@ -721,7 +753,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -749,7 +781,7 @@ items:
           ports:
           - containerPort: 9411
             name: zipkin
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -772,7 +804,7 @@ items:
           ports:
           - containerPort: 3306
             name: mysql
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -847,7 +879,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -882,11 +914,14 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -909,6 +944,9 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
@@ -929,6 +967,20 @@ items:
       targetPort: http
     selector:
       name: cart
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: cart-db
+    name: cart-db
+    namespace: sock-shop-prod
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+    selector:
+      name: cart-db
 kind: List
 
 ---
@@ -941,7 +993,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -979,7 +1031,7 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1047,7 +1099,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1113,7 +1165,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1148,11 +1200,14 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
           name: tmp-volume
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1175,6 +1230,9 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
@@ -1221,7 +1279,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1285,7 +1343,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1308,7 +1366,7 @@ items:
           ports:
           - containerPort: 5672
             name: rabbitmq
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1385,7 +1443,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1420,6 +1478,9 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
@@ -1452,7 +1513,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1492,7 +1553,7 @@ items:
               port: http
             initialDelaySeconds: 180
             periodSeconds: 3
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1515,6 +1576,9 @@ items:
           ports:
           - containerPort: 27017
             name: mongo
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         volumes:
         - emptyDir:
             medium: Memory
@@ -1559,7 +1623,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1587,7 +1651,7 @@ items:
           ports:
           - containerPort: 9411
             name: zipkin
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -1610,7 +1674,7 @@ items:
           ports:
           - containerPort: 3306
             name: mysql
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
