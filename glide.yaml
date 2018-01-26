@@ -21,6 +21,7 @@ import:
 - package: "github.com/spf13/pflag"
   version: "9ff6c6923cfffbcd502984b8e0c80539a94968b7"
 - package: "github.com/hashicorp/hcl"
+  version: "392dba7d905ed5d04a5794ba89f558b27e2ba1ca"
 - package: "github.com/docker/docker/pkg/term"
   version: "40af569"
 - package: "github.com/d4l3k/go-highlight"

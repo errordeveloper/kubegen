@@ -1,5 +1,5 @@
-hash: 1e2498afd3330e9017402c7cdac609d7647018f0087dffbad50c36c24755b8d5
-updated: 2018-01-25T17:46:33.528712Z
+hash: 9c9037d2bfa7e43850b56e7eb961730a9938c88f258bfa4a726746a6af6d4a8c
+updated: 2018-01-26T12:42:18.0363Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: 19f72df4d05d31cbe1c56bfc8045c96babff6c7e
@@ -60,7 +60,7 @@ imports:
 - name: github.com/guregu/null
   version: e81d6d8d57747b34d7c5fe0d20ebf57692f04ea9
 - name: github.com/hashicorp/hcl
-  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
+  version: 392dba7d905ed5d04a5794ba89f558b27e2ba1ca
   subpackages:
   - hcl/ast
   - hcl/parser
