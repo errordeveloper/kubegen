@@ -17,7 +17,7 @@ to be added, but isn't supported at present.
 
 > It should be useful as is, but it's ambition is to drive the community towards an improvement
 upstream (so I'd hope that Helm and other related project could make use of one standard format, see [issue #16](https://github.com/errordeveloper/kubegen/issues/16)).
-However, please note that it is **WORK IN PROGRESS** rigth now.
+However, please note that it is **WORK IN PROGRESS** right now.
 
 ## TL;DR
 
@@ -27,7 +27,7 @@ However, please note that it is **WORK IN PROGRESS** rigth now.
 ## Motivation & High-level Goals
 
 First of all, it should be simple to define a Kubernetes resource, users should be able to specify key fields required
-for a basic resource without refering to documentation.
+for a basic resource without referring to documentation.
 
 Secondly, there should exist a simple model for defining collections of re-usable resources, let's call
 them modules.
@@ -44,7 +44,7 @@ If one wanted to implement such black box they have the following to their dispo
 
 Additionally, it should have the following properties:
 
-  - simple and contsrained type system for input parameters
+  - simple and constrained type system for input parameters
   - simple rules of inheritance and scoping
   - familiar syntax
   - all state is local
@@ -56,12 +56,12 @@ Additionally, it should have the following properties:
 
 ## Current Implementation
 
-Firtsly, `kubegen` provides a simple non-recursive system of modules, which allows you to define resource with
+Firstly, `kubegen` provides a simple non-recursive system of modules, which allows you to define resource with
 a few simple parameters once and instantiate those multiple times with different values for those parameters.
 
 For example, you can use it to describe two different environments where your app runs.
 
-The following _bundle_ instatiates the same _module_ twice. The module defintion is located in `SourceDir: module/myapp`
+The following _bundle_ instantiates the same _module_ twice. The module definition is located in `SourceDir: module/myapp`
 directory, and the generated Kubernetes resources will be written to `OutputDir: env/prod`.
 
 ```YAML
@@ -83,7 +83,7 @@ Modules:
       domain_name: testing.errors.io
 ```
 
-Additionly, `kubegen` simplifies the format of the definition format for resources within the modules.
+Additionally, `kubegen` simplifies the format of the definition format for resources within the modules.
 It keeps familiar YAML format, yet reduces nesting of certain fields to make it more intuitive to write
 a resource definition (perhaps even without having to consult docs or the one you wrote earlier).
 
@@ -131,7 +131,7 @@ of environments, e.g. development and production.
 `kubegen` is all about _generating_ files locally and checking in to a repository for use with other tools that
 take care of managing releases (e.g. [Weave Flux](https://github.com/weaveworks/flux)).
 Nothing stops you from finding other uses for it, and e.g. pipe the output to `kubectl` for testing, but it's not
-recommended to rely on every version of `kubegen` to generate output cosisten with the output of the previous version,
+recommended to rely on every version of `kubegen` to generate output cosistent with the output of the previous version,
 as it is still in active development.
 
 ### Usage
@@ -141,6 +141,12 @@ as it is still in active development.
 You can build it from source, if you wish to hack on it, otherwise you can download [binaries from Equinox][dl].
 
 [dl]: https://dl.equinox.io/errordeveloper/kubegen/latest
+
+> NOTE: If you are intending to try `kubegen` with a Kubernetes cluster before v1.9, you will need to perform API conversions manually using `kubectl` v1.9 locally.
+> This is how you can do it:
+> ```
+> kubegen module -s ./examples/modules/sockshop | ~/Code/kubernetes/bin/kubectl convert --filename - > sockshop-v1.8.yaml
+> ```
 
 #### Sub-command: `kubegen bundle`
 
@@ -242,8 +248,8 @@ This command allows you simply upgrade the binary you have downloaded to latest 
 
 There are 2 main layers in `kubegen`:
 
-- _bundle_ provides a way of instatiating one or more _modules_
-- _module_ is a collection of one or more YAML, JSON or HCL maifests
+- _bundle_ provides a way of instantiating one or more _modules_
+- _module_ is a collection of one or more YAML, JSON or HCL manifests
 
 A manifest within a module may contain the following top-level keys:
 
@@ -258,15 +264,15 @@ A manifest within a module may contain the following top-level keys:
 
 Each of those keys is expected to contains a list of objects of the same type (as denoted by the key).
 
-Variabels are scoped globaly per-module, and you can provide a varibale-only manifest, which is useful for denoting parameters that are shared by all manifests withing a module.
+Parameters are scoped globally per-module.
 
-A manifest is converted to `List` of objects defined within it and results in one file. In other words, module instance will result in as many native manifest files as there are manifests withing a module, unless parameter-only manifests are used.
+A manifest is converted to `List` of objects defined within it and results in one file. In other words, module instance will result in as many native manifest files as there are manifests within a module, unless parameter-only manifests are used.
 
 ### Resource Conversion Rules
 
 Broadly, `kubegen` flattens the most non-intuitive parts of a Kubernetes resource.
 For example, a native `Deployment` object has `spec.template.spec.containers`, for `kubegen` that simply become `containers`.
-Additionally, you shouldn't have to specify `metadata.name` along with `metadata.labels.name`, you simply set `name` along with optional `labels`, and selectors are also infered unless specified otherwise.
+Additionally, you shouldn't have to specify `metadata.name` along with `metadata.labels.name`, you simply set `name` along with optional `labels`, and selectors are also inferred unless specified otherwise.
 
 <!-- TODO more details or an example
 Additionally, there are currently some minor details in how container and service ports are specified a little differently...
