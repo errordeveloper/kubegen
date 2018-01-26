@@ -3,9 +3,11 @@ package resources
 import (
 	"encoding/json"
 	_ "fmt"
+	"strings"
 
 	"reflect"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -100,13 +102,57 @@ func (i *Group) EncodeListToPrettyJSON() ([]byte, error) {
 	return util.EncodeList(list, "application/json", true)
 }
 
+func listAppendFlattened(components *metav1.List, component runtime.RawExtension) error {
+	if component.Object != nil {
+		if strings.HasSuffix(component.Object.GetObjectKind().GroupVersionKind().Kind, "List") {
+			// must use corev1, as it panics on obj.(*metav1.List) with
+			// an amusing error message saying that *v1.List is not *v1.List
+			list := component.Object.(*corev1.List)
+			for _, item := range (*list).Items {
+				// we attempt to recurse here, but most likely
+				// we will have to try decoding component.Raw
+				if err := listAppendFlattened(components, item); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+		components.Items = append(components.Items, component)
+		return nil
+	}
+	obj, err := util.Decode(component.Raw)
+	if err != nil {
+		return err
+	}
+	return listAppendFlattened(components, runtime.RawExtension{Object: obj})
+}
+
+// this version is a little simpler, but doesn't handle very raw nested lists
+// keep it here, in case full recusion leads to problems due to decoding or whatnot
+/*
+func listAppendFlattenedSemiRecursive(components *metav1.List, component runtime.RawExtension) {
+	if component.Object != nil {
+		if strings.HasSuffix(component.Object.GetObjectKind().GroupVersionKind().Kind, "List") {
+			// must use corev1, as it panics on obj.(*metav1.List) with
+			// an amusing error message saying that *v1.List is not *v1.List
+			list := component.Object.(*corev1.List)
+			for _, item := range (*list).Items {
+				listAppendFlattenedSemiRecursive(components, item)
+			}
+			return
+		}
+	}
+	components.Items = append(components.Items, component)
+}
+*/
+
 func (i *Group) appendToList(components *metav1.List, component Convertable) error {
 	obj, err := component.ToObject(i)
 	if err != nil {
 		return err
 	}
-	components.Items = append(components.Items, runtime.RawExtension{Object: obj})
-	return nil
+
+	return listAppendFlattened(components, runtime.RawExtension{Object: obj})
 }
 
 func (i *Group) MakeList() (*metav1.List, error) {
