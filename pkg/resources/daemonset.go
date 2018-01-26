@@ -3,9 +3,10 @@ package resources
 import (
 	"fmt"
 
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
 	"github.com/ulule/deepcopier"
 )
@@ -18,7 +19,7 @@ func (i DaemonSet) ToObject(localGroup *Group) (runtime.Object, error) {
 	return runtime.Object(obj), nil
 }
 
-func (i *DaemonSet) Convert(localGroup *Group) (*v1beta1.DaemonSet, error) {
+func (i *DaemonSet) Convert(localGroup *Group) (*appsv1.DaemonSet, error) {
 	meta := i.Metadata.Convert(i.Name, localGroup)
 
 	pod, err := MakePod(meta, i.Pod)
@@ -26,7 +27,7 @@ func (i *DaemonSet) Convert(localGroup *Group) (*v1beta1.DaemonSet, error) {
 		return nil, fmt.Errorf("unable to define pod for DaemonSet  %q – %v", i.Name, err)
 	}
 
-	daemonSetSpec := v1beta1.DaemonSetSpec{
+	daemonSetSpec := appsv1.DaemonSetSpec{
 		Template: *pod,
 	}
 
@@ -38,10 +39,10 @@ func (i *DaemonSet) Convert(localGroup *Group) (*v1beta1.DaemonSet, error) {
 		daemonSetSpec.Selector = &metav1.LabelSelector{MatchLabels: i.Selector}
 	}
 
-	daemonSet := v1beta1.DaemonSet{
+	daemonSet := appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
-			APIVersion: "extensions/v1beta1",
+			APIVersion: "apps/v1",
 		},
 		ObjectMeta: meta,
 		Spec:       daemonSetSpec,

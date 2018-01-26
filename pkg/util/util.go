@@ -1,117 +1,86 @@
 package util
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/pkg/api"
-	_ "k8s.io/client-go/pkg/api/install"
-	"k8s.io/client-go/pkg/api/v1"
-	_ "k8s.io/client-go/pkg/apis/apps/install"
-	appsv1beta1 "k8s.io/client-go/pkg/apis/apps/v1beta1"
-	_ "k8s.io/client-go/pkg/apis/extensions/install"
-	extensionsv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/kubernetes/pkg/printers"
+
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ghodss/yaml"
 	"github.com/hashicorp/hcl"
 )
 
-func makeCodec(contentType string, pretty bool) (runtime.Codec, error) {
-	serializerInfo, ok := runtime.SerializerInfoForMediaType(
-		api.Codecs.SupportedMediaTypes(),
-		contentType,
-	)
-
-	if !ok {
-		return nil, fmt.Errorf("unable to create a serializer")
+func marshalToJSON(object runtime.Object) ([]byte, error) {
+	// TODO consider borrowing sorting code from pkg/kubectl/sorting_printer.go
+	jsprinter := printers.JSONPrinter{}
+	buf := &bytes.Buffer{}
+	if err := jsprinter.PrintObj(object, buf); err != nil {
+		return nil, err
 	}
-
-	serializer := serializerInfo.Serializer
-
-	if pretty && serializerInfo.PrettySerializer != nil {
-		serializer = serializerInfo.PrettySerializer
-	}
-
-	codec := api.Codecs.CodecForVersions(
-		serializer,
-		serializer,
-		schema.GroupVersions(
-			[]schema.GroupVersion{
-				v1.SchemeGroupVersion,
-				extensionsv1beta1.SchemeGroupVersion,
-				appsv1beta1.SchemeGroupVersion,
-			},
-		),
-		runtime.InternalGroupVersioner,
-	)
-
-	return codec, nil
+	return buf.Bytes(), nil
 }
-
 func Encode(object runtime.Object, contentType string, pretty bool) ([]byte, error) {
-	codec, err := makeCodec(contentType, pretty)
+	data, err := marshalToJSON(object)
 	if err != nil {
-		return nil, fmt.Errorf("kubegen/util: error creating codec for %q – %v", contentType, err)
+		return nil, err
 	}
-
-	data, err := runtime.Encode(codec, object)
-	if err != nil {
-		return nil, fmt.Errorf("kubegen/util: error encoding object to %q – %v", contentType, err)
-	}
-
 	return cleanup(contentType, data, pretty)
 }
 
-func EncodeList(list *api.List, contentType string, pretty bool) ([]byte, error) {
-	// TODO use JSON for the first pass
-	codec, err := makeCodec(contentType, pretty)
+func EncodeList(list *metav1.List, contentType string, pretty bool) ([]byte, error) {
+	data, err := marshalToJSON(list)
 	if err != nil {
-		return nil, fmt.Errorf("kubegen/util: error creating codec for %q – %v", contentType, err)
+		return nil, err
 	}
-	// XXX: uncommenting this results in the following error:
-	// json: error calling MarshalJSON for type runtime.RawExtension: invalid character 'a' looking for beginning of value
-	//if err := runtime.EncodeList(codec, list.Items); err != nil {
-	//	return nil, err
-	//}
-
-	data, err := runtime.Encode(codec, list)
-	if err != nil {
-		return nil, fmt.Errorf("kubegen/util: error encoding list to %q – %v", contentType, err)
-	}
-
 	return cleanup(contentType, data, pretty)
 }
 
-func DumpListToFiles(list *api.List, contentType string) ([]string, error) {
+func Decode(data []byte) (runtime.Object, error) {
+	obj, err := runtime.Decode(scheme.Codecs.UniversalDeserializer(), data)
+	if err != nil {
+		return nil, fmt.Errorf("kubegen/util: error decoding object– %v", err)
+	}
+
+	return obj, nil
+}
+
+func DumpListToFiles(list *metav1.List, contentType string) ([]string, error) {
 	filenames := []string{}
 	for _, item := range list.Items {
 		var (
 			name, filename, filenamefmt string
 		)
 
-		switch item.GetObjectKind().GroupVersionKind().Kind {
+		i := item.Object
+
+		switch i.GetObjectKind().GroupVersionKind().Kind {
 		case "Service":
 			filenamefmt = "%s-svc.%s"
-			name = item.(*v1.Service).ObjectMeta.Name
+			name = i.(*corev1.Service).ObjectMeta.Name
 		case "Deployment":
 			filenamefmt = "%s-dpl.%s"
-			name = item.(*extensionsv1beta1.Deployment).ObjectMeta.Name
+			name = i.(*appsv1.Deployment).ObjectMeta.Name
 		case "ReplicaSet":
 			filenamefmt = "%s-rs.%s"
-			name = item.(*extensionsv1beta1.ReplicaSet).ObjectMeta.Name
+			name = i.(*appsv1.ReplicaSet).ObjectMeta.Name
 		case "DaemonSet":
 			filenamefmt = "%s-ds.%s"
-			name = item.(*extensionsv1beta1.DaemonSet).ObjectMeta.Name
+			name = i.(*appsv1.DaemonSet).ObjectMeta.Name
 		case "StatefulSet":
 			filenamefmt = "%s-ss.%s"
-			name = item.(*appsv1beta1.StatefulSet).ObjectMeta.Name
+			name = i.(*appsv1.StatefulSet).ObjectMeta.Name
 		}
 
-		data, err := Encode(item, contentType, true)
+		data, err := Encode(i, contentType, true)
 		if err != nil {
 			return nil, err
 		}

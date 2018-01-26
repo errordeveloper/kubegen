@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+
 	"github.com/ghodss/yaml"
 )
 
@@ -68,10 +69,15 @@ func cleanupInnerSpec(item map[string]interface{}) {
 	deleteSubKeyIfValueIsEmptyMap(item, "status", "loadBalancer")
 
 	deleteSubKeyIfValueIsEmptyMap(item, "spec", "strategy")
+	deleteSubKeyIfValueIsEmptyMap(item, "spec", "updateStrategy")
 
 	if spec, ok := getMap(item, "spec"); ok {
 		if template, ok := getMap(spec, "template"); ok {
 			if spec, ok := getMap(template, "spec"); ok {
+				rangeOverNonEmptyMapsInSlice(spec, "initContainers", func(container map[string]interface{}) {
+					deleteKeyIfValueIsEmptyMap(container, "resources")
+					deleteKeyIfValueIsEmptyMap(container, "securityContext")
+				})
 				rangeOverNonEmptyMapsInSlice(spec, "containers", func(container map[string]interface{}) {
 					deleteKeyIfValueIsEmptyMap(container, "resources")
 					deleteKeyIfValueIsEmptyMap(container, "securityContext")

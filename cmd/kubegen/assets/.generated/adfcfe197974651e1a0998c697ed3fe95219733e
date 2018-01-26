@@ -146,7 +146,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -190,7 +190,7 @@ items:
         - configMap:
             name: agent-config-volume-config
           name: agent-config-volume-config
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: DaemonSet
   metadata:
     labels:
@@ -261,7 +261,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
@@ -320,7 +320,7 @@ kind: List
 
 apiVersion: v1
 items:
-- apiVersion: extensions/v1beta1
+- apiVersion: apps/v1
   kind: DaemonSet
   metadata:
     labels:

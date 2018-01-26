@@ -3,9 +3,10 @@ package resources
 import (
 	"fmt"
 
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
 	"github.com/ulule/deepcopier"
 )
@@ -18,7 +19,7 @@ func (i ReplicaSet) ToObject(localGroup *Group) (runtime.Object, error) {
 	return runtime.Object(obj), nil
 }
 
-func (i *ReplicaSet) Convert(localGroup *Group) (*v1beta1.ReplicaSet, error) {
+func (i *ReplicaSet) Convert(localGroup *Group) (*appsv1.ReplicaSet, error) {
 	meta := i.Metadata.Convert(i.Name, localGroup)
 
 	pod, err := MakePod(meta, i.Pod)
@@ -26,9 +27,9 @@ func (i *ReplicaSet) Convert(localGroup *Group) (*v1beta1.ReplicaSet, error) {
 		return nil, fmt.Errorf("unable to define pod for ReplicaSet %q – %v", i.Name, err)
 	}
 
-	replicaSetSpec := v1beta1.ReplicaSetSpec{
+	replicaSetSpec := appsv1.ReplicaSetSpec{
 		Template: *pod,
-		Replicas: &i.Replicas,
+		Replicas: i.Replicas,
 	}
 
 	deepcopier.Copy(i).To(&replicaSetSpec)
@@ -39,10 +40,10 @@ func (i *ReplicaSet) Convert(localGroup *Group) (*v1beta1.ReplicaSet, error) {
 		replicaSetSpec.Selector = &metav1.LabelSelector{MatchLabels: i.Selector}
 	}
 
-	replicaSet := v1beta1.ReplicaSet{
+	replicaSet := appsv1.ReplicaSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ReplicaSet",
-			APIVersion: "extensions/v1beta1",
+			APIVersion: "apps/v1",
 		},
 		ObjectMeta: meta,
 		Spec:       replicaSetSpec,

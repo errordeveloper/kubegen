@@ -92,7 +92,7 @@ func (c *Converter) LoadObject(data []byte, sourcePath string, instanceName stri
 }
 
 func (c *Converter) UnloadObject(obj interface{}, sourcePath string, instanceName string) error {
-	jsonData, err := json.Marshal(c.tree.self)
+	jsonData, err := c.MarshalJSON()
 	if err != nil {
 		return err
 	}

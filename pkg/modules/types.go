@@ -1,5 +1,9 @@
 package modules
 
+import (
+	"github.com/errordeveloper/kubegen/pkg/resources"
+)
+
 const (
 	ModuleKind = "kubegen.k8s.io/Module.v1alpha2"
 	BundleKind = "kubegen.k8s.io/Bundle.v1alpha2"
@@ -27,19 +31,17 @@ type ModuleInstance struct {
 type valueLookupFunc func() []byte
 
 type Module struct {
-	Kind             string               `yaml:"Kind" json:"Kind" hcl:"kind"`
-	Parameters       []ModuleParameter    `yaml:"Parameters,omitempty" json:"Parameters,omitempty" hcl:"parameter"`
-	Internals        []ModuleInternal     `yaml:"Internals,omitempty" json:"Internals,omitempty" hcl:"internals"`
-	manifests        map[string][]byte    `yaml:"-" json:"-" hcl:"-"`
-	path             string               `yaml:"-" json:"-" hcl:"-"`
-	attributes       map[string]attribute `yaml:"-" json:"-" hcl:"-"`
-	IncludeManifests []RawResource        `yaml:"Include" json:"Include" hcl:"include"`
+	Kind            string               `yaml:"Kind" json:"Kind" hcl:"kind"`
+	Parameters      []ModuleParameter    `yaml:"Parameters,omitempty" json:"Parameters,omitempty" hcl:"parameter"`
+	Internals       []ModuleInternal     `yaml:"Internals,omitempty" json:"Internals,omitempty" hcl:"internals"`
+	Resources       []AnyResource        `yaml:"Resources" json:"Resources" hcl:"Resources"`
+	manifests       map[string][]byte    `yaml:"-" json:"-" hcl:"-"`
+	path            string               `yaml:"-" json:"-" hcl:"-"`
+	attributes      map[string]attribute `yaml:"-" json:"-" hcl:"-"`
+	loadedResources []resources.AnyResource
 }
-
-// TODO conditionally laod "raw" files
-type RawResource struct {
-	Path             string `yaml:"Path" json:"Path" hcl:",key"`
-	ControlParameter string `yaml:"ControlParameter" json:"ControlParameter" hcl:"control_parameter"`
+type AnyResource struct {
+	Path string `yaml:"path" json:"path" hcl:",key"`
 }
 
 type ModuleParameter struct {

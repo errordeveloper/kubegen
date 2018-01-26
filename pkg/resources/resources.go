@@ -1,13 +1,14 @@
 package resources
 
 import (
+	"encoding/json"
 	_ "fmt"
 
 	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/pkg/api"
 
 	"github.com/errordeveloper/kubegen/pkg/util"
 )
@@ -28,9 +29,8 @@ func exclusiveNonNil(args ...interface{}) *int {
 
 	if count == 0 || count > 1 {
 		return nil
-	} else {
-		return &index
 	}
+	return &index
 }
 
 func (i *Metadata) Convert(name string, localGroup *Group) metav1.ObjectMeta {
@@ -54,6 +54,13 @@ func (i *Metadata) Convert(name string, localGroup *Group) metav1.ObjectMeta {
 	return meta
 }
 
+func (i AnyResource) ToObject(localGroup *Group) (runtime.Object, error) {
+	jsonData, err := json.Marshal(i.Object)
+	if err != nil {
+		return runtime.Object(nil), err
+	}
+	return util.Decode(jsonData)
+}
 func (i *Group) EncodeListToYAML() ([]byte, error) {
 	list, err := i.MakeList()
 	if err != nil {
@@ -93,17 +100,22 @@ func (i *Group) EncodeListToPrettyJSON() ([]byte, error) {
 	return util.EncodeList(list, "application/json", true)
 }
 
-func (i *Group) appendToList(components *api.List, component Convertable) error {
+func (i *Group) appendToList(components *metav1.List, component Convertable) error {
 	obj, err := component.ToObject(i)
 	if err != nil {
 		return err
 	}
-	components.Items = append(components.Items, obj)
+	components.Items = append(components.Items, runtime.RawExtension{Object: obj})
 	return nil
 }
 
-func (i *Group) MakeList() (*api.List, error) {
-	components := &api.List{}
+func (i *Group) MakeList() (*metav1.List, error) {
+	components := &metav1.List{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "List",
+			APIVersion: "v1",
+		},
+	}
 	for _, component := range i.Deployments {
 		if err := i.appendToList(components, component); err != nil {
 			return nil, err
@@ -130,6 +142,11 @@ func (i *Group) MakeList() (*api.List, error) {
 		}
 	}
 	for _, component := range i.Services {
+		if err := i.appendToList(components, component); err != nil {
+			return nil, err
+		}
+	}
+	for _, component := range i.AnyResources {
 		if err := i.appendToList(components, component); err != nil {
 			return nil, err
 		}

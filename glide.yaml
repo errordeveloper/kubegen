@@ -1,22 +1,27 @@
 package: "github.com/errordeveloper/kubegen"
 import:
 - package: "k8s.io/client-go"
-  version: "1679e38db83a0dbe1ef86deab577eead47ce75e2"
+  version: "v6.0.0"
   subpackages:
   - kubernetes
-  - pkg/api/unversioned
-  - pkg/api/v1
-  - pkg/apis/extensions/v1beta1
   - tools/clientcmd
 - package: "k8s.io/apimachinery"
-  version: "21807b270ec15d19215659a5caa08b17f66d6f44"
+  version: "180eddb345a5be3a157cea1c624700ad5bd27b8f"
   subpackages:
   - pkg/api/resource
   - pkg/apis/meta/v1
   - pkg/runtime
   - pkg/util/intstr
+- package: "k8s.io/kubernetes"
+  version: "v1.9.2"
+  subpackages:
+  - pkg/printers
 - package: "github.com/spf13/cobra"
+  version: "f62e98d28ab7ad31d707ba837a966378465c7b57"
+- package: "github.com/spf13/pflag"
+  version: "9ff6c6923cfffbcd502984b8e0c80539a94968b7"
 - package: "github.com/hashicorp/hcl"
+  version: "392dba7d905ed5d04a5794ba89f558b27e2ba1ca"
 - package: "github.com/docker/docker/pkg/term"
   version: "40af569"
 - package: "github.com/d4l3k/go-highlight"
@@ -27,11 +32,21 @@ import:
 - package: "github.com/ulule/deepcopier"
   version: "4a5401c"
 - package: "github.com/equinox-io/equinox"
+
+
+# must be done like this, see https://github.com/sirupsen/logrus/issues/553#issuecomment-306591437
+- package: "github.com/sirupsen/logrus"
+  version: "v1.0.4"
+- package: "github.com/Sirupsen/logrus"
+  version: "v1.0.4"
+  repo: "https://github.com/sirupsen/logrus"
+  vcs: "git"
+
+# must be set here to enforce what we need for testify and not what client-go pulls in
 - package: "github.com/davecgh/go-spew"
-  # must be set here to enforce what we need for testify
-  # and not what client-go pulls in
   version: "04cdfd42973bb9c8589fd6a731800cf222fde1a9"
   subpackages: [spew]
+
 testImports:
 - package: "github.com/errordeveloper/testcli"
 - package: "github.com/stretchr/testify"

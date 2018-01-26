@@ -3,10 +3,11 @@ package resources
 import (
 	"fmt"
 
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
 	"github.com/ulule/deepcopier"
 )
@@ -19,7 +20,7 @@ func (i Deployment) ToObject(localGroup *Group) (runtime.Object, error) {
 	return runtime.Object(obj), nil
 }
 
-func (i *Deployment) Convert(localGroup *Group) (*v1beta1.Deployment, error) {
+func (i *Deployment) Convert(localGroup *Group) (*appsv1.Deployment, error) {
 	meta := i.Metadata.Convert(i.Name, localGroup)
 
 	pod, err := MakePod(meta, i.Pod)
@@ -27,9 +28,9 @@ func (i *Deployment) Convert(localGroup *Group) (*v1beta1.Deployment, error) {
 		return nil, fmt.Errorf("unable to define pod for Deployment %q – %v", i.Name, err)
 	}
 
-	deploymentSpec := v1beta1.DeploymentSpec{
+	deploymentSpec := appsv1.DeploymentSpec{
 		Template: *pod,
-		Replicas: &i.Replicas,
+		Replicas: i.Replicas,
 	}
 
 	deepcopier.Copy(i).To(&deploymentSpec)
@@ -42,10 +43,10 @@ func (i *Deployment) Convert(localGroup *Group) (*v1beta1.Deployment, error) {
 
 	deploymentSpec.Strategy = i.Strategy.Convert()
 
-	deployment := v1beta1.Deployment{
+	deployment := appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
-			APIVersion: "extensions/v1beta1",
+			APIVersion: "apps/v1",
 		},
 		ObjectMeta: meta,
 		Spec:       deploymentSpec,
@@ -54,13 +55,13 @@ func (i *Deployment) Convert(localGroup *Group) (*v1beta1.Deployment, error) {
 	return &deployment, nil
 }
 
-func (i *DeploymentStrategy) Convert() v1beta1.DeploymentStrategy {
-	deploymentStrategy := v1beta1.DeploymentStrategy{}
+func (i *DeploymentStrategy) Convert() appsv1.DeploymentStrategy {
+	deploymentStrategy := appsv1.DeploymentStrategy{}
 
 	if i.Type != "" {
-		deploymentStrategy.Type = v1beta1.DeploymentStrategyType(i.Type)
+		deploymentStrategy.Type = appsv1.DeploymentStrategyType(i.Type)
 		if i.Type == "RollingUpdate" {
-			deploymentStrategy.RollingUpdate = &v1beta1.RollingUpdateDeployment{}
+			deploymentStrategy.RollingUpdate = &appsv1.RollingUpdateDeployment{}
 
 			if i.RollingUpdateDeployment.MaxUnavailable != "" {
 				v := intstr.FromString(i.RollingUpdateDeployment.MaxUnavailable)

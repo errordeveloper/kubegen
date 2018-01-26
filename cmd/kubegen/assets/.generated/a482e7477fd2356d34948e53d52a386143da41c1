@@ -2,7 +2,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -49,7 +49,13 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                }
+                },
+                "volumeMounts": [
+                  {
+                    "mountPath": "/tmp",
+                    "name": "tmp-volume"
+                  }
+                ]
               }
             ],
             "volumes": [
@@ -65,7 +71,7 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -95,6 +101,12 @@
                   {
                     "containerPort": 27017,
                     "name": "mongo"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "mountPath": "/tmp",
+                    "name": "tmp-volume"
                   }
                 ]
               }
@@ -135,6 +147,28 @@
           "name": "cart"
         }
       }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "labels": {
+          "name": "cart-db"
+        },
+        "name": "cart-db"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "mongo",
+            "port": 27017,
+            "targetPort": "mongo"
+          }
+        ],
+        "selector": {
+          "name": "cart-db"
+        }
+      }
     }
   ],
   "kind": "List"
@@ -143,7 +177,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -204,7 +238,7 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -303,7 +337,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -393,7 +427,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -440,7 +474,13 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                }
+                },
+                "volumeMounts": [
+                  {
+                    "mountPath": "/tmp",
+                    "name": "tmp-volume"
+                  }
+                ]
               }
             ],
             "volumes": [
@@ -456,7 +496,7 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -486,6 +526,12 @@
                   {
                     "containerPort": 27017,
                     "name": "mongo"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "mountPath": "/tmp",
+                    "name": "tmp-volume"
                   }
                 ]
               }
@@ -556,7 +602,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -645,7 +691,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -684,7 +730,7 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -792,7 +838,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -839,7 +885,13 @@
                   },
                   "initialDelaySeconds": 180,
                   "periodSeconds": 3
-                }
+                },
+                "volumeMounts": [
+                  {
+                    "mountPath": "/tmp",
+                    "name": "tmp-volume"
+                  }
+                ]
               }
             ],
             "volumes": [
@@ -886,7 +938,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -951,7 +1003,7 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -981,6 +1033,12 @@
                   {
                     "containerPort": 27017,
                     "name": "mongo"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "mountPath": "/tmp",
+                    "name": "tmp-volume"
                   }
                 ]
               }
@@ -1048,7 +1106,7 @@
   "apiVersion": "v1",
   "items": [
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -1097,7 +1155,7 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {
@@ -1136,7 +1194,7 @@
       }
     },
     {
-      "apiVersion": "extensions/v1beta1",
+      "apiVersion": "apps/v1",
       "kind": "Deployment",
       "metadata": {
         "labels": {

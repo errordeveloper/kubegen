@@ -42,7 +42,7 @@ func (i *Module) makeLookupModifier(c *macroproc.Converter, branch *macroproc.Br
 	return c.TypeCheckModifier(branch, macroproc.String, cb)
 }
 
-func loadObjWithModuleContext(group *resources.Group, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
+func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
 	mp := macroproc.New()
 
 	mp.DefineMacro(macroproc.MacroStringLookup, moduleContext.makeLookupModifier)
@@ -60,7 +60,7 @@ func loadObjWithModuleContext(group *resources.Group, data []byte, sourcePath st
 	if err := mp.Run(); err != nil {
 		return err
 	}
-	if err := mp.UnloadObject(group, sourcePath, instanceName); err != nil {
+	if err := mp.UnloadObject(obj, sourcePath, instanceName); err != nil {
 		return err
 	}
 	return nil
@@ -116,6 +116,10 @@ func (b *Bundle) LoadModules(selectNames []string) error {
 		}
 
 		if err := m.LoadAttributes(i); err != nil {
+			return err
+		}
+
+		if err := m.IncludeResouces(i); err != nil {
 			return err
 		}
 
@@ -221,6 +225,9 @@ func NewModule(dir, instanceName string) (*Module, error) {
 		manifests: make(map[string][]byte),
 	}
 	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
 		// TODO consolidate with NewResourceGroupFromFile
 		m := &Module{}
 		manifestPath := path.Join(dir, file.Name())
@@ -241,6 +248,8 @@ func NewModule(dir, instanceName string) (*Module, error) {
 		// Parameters and Internals are scoped globally, here we collect them
 		module.Parameters = append(module.Parameters, m.Parameters...)
 		module.Internals = append(module.Internals, m.Internals...)
+		// Append raw resources that will be loaded separately
+		module.Resources = append(module.Resources, m.Resources...)
 		// The module itself isn't something we can parse 100% yet, so we only store it as a string
 		module.manifests[manifestPath] = data
 	}
@@ -380,6 +389,27 @@ func (i *ModuleInternal) load(m *Module, instance ModuleInstance) error {
 	return nil
 }
 
+func (i *AnyResource) load(m *Module, instance ModuleInstance) error {
+	var obj interface{}
+	manifestPath := path.Join(m.path, i.Path)
+	data, err := ioutil.ReadFile(manifestPath)
+	if err != nil {
+		return fmt.Errorf(
+			"error reading file %q in module %q – %v",
+			i.Path, m.path, err)
+	}
+	if err := util.LoadObj(&obj, data, manifestPath, instance.Name); err != nil {
+		return err
+	}
+
+	if err := loadObjWithModuleContext(&obj, data, manifestPath, instance.Name, m); err != nil {
+		return err
+	}
+
+	m.loadedResources = append(m.loadedResources, resources.AnyResource{Object: obj})
+	return nil
+}
+
 // TODO maybe this should be a more generic thing in pkg/macroproc, e.g. macro.TypeCheck(interface{})
 func (i *attribute) typeCheck(macro *macroproc.Macro) error {
 	rt := strings.Title(macro.ReturnType.String())
@@ -428,6 +458,16 @@ func (m *Module) LoadAttributes(instance ModuleInstance) error {
 	return nil
 }
 
+func (m *Module) IncludeResouces(instance ModuleInstance) error {
+	for _, resource := range m.Resources {
+		if err := resource.load(m, instance); err != nil {
+			return err
+		}
+	}
+	// log.Printf("resources=%v", m.Resources)
+	return nil
+}
+
 func (m *Module) LoadGroups(instanceName, namespace string) (map[string]resources.Group, error) {
 	groups := make(map[string]resources.Group)
 
@@ -442,6 +482,8 @@ func (m *Module) LoadGroups(instanceName, namespace string) (map[string]resource
 		if group.Namespace == "" && namespace != "" {
 			group.Namespace = namespace
 		}
+
+		group.AnyResources = m.loadedResources
 
 		groups[manifestPath] = group
 		//log.Printf("Loaded group from %q", manifestPath)
@@ -470,6 +512,7 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 
 		info := fmt.Sprintf(
 			"\n---\n#\n# Generated from module\n#\tName: %q\n#\tSourceDir: %q\n#\tmanifestPath: %q\n#\n\n",
+			// TODO add version of kubegen and subtree hash of the module
 			instance.Name,
 			instance.SourceDir,
 			manifestPath,
