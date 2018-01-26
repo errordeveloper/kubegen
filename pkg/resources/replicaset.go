@@ -29,7 +29,7 @@ func (i *ReplicaSet) Convert(localGroup *Group) (*appsv1.ReplicaSet, error) {
 
 	replicaSetSpec := appsv1.ReplicaSetSpec{
 		Template: *pod,
-		Replicas: &i.Replicas,
+		Replicas: i.Replicas,
 	}
 
 	deepcopier.Copy(i).To(&replicaSetSpec)

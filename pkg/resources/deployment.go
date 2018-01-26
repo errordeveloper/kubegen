@@ -30,7 +30,7 @@ func (i *Deployment) Convert(localGroup *Group) (*appsv1.Deployment, error) {
 
 	deploymentSpec := appsv1.DeploymentSpec{
 		Template: *pod,
-		Replicas: &i.Replicas,
+		Replicas: i.Replicas,
 	}
 
 	deepcopier.Copy(i).To(&deploymentSpec)

@@ -52,7 +52,7 @@ type Deployment struct {
 	Name                    string `yaml:"name,omitempty" hcl:",key" deepcopier:"skip"`
 	Metadata                `yaml:",inline" hcl:",squash" deepcopier:"skip"`
 	Selector                map[string]string `yaml:"selector,omitempty" hcl:"selector" deepcopier:"skip"`
-	Replicas                int32             `yaml:"replicas,omitempty" hcl:"replicas" deepcopier:"skip"`
+	Replicas                *int32            `yaml:"replicas,omitempty" hcl:"replicas" deepcopier:"skip"`
 	Pod                     `yaml:",inline" hcl:",squash" deepcopier:"skip"`
 	Strategy                DeploymentStrategy `yaml:"strategy,omitempty" hcl:"strategy" deepcopier:"skip"`
 	MinReadySeconds         int32              `yaml:"minReadySeconds,omitempty" hcl:"min_ready_seconds"`
@@ -65,7 +65,7 @@ type ReplicaSet struct {
 	Name            string `yaml:"name" hcl:",key" deepcopier:"skip"`
 	Metadata        `yaml:",inline" hcl:",squash" deepcopier:"skip"`
 	Selector        map[string]string `yaml:"selector,omitempty" hcl:"selector" deepcopier:"skip"`
-	Replicas        int32             `yaml:"replicas,omitempty" hcl:"replicas" deepcopier:"skip"`
+	Replicas        *int32            `yaml:"replicas,omitempty" hcl:"replicas" deepcopier:"skip"`
 	Pod             `yaml:",inline" hcl:",squash" deepcopier:"skip"`
 	MinReadySeconds int32 `yaml:"minReadySeconds,omitempty" hcl:"min_ready_seconds"`
 }
@@ -81,7 +81,7 @@ type StatefulSet struct {
 	Name                 string `yaml:"name" hcl:",key" deepcopier:"skip"`
 	Metadata             `yaml:",inline" hcl:",squash" deepcopier:"skip"`
 	Selector             map[string]string `yaml:"selector,omitempty" hcl:"selector" deepcopier:"skip"`
-	Replicas             int32             `yaml:"replicas,omitempty" hcl:"replicas" deepcopier:"skip"`
+	Replicas             *int32            `yaml:"replicas,omitempty" hcl:"replicas" deepcopier:"skip"`
 	Pod                  `yaml:",inline" hcl:",squash" deepcopier:"skip"`
 	VolumeClaimTemplates []corev1.PersistentVolumeClaim `yaml:"volumeClaimTemplates,omitempty" hcl:"volume_claim" deepcopier:"skip"`
 	ServiceName          string                         `yaml:"serviceName,omitempty" hcl:"service_name"`

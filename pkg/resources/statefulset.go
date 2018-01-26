@@ -29,7 +29,7 @@ func (i *StatefulSet) Convert(localGroup *Group) (*appsv1.StatefulSet, error) {
 
 	statefulSetSpec := appsv1.StatefulSetSpec{
 		Template: *pod,
-		Replicas: &i.Replicas,
+		Replicas: i.Replicas,
 	}
 
 	deepcopier.Copy(i).To(&statefulSetSpec)
