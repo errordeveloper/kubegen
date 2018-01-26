@@ -203,7 +203,7 @@ func (i *Probe) Convert(ports []ContainerPort) (*corev1.Probe, error) {
 func (i *Volume) Convert() (*corev1.Volume, error) {
 	volume := corev1.Volume{Name: i.Name}
 
-	whichVolumeSource := exclusiveNonNil(i.HostPath, i.EmptyDir, i.Secret, i.ConfigMap)
+	whichVolumeSource := exclusiveNonNil(i.HostPath, i.EmptyDir, i.Secret, i.ConfigMap, i.PersistentVolumeClaim)
 	if whichVolumeSource != nil {
 		switch *whichVolumeSource {
 		case 0:
@@ -226,6 +226,8 @@ func (i *Volume) Convert() (*corev1.Volume, error) {
 				s.Name = i.Name
 			}
 			volume.VolumeSource.ConfigMap = &s
+		case 4:
+			volume.VolumeSource.PersistentVolumeClaim = i.PersistentVolumeClaim
 		}
 	} else {
 		return nil, fmt.Errorf("one volume source must be defined, none or too many given")

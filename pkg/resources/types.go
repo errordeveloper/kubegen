@@ -173,12 +173,14 @@ type Volume struct {
 	VolumeSource `yaml:",inline" hcl:",squash"`
 }
 
-// TODO: Figure out how to generate or import these
 type VolumeSource struct {
 	HostPath  *HostPathVolumeSource  `yaml:"hostPath,omitempty" hcl:"host_path"`
 	EmptyDir  *EmptyDirVolumeSource  `yaml:"emptyDir,omitempty" hcl:"empty_dir"`
 	Secret    *SecretVolumeSource    `yaml:"secret,omitempty" hcl:"secret"`
 	ConfigMap *ConfigMapVolumeSource `yaml:"configMap" hcl:"configmap"`
+	// TODO: It appears to work in case of the PVC, the reason other sources have duplicate type definitions
+	// is because of HCL, so we should determine how to go about it (perhaps generate HCL-tagged types)
+	PersistentVolumeClaim *corev1.PersistentVolumeClaimVolumeSource `yaml:"persistentVolumeClaim" hcl:"persistentVolumeClaim"`
 }
 
 type HostPathVolumeSource struct {
