@@ -2,7 +2,6 @@ package modules
 
 import (
 	"fmt"
-	"log"
 
 	"io/ioutil"
 	"os"
@@ -43,7 +42,7 @@ func (i *Module) makeLookupModifier(c *macroproc.Converter, branch *macroproc.Br
 	return c.TypeCheckModifier(branch, macroproc.String, cb)
 }
 
-func loadObjWithModuleContext(group *resources.Group, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
+func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, instanceName string, moduleContext *Module) error {
 	mp := macroproc.New()
 
 	mp.DefineMacro(macroproc.MacroStringLookup, moduleContext.makeLookupModifier)
@@ -61,7 +60,7 @@ func loadObjWithModuleContext(group *resources.Group, data []byte, sourcePath st
 	if err := mp.Run(); err != nil {
 		return err
 	}
-	if err := mp.UnloadObject(group, sourcePath, instanceName); err != nil {
+	if err := mp.UnloadObject(obj, sourcePath, instanceName); err != nil {
 		return err
 	}
 	return nil
@@ -402,6 +401,11 @@ func (i *AnyResource) load(m *Module, instance ModuleInstance) error {
 	if err := util.LoadObj(&obj, data, manifestPath, instance.Name); err != nil {
 		return err
 	}
+
+	if err := loadObjWithModuleContext(&obj, data, manifestPath, instance.Name, m); err != nil {
+		return err
+	}
+
 	m.loadedResources = append(m.loadedResources, resources.AnyResource{Object: obj})
 	return nil
 }
@@ -460,7 +464,7 @@ func (m *Module) IncludeResouces(instance ModuleInstance) error {
 			return err
 		}
 	}
-	log.Printf("resources=%v", m.Resources)
+	// log.Printf("resources=%v", m.Resources)
 	return nil
 }
 
