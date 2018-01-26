@@ -74,6 +74,10 @@ func cleanupInnerSpec(item map[string]interface{}) {
 	if spec, ok := getMap(item, "spec"); ok {
 		if template, ok := getMap(spec, "template"); ok {
 			if spec, ok := getMap(template, "spec"); ok {
+				rangeOverNonEmptyMapsInSlice(spec, "initContainers", func(container map[string]interface{}) {
+					deleteKeyIfValueIsEmptyMap(container, "resources")
+					deleteKeyIfValueIsEmptyMap(container, "securityContext")
+				})
 				rangeOverNonEmptyMapsInSlice(spec, "containers", func(container map[string]interface{}) {
 					deleteKeyIfValueIsEmptyMap(container, "resources")
 					deleteKeyIfValueIsEmptyMap(container, "securityContext")
