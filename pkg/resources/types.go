@@ -23,7 +23,7 @@ type Group struct {
 	StatefulSets []StatefulSet `yaml:"StatefulSet" hcl:"statefulset"`
 	ConfigMaps   []ConfigMap   `yaml:"ConfigMaps" hcl:"configmap"`
 	Secrets      []Secret      `yaml:"Secrets" hcl:"secret"`
-	AnyResources []AnyResource `yaml:"Resources" hcl:"resources"`
+	Anything     []Anything    `yaml:"Resources" hcl:"resources"`
 }
 
 type Metadata struct {
@@ -32,7 +32,7 @@ type Metadata struct {
 	Namespace   string            `yaml:"namespace,omitempty" hcl:"namespace"`
 }
 
-type AnyResource struct{ Object interface{} }
+type Anything struct{ Object interface{} }
 
 type Service struct {
 	Name                     string `yaml:"name" hcl:",key" deepcopier:"skip"`
