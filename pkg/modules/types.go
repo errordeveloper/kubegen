@@ -30,18 +30,24 @@ type ModuleInstance struct {
 
 type valueLookupFunc func() []byte
 
+type ManifestPath = string
+type AttributeKey = string
 type Module struct {
-	Kind            string               `yaml:"Kind" json:"Kind" hcl:"kind"`
-	Parameters      []ModuleParameter    `yaml:"Parameters,omitempty" json:"Parameters,omitempty" hcl:"parameter"`
-	Internals       []ModuleInternal     `yaml:"Internals,omitempty" json:"Internals,omitempty" hcl:"internals"`
-	Resources       []AnyResource        `yaml:"Resources" json:"Resources" hcl:"Resources"`
-	manifests       map[string][]byte    `yaml:"-" json:"-" hcl:"-"`
-	path            string               `yaml:"-" json:"-" hcl:"-"`
-	attributes      map[string]attribute `yaml:"-" json:"-" hcl:"-"`
-	loadedResources []resources.AnyResource
+	Kind       string            `yaml:"Kind" json:"Kind" hcl:"kind"`
+	Parameters []ModuleParameter `yaml:"Parameters,omitempty" json:"Parameters,omitempty" hcl:"parameter"`
+	Internals  []ModuleInternal  `yaml:"Internals,omitempty" json:"Internals,omitempty" hcl:"internals"`
+	Resources  []AnyResource     `yaml:"Resources" json:"Resources" hcl:"resource"`
+
+	directory  string
+	attributes map[AttributeKey]attribute
+	manifests  map[ManifestPath][]byte
+	resources  map[ManifestPath][]resources.Anything
 }
+
 type AnyResource struct {
 	Path string `yaml:"path" json:"path" hcl:",key"`
+
+	includedBy ManifestPath
 }
 
 type ModuleParameter struct {

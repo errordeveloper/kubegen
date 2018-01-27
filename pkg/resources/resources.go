@@ -56,7 +56,7 @@ func (i *Metadata) Convert(name string, localGroup *Group) metav1.ObjectMeta {
 	return meta
 }
 
-func (i AnyResource) ToObject(localGroup *Group) (runtime.Object, error) {
+func (i Anything) ToObject(localGroup *Group) (runtime.Object, error) {
 	jsonData, err := json.Marshal(i.Object)
 	if err != nil {
 		return runtime.Object(nil), err
@@ -192,7 +192,7 @@ func (i *Group) MakeList() (*metav1.List, error) {
 			return nil, err
 		}
 	}
-	for _, component := range i.AnyResources {
+	for _, component := range i.Anything {
 		if err := i.appendToList(components, component); err != nil {
 			return nil, err
 		}

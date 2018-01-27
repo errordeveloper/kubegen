@@ -221,8 +221,9 @@ func NewModule(dir, instanceName string) (*Module, error) {
 	}
 
 	module := &Module{
-		path:      dir,
-		manifests: make(map[string][]byte),
+		directory: dir,
+		manifests: make(map[ManifestPath][]byte),
+		resources: make(map[ManifestPath][]resources.Anything),
 	}
 	for _, file := range files {
 		if file.IsDir() {
@@ -249,7 +250,10 @@ func NewModule(dir, instanceName string) (*Module, error) {
 		module.Parameters = append(module.Parameters, m.Parameters...)
 		module.Internals = append(module.Internals, m.Internals...)
 		// Append raw resources that will be loaded separately
-		module.Resources = append(module.Resources, m.Resources...)
+		for _, resource := range m.Resources {
+			resource.includedBy = manifestPath
+			module.Resources = append(module.Resources, resource)
+		}
 		// The module itself isn't something we can parse 100% yet, so we only store it as a string
 		module.manifests[manifestPath] = data
 	}
@@ -391,12 +395,12 @@ func (i *ModuleInternal) load(m *Module, instance ModuleInstance) error {
 
 func (i *AnyResource) load(m *Module, instance ModuleInstance) error {
 	var obj interface{}
-	manifestPath := path.Join(m.path, i.Path)
+	manifestPath := path.Join(m.directory, i.Path)
 	data, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
 		return fmt.Errorf(
 			"error reading file %q in module %q – %v",
-			i.Path, m.path, err)
+			i.Path, m.directory, err)
 	}
 	if err := util.LoadObj(&obj, data, manifestPath, instance.Name); err != nil {
 		return err
@@ -407,7 +411,7 @@ func (i *AnyResource) load(m *Module, instance ModuleInstance) error {
 		return err
 	}
 
-	m.loadedResources = append(m.loadedResources, resources.AnyResource{Object: obj})
+	m.resources[i.includedBy] = append(m.resources[i.includedBy], resources.Anything{Object: obj})
 	return nil
 }
 
@@ -442,7 +446,7 @@ func (i *attribute) typeCheck(macro *macroproc.Macro) error {
 }
 
 func (m *Module) LoadAttributes(instance ModuleInstance) error {
-	m.attributes = make(map[string]attribute, len(m.Parameters))
+	m.attributes = make(map[AttributeKey]attribute, len(m.Parameters))
 
 	for _, parameter := range m.Parameters {
 		if err := parameter.load(m, instance); err != nil {
@@ -469,8 +473,8 @@ func (m *Module) IncludeResouces(instance ModuleInstance) error {
 	return nil
 }
 
-func (m *Module) LoadGroups(instanceName, namespace string) (map[string]resources.Group, error) {
-	groups := make(map[string]resources.Group)
+func (m *Module) LoadGroups(instanceName, namespace string) (map[ManifestPath]resources.Group, error) {
+	groups := make(map[ManifestPath]resources.Group)
 
 	for manifestPath, data := range m.manifests {
 		// TODO also do something about multiple formats here
@@ -484,7 +488,7 @@ func (m *Module) LoadGroups(instanceName, namespace string) (map[string]resource
 			group.Namespace = namespace
 		}
 
-		group.AnyResources = m.loadedResources
+		group.Anything = m.resources[manifestPath]
 
 		groups[manifestPath] = group
 		//log.Printf("Loaded group from %q", manifestPath)
@@ -494,8 +498,8 @@ func (m *Module) LoadGroups(instanceName, namespace string) (map[string]resource
 	return groups, nil
 }
 
-func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte, error) {
-	output := make(map[string][]byte)
+func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[ManifestPath][]byte, error) {
+	output := make(map[ManifestPath][]byte)
 	groups, err := m.LoadGroups(instance.Name, instance.Namespace)
 	if err != nil {
 		return nil, err
@@ -525,8 +529,8 @@ func (m *Module) EncodeGroupsToYAML(instance ModuleInstance) (map[string][]byte,
 	return output, nil
 }
 
-func (m *Module) EncodeGroupsToJSON(instance ModuleInstance) (map[string][]byte, error) {
-	output := make(map[string][]byte)
+func (m *Module) EncodeGroupsToJSON(instance ModuleInstance) (map[ManifestPath][]byte, error) {
+	output := make(map[ManifestPath][]byte)
 	groups, err := m.LoadGroups(instance.Name, instance.Namespace)
 	if err != nil {
 		return nil, err
