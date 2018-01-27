@@ -402,6 +402,7 @@ func (i *AnyResource) load(m *Module, instance ModuleInstance) error {
 		return err
 	}
 
+	// evalue macros agains context of the current module
 	if err := loadObjWithModuleContext(&obj, data, manifestPath, instance.Name, m); err != nil {
 		return err
 	}
