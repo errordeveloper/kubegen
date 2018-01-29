@@ -10,11 +10,20 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Phases are only used a logical grouping,
+// mostly there is no need as modifiers are
+// sorted by depth, and we can apply other
+// sub-sorting methods if needed, but for
+// the time being phases are convinient to
+// keep. If it becomes tedious to maintain,
+// they can be removed.
+
 const (
 	MacrosEvalPhaseA = iota
 	MacrosEvalPhaseB
 	MacrosEvalPhaseC
 	MacrosEvalPhaseD
+	MacrosEvalPhaseE
 	MacrosEvalPhases
 )
 
@@ -23,14 +32,19 @@ var macrosEvalPhases = [MacrosEvalPhases]MacrosEvalPhase{
 	MacrosEvalPhaseB,
 	MacrosEvalPhaseC,
 	MacrosEvalPhaseD,
+	MacrosEvalPhaseE,
 }
 
 var (
+	// Phase A – branching
+
 	MacroBooleanIf = &Macro{
 		ReturnType: Null,
 		EvalPhase:  MacrosEvalPhaseA,
 		VerbName:   "If",
 	}
+
+	// Phase B – lookups
 
 	MacroBooleanLookup = &Macro{
 		ReturnType: Boolean,
@@ -58,12 +72,26 @@ var (
 		VerbName:   "Lookup",
 	}
 
-	MacroStringJoin = &Macro{
-		ReturnType: String,
+	// Phase C – importers
+
+	LoadObjectJSON = &Macro{
+		ReturnType: Object,
 		EvalPhase:  MacrosEvalPhaseC,
-		VerbName:   "Join",
+		VerbName:   "LoadJSON",
+	}
+	LoadArrayJSON = &Macro{
+		ReturnType: Array,
+		EvalPhase:  MacrosEvalPhaseC,
+		VerbName:   "LoadJSON",
 	}
 
+	// Phase D – string functions
+
+	MacroStringJoin = &Macro{
+		ReturnType: String,
+		EvalPhase:  MacrosEvalPhaseD,
+		VerbName:   "Join",
+	}
 	MacroStringAsJSON = &Macro{
 		ReturnType: String,
 		EvalPhase:  MacrosEvalPhaseD,
@@ -74,24 +102,13 @@ var (
 		EvalPhase:  MacrosEvalPhaseD,
 		VerbName:   "AsYAML",
 	}
-
 	MacroStringAsBASE64 = &Macro{
 		ReturnType: String,
 		EvalPhase:  MacrosEvalPhaseD,
 		VerbName:   "AsBASE64",
 	}
 
-	LoadObjectJSON = &Macro{
-		ReturnType: Object,
-		EvalPhase:  MacrosEvalPhaseA,
-		VerbName:   "LoadJSON",
-	}
-
-	LoadArrayJSON = &Macro{
-		ReturnType: Array,
-		EvalPhase:  MacrosEvalPhaseA,
-		VerbName:   "LoadJSON",
-	}
+	// Phase E – extra unused phase
 )
 
 func (m *Macro) String() string {

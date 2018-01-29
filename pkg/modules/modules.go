@@ -16,7 +16,6 @@ import (
 
 func (i *Module) makeLookupModifier(c *macroproc.Converter, branch *macroproc.BranchLocator, _ *macroproc.Macro) (macroproc.ModifierCallback, error) {
 	cb := func(m *macroproc.Modifier, c *macroproc.Converter) error {
-
 		k := m.Branch.StringValue()
 		if k == nil {
 			return fmt.Errorf("attribute reference is not a string – %#v", m.Branch)

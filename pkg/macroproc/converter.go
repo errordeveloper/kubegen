@@ -59,6 +59,7 @@ func New() *Converter {
 			MacrosEvalPhaseB: make(map[string]*UnregisteredModifier),
 			MacrosEvalPhaseC: make(map[string]*UnregisteredModifier),
 			MacrosEvalPhaseD: make(map[string]*UnregisteredModifier),
+			MacrosEvalPhaseE: make(map[string]*UnregisteredModifier),
 		},
 		macroMatcher: newMacroMatcher(),
 		modifiers:    make(map[string]*Modifier),
@@ -266,17 +267,23 @@ func (c *Converter) get(path ...interface{}) *BranchLocator {
 	return &branch
 }
 
-// Refresh get latest value from t and recurses into parents,
-// without this nested macros don't work properly. It maybe
-// a bug to do with how NewTree(&value) is used in doIterate).
-func (b *BranchLocator) Refresh(t *Tree) error {
-	var err error
-	b.value, err = t.Get(b.path[1:]...)
+// Refresh get latest value from t and recurses into parents.
+// It is not recommended to use it, as it introduces underide
+// conflicts, e.g. any macros in an object lookup can get
+// evaluated in unpredicatable order, so some macros seen at
+// the registration stage are no longer seen when we attempt
+// to evaluate those. If we were to optimize the number of
+// times each effectively identical macro gets evaluated,
+// we could use this again, so for now we can keep this
+// method here and the notes in `*Converter.callModifiersOnce`.
+func (b *BranchLocator) Refresh(c *Converter) error {
+	v, err := c.tree.Get(b.path[1:]...)
 	if err != nil {
-		return fmt.Errorf("cannot to refresh value at %v – %v", b.path, err)
+		return fmt.Errorf("cannot refresh value at %s (b.value=%s c.tree=%s) – %v", b.PathToString(), b.value, c.tree, err)
 	}
+	b.value = v
 	if b.parent != nil {
-		return b.parent.Refresh(t)
+		return b.parent.Refresh(c)
 	}
 	return nil
 }
