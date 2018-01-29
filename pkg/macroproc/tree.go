@@ -62,11 +62,16 @@ func (t *Tree) Len() int {
 	return len(t.self.(map[string]interface{}))
 }
 
+// BytesAsJSON returns JSON-encoded representation
+func (t *Tree) BytesAsJSON() ([]byte, error) {
+	return json.Marshal(t.self)
+}
+
 // Bytes returns JSON-encoded representation
 // it is mostly used for testing, so it will
 // panic if the object cannot be encoded
 func (t *Tree) Bytes() []byte {
-	js, err := json.Marshal(t.self)
+	js, err := t.BytesAsJSON()
 	if err != nil {
 		panic(err) // this mostly for testing, so we are okay
 	}
@@ -77,6 +82,15 @@ func (t *Tree) Bytes() []byte {
 // it is mostly used for testing, so it will
 // panic if the object cannot be encoded
 func (t *Tree) String() string { return string(t.Bytes()) }
+
+// StringAsJSON returns JSON-encoded representation
+func (t *Tree) StringAsJSON() (string, error) {
+	js, err := t.BytesAsJSON()
+	if err != nil {
+		return "", err
+	}
+	return string(js), nil
+}
 
 func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
 	var vt ValueType

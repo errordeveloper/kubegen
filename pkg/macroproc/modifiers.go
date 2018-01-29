@@ -3,6 +3,7 @@ package macroproc
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -41,6 +42,9 @@ func (m *UnregisteredModifier) Register(c *Converter, branch *BranchLocator) (*M
 }
 
 func (m *Modifier) Do(c *Converter) error {
+	if err := m.Branch.Refresh(c.tree); err != nil {
+		return err
+	}
 	return m.modifierCallback(m, c)
 }
 
@@ -117,7 +121,19 @@ func (c *Converter) ifMacroDoRegister(newBranch *BranchLocator, key interface{},
 }
 
 func (c *Converter) callModifiersOnce() error {
-	for p, modifier := range c.modifiers {
+	keys := []*BranchLocator{}
+
+	for _, modifier := range c.modifiers {
+		keys = append(keys, modifier.Branch)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i].path) > len(keys[j].path)
+	})
+
+	for x := range keys {
+		p := keys[x].PathToString()
+		modifier := c.modifiers[p]
 		if err := modifier.Do(c); err != nil {
 			// TODO should put more info in the error (perhaps use github.com/pkg/errors)
 			return fmt.Errorf("callback on %s failed to modify the tree – %v", p, err)

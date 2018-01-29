@@ -53,6 +53,7 @@ func loadObjWithModuleContext(obj interface{}, data []byte, sourcePath string, i
 	mp.DefineMacro(macroproc.MacroStringJoin, macroproc.MakeModifierStringJoin)
 	mp.DefineMacro(macroproc.MacroStringAsJSON, macroproc.MakeModifierStringAsJSON)
 	mp.DefineMacro(macroproc.MacroStringAsYAML, macroproc.MakeModifierStringAsYAML)
+	mp.DefineMacro(macroproc.MacroStringAsBASE64, macroproc.MakeModifierStringAsBASE64)
 
 	if err := mp.LoadObject(data, sourcePath, instanceName); err != nil {
 		return err

@@ -1,7 +1,9 @@
 package macroproc
 
 import (
+	"encoding/base64"
 	"encoding/json"
+
 	"fmt"
 	"strings"
 
@@ -73,6 +75,12 @@ var (
 		VerbName:   "AsYAML",
 	}
 
+	MacroStringAsBASE64 = &Macro{
+		ReturnType: String,
+		EvalPhase:  MacrosEvalPhaseD,
+		VerbName:   "AsBASE64",
+	}
+
 	LoadObjectJSON = &Macro{
 		ReturnType: Object,
 		EvalPhase:  MacrosEvalPhaseA,
@@ -109,7 +117,11 @@ func MakeModifierStringJoin(c *Converter, branch *BranchLocator, _ *Macro) (Modi
 func MakeModifierStringAsYAML(_ *Converter, _ *BranchLocator, _ *Macro) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
 		o := new(interface{})
-		if err := json.Unmarshal(m.Branch.Value().Bytes(), o); err != nil {
+		js, err := m.Branch.Value().BytesAsJSON()
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(js, o); err != nil {
 			return err
 		}
 		x, err := yaml.Marshal(o)
@@ -128,7 +140,28 @@ func MakeModifierStringAsYAML(_ *Converter, _ *BranchLocator, _ *Macro) (Modifie
 
 func MakeModifierStringAsJSON(_ *Converter, _ *BranchLocator, _ *Macro) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
-		if err := c.Set(m.Branch, m.Branch.Value().String()); err != nil {
+		js, err := m.Branch.Value().StringAsJSON()
+		if err != nil {
+			return err
+		}
+		if err := c.Set(m.Branch, js); err != nil {
+			return err
+		}
+		return nil
+	}
+	return cb, nil
+}
+
+func MakeModifierStringAsBASE64(_ *Converter, _ *BranchLocator, _ *Macro) (ModifierCallback, error) {
+	cb := func(m *Modifier, c *Converter) error {
+		// if m.Branch.Kind() != String {
+		// 	return fmt.Errorf("not a string")
+		// }
+		js, err := m.Branch.Value().BytesAsJSON()
+		if err != nil {
+			return err
+		}
+		if err := c.Set(m.Branch, base64.StdEncoding.EncodeToString(js)); err != nil {
 			return err
 		}
 		return nil

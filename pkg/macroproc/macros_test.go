@@ -718,7 +718,7 @@ func TestMacroObjectToJSON(t *testing.T) {
 
 	if err := conv.Run(); err != nil {
 		t.Logf("tree=%s", conv.tree)
-		t.Fatalf("failed to convert �� %v", err)
+		t.Fatalf("failed to convert – %v", err)
 	}
 
 	assert.Equal(0, len(conv.modifiers))
@@ -752,6 +752,70 @@ func TestMacroToString(t *testing.T) {
 	}
 
 	assert.Equal("kubegen.String.FooBar", m.String())
+}
+
+func TestMacroStringToBASE64(t *testing.T) {
+	conv := New()
+
+	assert := assert.New(t)
+
+	tobj1 := []byte(`{
+			"Kind": "Some",
+			"foobarString": {
+				"kubegen.String.AsBASE64":"foo:bar"
+			},
+			"foobarQuoted1": {
+				"kubegen.String.AsBASE64": {
+					"kubegen.String.AsJSON": { "foo": "bar" }
+				}
+			},
+			"foobarQuoted2": {
+				"kubegen.String.AsBASE64": "{\"foo\":\"bar\"}"
+			},
+			"foobarDoubleQuoted1": {
+				"kubegen.String.AsBASE64": {
+					"kubegen.String.AsJSON": {
+						"kubegen.String.AsJSON": { "foo": "bar" }
+					}
+				}
+			}
+	}`)
+
+	if err := conv.LoadObject(tobj1, "tobj1.json", ""); err != nil {
+		t.Fatalf("failed to load – %v", err)
+	}
+
+	conv.DefineMacro(MacroStringAsJSON, MakeModifierStringAsJSON)
+	conv.DefineMacro(MacroStringAsBASE64, MakeModifierStringAsBASE64)
+
+	if err := conv.Run(); err != nil {
+		t.Logf("tree=%s", conv.tree)
+		t.Fatalf("failed to convert – %v", err)
+	}
+
+	{
+		v, err := conv.tree.GetString("foobarString")
+		assert.Nil(err)
+		assert.Equal("ImZvbzpiYXIi", v) // "foo:bar"
+	}
+
+	{
+		v, err := conv.tree.GetString("foobarQuoted1")
+		assert.Nil(err)
+		assert.Equal("IntcImZvb1wiOlwiYmFyXCJ9Ig==", v) // "{\"foo\":\"bar\"}"
+	}
+
+	{
+		v, err := conv.tree.GetString("foobarQuoted2")
+		assert.Nil(err)
+		assert.Equal("IntcImZvb1wiOlwiYmFyXCJ9Ig==", v) // "{\"foo\":\"bar\"}"
+	}
+
+	{
+		v, err := conv.tree.GetString("foobarDoubleQuoted1")
+		assert.Nil(err)
+		assert.Equal("Ilwie1xcXCJmb29cXFwiOlxcXCJiYXJcXFwifVwiIg==", v) // "\"{\\\"foo\\\":\\\"bar\\\"}\""%
+	}
 }
 
 func _TestMacroLoadJSON(t *testing.T) {
@@ -944,4 +1008,3 @@ func TestMacroSelect(t *testing.T) {
 // - kubegen.Object.LoadYAML
 // Also:
 // - kubegen.Array.ReadBytes
-// - kubegen.String.AsBASE64

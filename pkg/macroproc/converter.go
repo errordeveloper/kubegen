@@ -266,6 +266,21 @@ func (c *Converter) get(path ...interface{}) *BranchLocator {
 	return &branch
 }
 
+// Refresh get latest value from t and recurses into parents,
+// without this nested macros don't work properly. It maybe
+// a bug to do with how NewTree(&value) is used in doIterate).
+func (b *BranchLocator) Refresh(t *Tree) error {
+	var err error
+	b.value, err = t.Get(b.path[1:]...)
+	if err != nil {
+		return fmt.Errorf("cannot to refresh value at %v – %v", b.path, err)
+	}
+	if b.parent != nil {
+		return b.parent.Refresh(t)
+	}
+	return nil
+}
+
 func (b *BranchLocator) Kind() ValueType { return b.kind }
 
 func (b *BranchLocator) Value() *Tree { return b.value }
