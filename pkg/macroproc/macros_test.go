@@ -13,7 +13,7 @@ func TestMacroModifiersDeletion(t *testing.T) {
 
 	tobj := []byte(`{
 		"Kind": "some",
-		"kubegen.Null.Delete": { "aFoodOrder": "YES" },
+		"kubegen.Object.Delete": { "aFoodOrder": "YES" },
 		"order": {
 			"potatoe": {
 				"mash": { "count": 1 },
@@ -25,11 +25,11 @@ func TestMacroModifiersDeletion(t *testing.T) {
 					"other": [
 						{
 							"kind": "sweetAndSour",
-							"kubegen.Null.Delete": "someOfThatMayBe"
+							"kubegen.Object.Delete": "someOfThatMayBe"
 						},
 						{
 							"kind": "sourCream",
-							"kubegen.Null.Delete": "yesExtraOfThatPleaseThankYou"
+							"kubegen.Object.Delete": "yesExtraOfThatPleaseThankYou"
 						}
 					]
 				}
@@ -68,7 +68,7 @@ func TestMacroModifiersDeletion(t *testing.T) {
 		"object without modifier macros should be larger")
 
 	conv.DefineMacro(&Macro{
-		ReturnType: Null,
+		ReturnType: Object,
 		EvalPhase:  MacrosEvalPhaseA,
 		VerbName:   "Delete",
 	}, func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {

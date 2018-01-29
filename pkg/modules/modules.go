@@ -24,9 +24,8 @@ func (i *Module) makeLookupModifier(c *macroproc.Converter, branch *macroproc.Br
 		if !ok {
 			return fmt.Errorf("undeclared attribute %q", *k)
 		}
-		if err := v.typeCheck(m.Macro); err != nil {
-			return err
-		}
+		// A type check of value is not useful here, as we may lookup an object that
+		// may return new macros that result in a desired type in the end
 		if m.Macro.ReturnType == macroproc.Array || m.Macro.ReturnType == macroproc.Object {
 			if err := c.Overlay(m.Branch, v.Value); err != nil {
 				return err
@@ -412,36 +411,6 @@ func (i *AnyResource) load(m *Module, instance ModuleInstance) error {
 	}
 
 	m.resources[i.includedBy] = append(m.resources[i.includedBy], resources.Anything{Object: obj})
-	return nil
-}
-
-// TODO maybe this should be a more generic thing in pkg/macroproc, e.g. macro.TypeCheck(interface{})
-func (i *attribute) typeCheck(macro *macroproc.Macro) error {
-	rt := strings.Title(macro.ReturnType.String())
-	cannotConvertError := fmt.Errorf("cannot convert type %s to %s for %q", i.Type, rt, macro)
-	if i.Type != rt {
-		return cannotConvertError
-	}
-
-	switch macro.ReturnType {
-	case macroproc.Number:
-		switch i.Value.(type) {
-		case int:
-			break
-		case float64:
-			break
-		default:
-			return cannotConvertError
-		}
-	case macroproc.String:
-		switch i.Value.(type) {
-		case string:
-			break
-		default:
-			return cannotConvertError
-		}
-	}
-
 	return nil
 }
 

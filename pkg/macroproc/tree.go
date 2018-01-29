@@ -92,7 +92,7 @@ func (t *Tree) StringAsJSON() (string, error) {
 	return string(js), nil
 }
 
-func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
+func getValueType(v interface{}) *ValueType {
 	var vt ValueType
 	switch v.(type) {
 	case map[string]interface{}:
@@ -116,6 +116,14 @@ func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
 	case bool:
 		vt = Boolean
 	default:
+		return nil
+	}
+	return &vt
+}
+
+func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
+	vt := getValueType(v)
+	if vt == nil {
 		return nil, fmt.Errorf("unexpected value type %s [%v=%v]",
 			reflect.ValueOf(v).Kind(), k, v)
 	}
@@ -126,7 +134,26 @@ func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
 		t.next.key = k
 	}
 
-	return &vt, nil
+	return vt, nil
+}
+
+// Check the path exists and return value type
+func (t *Tree) Check(path ...interface{}) (*ValueType, error) {
+	if len(path) == 0 {
+		vt := getValueType(t.self)
+		if vt == nil {
+			return nil, fmt.Errorf("cannot determine value type for the root of the tree")
+		}
+	}
+	v, err := t.Get(path...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get path %v – %v", path, err)
+	}
+	vt := getValueType(v.self)
+	if vt == nil {
+		return nil, fmt.Errorf("cannot determine value type for %v – %v", path, err)
+	}
+	return vt, nil
 }
 
 type treeObjectIterator func(key string, value interface{}, valueType ValueType) error

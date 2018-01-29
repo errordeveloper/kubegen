@@ -42,9 +42,19 @@ func (m *UnregisteredModifier) Register(c *Converter, branch *BranchLocator) (*M
 }
 
 func (m *Modifier) Do(c *Converter) error {
-	return m.modifierCallback(m, c)
+	if err := m.modifierCallback(m, c); err != nil {
+		return err
+	}
+	failFmt := "failed to type-check new value after macro evaluation"
+	vt, err := c.tree.Check(m.Branch.path[1 : len(m.Branch.path)-1]...)
+	if err != nil {
+		return fmt.Errorf("%s – %v", failFmt, err)
+	}
+	if *vt != m.Macro.ReturnType {
+		return fmt.Errorf("%s – result is a %s, not a %s", failFmt, *vt, m.Macro.ReturnType)
+	}
+	return nil
 }
-
 func (c *Converter) DefineMacro(m *Macro, fn MakeModifier) {
 	c.macros[m.EvalPhase][m.String()] = &UnregisteredModifier{m, fn}
 	c.macroMatcher.update(m)
