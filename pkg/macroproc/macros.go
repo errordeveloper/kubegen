@@ -171,14 +171,18 @@ func MakeModifierStringAsJSON(_ *Converter, _ *BranchLocator, _ *Macro) (Modifie
 
 func MakeModifierStringAsBASE64(_ *Converter, _ *BranchLocator, _ *Macro) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
-		// if m.Branch.Kind() != String {
-		// 	return fmt.Errorf("not a string")
-		// }
-		js, err := m.Branch.Value().BytesAsJSON()
-		if err != nil {
-			return err
+		data := []byte{}
+		v := m.Branch.Value()
+		if vt, _ := v.Check(); *vt == String {
+			data = []byte(m.Branch.value.self.(string))
+		} else {
+			js, err := v.BytesAsJSON()
+			if err != nil {
+				return err
+			}
+			data = js
 		}
-		if err := c.Set(m.Branch, base64.StdEncoding.EncodeToString(js)); err != nil {
+		if err := c.Set(m.Branch, base64.StdEncoding.EncodeToString(data)); err != nil {
 			return err
 		}
 		return nil

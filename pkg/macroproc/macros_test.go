@@ -764,18 +764,25 @@ func TestMacroStringToBASE64(t *testing.T) {
 			"foobarString": {
 				"kubegen.String.AsBASE64":"foo:bar"
 			},
-			"foobarQuoted1": {
+			"foobarQuotedObject1": {
+				"kubegen.String.AsBASE64": {
+					"kubegen.String.AsJSON": "{\"foo\":\"bar\"}"
+				}
+			},
+			"foobarUnquotedObject1": {
 				"kubegen.String.AsBASE64": {
 					"kubegen.String.AsJSON": { "foo": "bar" }
 				}
 			},
-			"foobarQuoted2": {
+			"foobarUnquotedObject2": {
 				"kubegen.String.AsBASE64": "{\"foo\":\"bar\"}"
 			},
 			"foobarDoubleQuoted1": {
 				"kubegen.String.AsBASE64": {
 					"kubegen.String.AsJSON": {
-						"kubegen.String.AsJSON": { "foo": "bar" }
+						"kubegen.String.AsJSON": {
+							"kubegen.String.AsJSON": { "foo": "bar" }
+						}
 					}
 				}
 			}
@@ -796,25 +803,31 @@ func TestMacroStringToBASE64(t *testing.T) {
 	{
 		v, err := conv.tree.GetString("foobarString")
 		assert.Nil(err)
-		assert.Equal("ImZvbzpiYXIi", v) // "foo:bar"
+		assert.Equal("Zm9vOmJhcg==", v) // foo:bar
 	}
 
 	{
-		v, err := conv.tree.GetString("foobarQuoted1")
+		v, err := conv.tree.GetString("foobarQuotedObject1")
 		assert.Nil(err)
 		assert.Equal("IntcImZvb1wiOlwiYmFyXCJ9Ig==", v) // "{\"foo\":\"bar\"}"
 	}
 
 	{
-		v, err := conv.tree.GetString("foobarQuoted2")
+		v, err := conv.tree.GetString("foobarUnquotedObject1")
 		assert.Nil(err)
-		assert.Equal("IntcImZvb1wiOlwiYmFyXCJ9Ig==", v) // "{\"foo\":\"bar\"}"
+		assert.Equal("eyJmb28iOiJiYXIifQ==", v) // {"foo":"bar"}
+	}
+
+	{
+		v, err := conv.tree.GetString("foobarUnquotedObject2")
+		assert.Nil(err)
+		assert.Equal("eyJmb28iOiJiYXIifQ==", v) // {"foo":"bar"}
 	}
 
 	{
 		v, err := conv.tree.GetString("foobarDoubleQuoted1")
 		assert.Nil(err)
-		assert.Equal("Ilwie1xcXCJmb29cXFwiOlxcXCJiYXJcXFwifVwiIg==", v) // "\"{\\\"foo\\\":\\\"bar\\\"}\""%
+		assert.Equal("Ilwie1xcXCJmb29cXFwiOlxcXCJiYXJcXFwifVwiIg==", v) // "\"{\\\"foo\\\":\\\"bar\\\"}\""
 	}
 }
 
