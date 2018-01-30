@@ -1,18 +1,29 @@
 package macroproc
 
 import (
+	"encoding/base64"
 	"encoding/json"
+
 	"fmt"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Phases are only used a logical grouping,
+// mostly there is no need as modifiers are
+// sorted by depth, and we can apply other
+// sub-sorting methods if needed, but for
+// the time being phases are convinient to
+// keep. If it becomes tedious to maintain,
+// they can be removed.
+
 const (
 	MacrosEvalPhaseA = iota
 	MacrosEvalPhaseB
 	MacrosEvalPhaseC
 	MacrosEvalPhaseD
+	MacrosEvalPhaseE
 	MacrosEvalPhases
 )
 
@@ -21,14 +32,19 @@ var macrosEvalPhases = [MacrosEvalPhases]MacrosEvalPhase{
 	MacrosEvalPhaseB,
 	MacrosEvalPhaseC,
 	MacrosEvalPhaseD,
+	MacrosEvalPhaseE,
 }
 
 var (
+	// Phase A – branching
+
 	MacroBooleanIf = &Macro{
 		ReturnType: Null,
 		EvalPhase:  MacrosEvalPhaseA,
 		VerbName:   "If",
 	}
+
+	// Phase B – lookups
 
 	MacroBooleanLookup = &Macro{
 		ReturnType: Boolean,
@@ -56,12 +72,26 @@ var (
 		VerbName:   "Lookup",
 	}
 
-	MacroStringJoin = &Macro{
-		ReturnType: String,
+	// Phase C – importers
+
+	LoadObjectJSON = &Macro{
+		ReturnType: Object,
 		EvalPhase:  MacrosEvalPhaseC,
-		VerbName:   "Join",
+		VerbName:   "LoadJSON",
+	}
+	LoadArrayJSON = &Macro{
+		ReturnType: Array,
+		EvalPhase:  MacrosEvalPhaseC,
+		VerbName:   "LoadJSON",
 	}
 
+	// Phase D – string functions
+
+	MacroStringJoin = &Macro{
+		ReturnType: String,
+		EvalPhase:  MacrosEvalPhaseD,
+		VerbName:   "Join",
+	}
 	MacroStringAsJSON = &Macro{
 		ReturnType: String,
 		EvalPhase:  MacrosEvalPhaseD,
@@ -72,18 +102,13 @@ var (
 		EvalPhase:  MacrosEvalPhaseD,
 		VerbName:   "AsYAML",
 	}
-
-	LoadObjectJSON = &Macro{
-		ReturnType: Object,
-		EvalPhase:  MacrosEvalPhaseA,
-		VerbName:   "LoadJSON",
+	MacroStringAsBASE64 = &Macro{
+		ReturnType: String,
+		EvalPhase:  MacrosEvalPhaseD,
+		VerbName:   "AsBASE64",
 	}
 
-	LoadArrayJSON = &Macro{
-		ReturnType: Array,
-		EvalPhase:  MacrosEvalPhaseA,
-		VerbName:   "LoadJSON",
-	}
+	// Phase E – extra unused phase
 )
 
 func (m *Macro) String() string {
@@ -109,7 +134,11 @@ func MakeModifierStringJoin(c *Converter, branch *BranchLocator, _ *Macro) (Modi
 func MakeModifierStringAsYAML(_ *Converter, _ *BranchLocator, _ *Macro) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
 		o := new(interface{})
-		if err := json.Unmarshal(m.Branch.Value().Bytes(), o); err != nil {
+		js, err := m.Branch.Value().BytesAsJSON()
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(js, o); err != nil {
 			return err
 		}
 		x, err := yaml.Marshal(o)
@@ -128,7 +157,28 @@ func MakeModifierStringAsYAML(_ *Converter, _ *BranchLocator, _ *Macro) (Modifie
 
 func MakeModifierStringAsJSON(_ *Converter, _ *BranchLocator, _ *Macro) (ModifierCallback, error) {
 	cb := func(m *Modifier, c *Converter) error {
-		if err := c.Set(m.Branch, m.Branch.Value().String()); err != nil {
+		js, err := m.Branch.Value().StringAsJSON()
+		if err != nil {
+			return err
+		}
+		if err := c.Set(m.Branch, js); err != nil {
+			return err
+		}
+		return nil
+	}
+	return cb, nil
+}
+
+func MakeModifierStringAsBASE64(_ *Converter, _ *BranchLocator, _ *Macro) (ModifierCallback, error) {
+	cb := func(m *Modifier, c *Converter) error {
+		// if m.Branch.Kind() != String {
+		// 	return fmt.Errorf("not a string")
+		// }
+		js, err := m.Branch.Value().BytesAsJSON()
+		if err != nil {
+			return err
+		}
+		if err := c.Set(m.Branch, base64.StdEncoding.EncodeToString(js)); err != nil {
 			return err
 		}
 		return nil

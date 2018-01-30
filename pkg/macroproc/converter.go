@@ -59,6 +59,7 @@ func New() *Converter {
 			MacrosEvalPhaseB: make(map[string]*UnregisteredModifier),
 			MacrosEvalPhaseC: make(map[string]*UnregisteredModifier),
 			MacrosEvalPhaseD: make(map[string]*UnregisteredModifier),
+			MacrosEvalPhaseE: make(map[string]*UnregisteredModifier),
 		},
 		macroMatcher: newMacroMatcher(),
 		modifiers:    make(map[string]*Modifier),
@@ -264,6 +265,19 @@ func (c *Converter) get(path ...interface{}) *BranchLocator {
 		}
 	}
 	return &branch
+}
+
+// Refresh get latest value from t and recurses into parents
+func (b *BranchLocator) Refresh(c *Converter) error {
+	v, err := c.tree.Get(b.path[1:]...)
+	if err != nil {
+		return fmt.Errorf("cannot refresh value at %s (b.value=%s c.tree=%s) – %v", b.PathToString(), b.value, c.tree, err)
+	}
+	b.value = v
+	if b.parent != nil {
+		return b.parent.Refresh(c)
+	}
+	return nil
 }
 
 func (b *BranchLocator) Kind() ValueType { return b.kind }

@@ -62,11 +62,16 @@ func (t *Tree) Len() int {
 	return len(t.self.(map[string]interface{}))
 }
 
+// BytesAsJSON returns JSON-encoded representation
+func (t *Tree) BytesAsJSON() ([]byte, error) {
+	return json.Marshal(t.self)
+}
+
 // Bytes returns JSON-encoded representation
 // it is mostly used for testing, so it will
 // panic if the object cannot be encoded
 func (t *Tree) Bytes() []byte {
-	js, err := json.Marshal(t.self)
+	js, err := t.BytesAsJSON()
 	if err != nil {
 		panic(err) // this mostly for testing, so we are okay
 	}
@@ -78,7 +83,16 @@ func (t *Tree) Bytes() []byte {
 // panic if the object cannot be encoded
 func (t *Tree) String() string { return string(t.Bytes()) }
 
-func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
+// StringAsJSON returns JSON-encoded representation
+func (t *Tree) StringAsJSON() (string, error) {
+	js, err := t.BytesAsJSON()
+	if err != nil {
+		return "", err
+	}
+	return string(js), nil
+}
+
+func getValueType(v interface{}) *ValueType {
 	var vt ValueType
 	switch v.(type) {
 	case map[string]interface{}:
@@ -102,6 +116,14 @@ func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
 	case bool:
 		vt = Boolean
 	default:
+		return nil
+	}
+	return &vt
+}
+
+func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
+	vt := getValueType(v)
+	if vt == nil {
 		return nil, fmt.Errorf("unexpected value type %s [%v=%v]",
 			reflect.ValueOf(v).Kind(), k, v)
 	}
@@ -112,7 +134,26 @@ func (t *Tree) makeNext(k, v interface{}) (*ValueType, error) {
 		t.next.key = k
 	}
 
-	return &vt, nil
+	return vt, nil
+}
+
+// Check the path exists and return value type
+func (t *Tree) Check(path ...interface{}) (*ValueType, error) {
+	if len(path) == 0 {
+		vt := getValueType(t.self)
+		if vt == nil {
+			return nil, fmt.Errorf("cannot determine value type for the root of the tree")
+		}
+	}
+	v, err := t.Get(path...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get path %v – %v", path, err)
+	}
+	vt := getValueType(v.self)
+	if vt == nil {
+		return nil, fmt.Errorf("cannot determine value type for %v – %v", path, err)
+	}
+	return vt, nil
 }
 
 type treeObjectIterator func(key string, value interface{}, valueType ValueType) error

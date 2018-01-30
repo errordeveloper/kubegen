@@ -3,6 +3,7 @@ package macroproc
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -41,9 +42,30 @@ func (m *UnregisteredModifier) Register(c *Converter, branch *BranchLocator) (*M
 }
 
 func (m *Modifier) Do(c *Converter) error {
-	return m.modifierCallback(m, c)
-}
+	// As pointers are used for all sub-trees, a refresh of
+	// pointer saves from having to call the actual modifier.
+	// Besides that, it's actually essential to refresh here
+	// to avoid stale state.
+	if err := m.Branch.Refresh(c); err != nil {
+		// TODO consider adding some kind of safety net here, right now we just
+		// assume we did the right thing, but we might want to check
+		// log.Printf("skipping stale modifier on %s", m.Branch.PathToString())
+		return nil
+	}
 
+	if err := m.modifierCallback(m, c); err != nil {
+		return err
+	}
+	failFmt := "failed to type-check new value after macro evaluation"
+	vt, err := c.tree.Check(m.Branch.path[1 : len(m.Branch.path)-1]...)
+	if err != nil {
+		return fmt.Errorf("%s – %v", failFmt, err)
+	}
+	if *vt != m.Macro.ReturnType {
+		return fmt.Errorf("%s – result is a %s, not a %s", failFmt, *vt, m.Macro.ReturnType)
+	}
+	return nil
+}
 func (c *Converter) DefineMacro(m *Macro, fn MakeModifier) {
 	c.macros[m.EvalPhase][m.String()] = &UnregisteredModifier{m, fn}
 	c.macroMatcher.update(m)
@@ -117,9 +139,23 @@ func (c *Converter) ifMacroDoRegister(newBranch *BranchLocator, key interface{},
 }
 
 func (c *Converter) callModifiersOnce() error {
-	for p, modifier := range c.modifiers {
+	// Our keys need to be sorted by depth
+	keys := []*BranchLocator{}
+	for _, modifier := range c.modifiers {
+		keys = append(keys, modifier.Branch)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i].path) > len(keys[j].path)
+	})
+
+	for x := range keys {
+		p := keys[x].PathToString()
+		// log.Printf("calling %s", p)
+		modifier := c.modifiers[p]
 		if err := modifier.Do(c); err != nil {
 			// TODO should put more info in the error (perhaps use github.com/pkg/errors)
+			// as this is probably the most verbose kind of error user may see
 			return fmt.Errorf("callback on %s failed to modify the tree – %v", p, err)
 		}
 		delete(c.modifiers, p)
