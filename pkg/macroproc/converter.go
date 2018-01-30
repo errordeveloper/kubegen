@@ -267,15 +267,7 @@ func (c *Converter) get(path ...interface{}) *BranchLocator {
 	return &branch
 }
 
-// Refresh get latest value from t and recurses into parents.
-// It is not recommended to use it, as it introduces underide
-// conflicts, e.g. any macros in an object lookup can get
-// evaluated in unpredicatable order, so some macros seen at
-// the registration stage are no longer seen when we attempt
-// to evaluate those. If we were to optimize the number of
-// times each effectively identical macro gets evaluated,
-// we could use this again, so for now we can keep this
-// method here and the notes in `*Converter.callModifiersOnce`.
+// Refresh get latest value from t and recurses into parents
 func (b *BranchLocator) Refresh(c *Converter) error {
 	v, err := c.tree.Get(b.path[1:]...)
 	if err != nil {

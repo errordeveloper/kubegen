@@ -42,6 +42,17 @@ func (m *UnregisteredModifier) Register(c *Converter, branch *BranchLocator) (*M
 }
 
 func (m *Modifier) Do(c *Converter) error {
+	// As pointers are used for all sub-trees, a refresh of
+	// pointer saves from having to call the actual modifier.
+	// Besides that, it's actually essential to refresh here
+	// to avoid stale state.
+	if err := m.Branch.Refresh(c); err != nil {
+		// TODO consider adding some kind of safety net here, right now we just
+		// assume we did the right thing, but we might want to check
+		// log.Printf("skipping stale modifier on %s", m.Branch.PathToString())
+		return nil
+	}
+
 	if err := m.modifierCallback(m, c); err != nil {
 		return err
 	}
@@ -111,13 +122,6 @@ func (m *macroMatcher) isMacro(key interface{}) (string, bool) {
 }
 
 func (c *Converter) ifMacroDoRegister(newBranch *BranchLocator, key interface{}, errors chan error) {
-	switch newBranch.path[1] {
-	case "Internals":
-		return
-	case "Parameters":
-		return
-	}
-
 	m, _ := c.macroMatcher.isMacro(key)
 	// TODO using second return value makes our tests fail
 	// we still have work todo here to use regexp matcher properly
@@ -135,18 +139,7 @@ func (c *Converter) ifMacroDoRegister(newBranch *BranchLocator, key interface{},
 }
 
 func (c *Converter) callModifiersOnce() error {
-	// Our keys need to be sorted by depth, which is
-	// sufficent for each document, however it is
-	// important to understand that internals and
-	// parameters are not evaluated, as those are
-	// in global scope of a module and for reasons
-	// mentioned below, it just becomes very hard
-	// to deal with conflicting state if we attrempt
-	// to tightly couple all the moving parts, i.e.
-	// lookups, importers and string operations.
-	// Even though we use pointers to tree all over
-	// the place, some sub-tree become disjoint
-	// in the process of macro evaluation.
+	// Our keys need to be sorted by depth
 	keys := []*BranchLocator{}
 	for _, modifier := range c.modifiers {
 		keys = append(keys, modifier.Branch)
@@ -160,19 +153,9 @@ func (c *Converter) callModifiersOnce() error {
 		p := keys[x].PathToString()
 		// log.Printf("calling %s", p)
 		modifier := c.modifiers[p]
-		// It is critical that the subtrees which
-		// modifier callbacks invoked here see and
-		// operate on is not tightly coupled. When
-		// we tried to refresh the tree on each
-		// callback, we have learnt that it makes
-		// nested macros work badly with attributes
-		// where macros are evaluated in somewhat
-		// unpredictable order and what we get here
-		// maybe an updated version of the tree,
-		// and the key we have registered callbacks
-		// for is rather invalid.
 		if err := modifier.Do(c); err != nil {
 			// TODO should put more info in the error (perhaps use github.com/pkg/errors)
+			// as this is probably the most verbose kind of error user may see
 			return fmt.Errorf("callback on %s failed to modify the tree – %v", p, err)
 		}
 		delete(c.modifiers, p)
