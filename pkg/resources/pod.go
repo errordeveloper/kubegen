@@ -247,7 +247,12 @@ func MakePod(parentMeta metav1.ObjectMeta, spec Pod) (*corev1.PodTemplateSpec, e
 		Volumes:    []corev1.Volume{},
 	}
 
-	deepcopier.Copy(spec).To(&podSpec)
+	deepcopier.Copy(&spec).To(&podSpec)
+
+	// TODO investigate why deepcopier doesn't handle this as expected
+	if spec.ServiceAccountName != "" {
+		podSpec.ServiceAccountName = spec.ServiceAccountName
+	}
 
 	for n, volume := range spec.Volumes {
 		v, err := volume.Convert()
