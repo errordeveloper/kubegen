@@ -11,10 +11,10 @@ type MakeModifier func(*Converter, *BranchLocator, *Macro) (ModifierCallback, er
 type ModifierCallback func(*Modifier, *Converter) error
 
 type Macro struct {
-	ReturnType ValueType
-	EvalPhase  MacrosEvalPhase
-	VerbName   string
-	Argument   bool
+	ReturnType   ValueType
+	EvalPhase    MacrosEvalPhase
+	VerbName     string
+	ArgumentType MacroArgumentType
 }
 
 type UnregisteredModifier struct {

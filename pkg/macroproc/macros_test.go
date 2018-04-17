@@ -948,7 +948,6 @@ func TestAllAttributes(t *testing.T) {
 }
 */
 
-/*
 func TestMacroSelect(t *testing.T) {
 	conv := New()
 
@@ -960,15 +959,19 @@ func TestMacroSelect(t *testing.T) {
 
 	tobj := []byte(`{
 		"Kind": "Some",
-		"kubegen.Object.Select(.test.foo)": {
-		  "kubegen.Object.LoadJSON": "fixture1"
+		"kubegen.Object.Select": {
+			".With": [ "test", "foo" ],
+			".From": {
+		  		"kubegen.Object.LoadJSON": "fixture1"
+			}
 		}
 	}`)
 
 	conv.DefineMacro(LoadObjectJSON,
 		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			var newData []byte
-			if v, ok := tfiles[string(branch.value)]; ok {
+			k := branch.StringValue()
+			if v, ok := tfiles[*k]; ok {
 				newData = v
 			} else {
 				newData = []byte("{ }")
@@ -979,7 +982,8 @@ func TestMacroSelect(t *testing.T) {
 	conv.DefineMacro(LoadArrayJSON,
 		func(c *Converter, branch *BranchLocator, _ *Macro) (ModifierCallback, error) {
 			var newData []byte
-			if v, ok := tfiles[string(branch.value)]; ok {
+			k := branch.StringValue()
+			if v, ok := tfiles[*k]; ok {
 				newData = v
 			} else {
 				newData = []byte("[ ]")
@@ -988,10 +992,10 @@ func TestMacroSelect(t *testing.T) {
 		})
 
 	objectSelect := &Macro{
-		ReturnType: Array,
-		EvalPhase:  MacrosEvalPhaseA,
-		VerbName:   "LoadJSON",
-		Argument:   true,
+		ReturnType:   Object,
+		EvalPhase:    MacrosEvalPhaseA,
+		VerbName:     "Select",
+		ArgumentType: MacroObjectFromWith,
 	}
 
 	conv.DefineMacro(objectSelect,
@@ -1014,7 +1018,6 @@ func TestMacroSelect(t *testing.T) {
 		assert.Equal("Some", v)
 	}
 }
-*/
 
 // TODO:
 // - kubegen.String.ReadFile

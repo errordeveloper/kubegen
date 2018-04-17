@@ -24,7 +24,8 @@ type (
 	branchPath       = []interface{}
 	stringBranchPath = []string
 
-	MacrosEvalPhase = int
+	MacrosEvalPhase   = int
+	MacroArgumentType = int
 )
 
 const (

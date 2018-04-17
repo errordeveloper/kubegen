@@ -35,6 +35,13 @@ var macrosEvalPhases = [MacrosEvalPhases]MacrosEvalPhase{
 	MacrosEvalPhaseE,
 }
 
+const (
+	MacroStringArgument = iota
+	MacroArrayArgument
+	MacroObjectArgument
+	MacroObjectFromWith
+)
+
 var (
 	// Phase A – branching
 
@@ -47,65 +54,76 @@ var (
 	// Phase B – lookups
 
 	MacroBooleanLookup = &Macro{
-		ReturnType: Boolean,
-		EvalPhase:  MacrosEvalPhaseB,
-		VerbName:   "Lookup",
+		ReturnType:   Boolean,
+		EvalPhase:    MacrosEvalPhaseB,
+		VerbName:     "Lookup",
+		ArgumentType: MacroStringArgument,
 	}
 	MacroStringLookup = &Macro{
-		ReturnType: String,
-		EvalPhase:  MacrosEvalPhaseB,
-		VerbName:   "Lookup",
+		ReturnType:   String,
+		EvalPhase:    MacrosEvalPhaseB,
+		VerbName:     "Lookup",
+		ArgumentType: MacroStringArgument,
 	}
 	MacroNumberLookup = &Macro{
-		ReturnType: Number,
-		EvalPhase:  MacrosEvalPhaseB,
-		VerbName:   "Lookup",
+		ReturnType:   Number,
+		EvalPhase:    MacrosEvalPhaseB,
+		VerbName:     "Lookup",
+		ArgumentType: MacroStringArgument,
 	}
 	MacroArrayLookup = &Macro{
-		ReturnType: Array,
-		EvalPhase:  MacrosEvalPhaseB,
-		VerbName:   "Lookup",
+		ReturnType:   Array,
+		EvalPhase:    MacrosEvalPhaseB,
+		VerbName:     "Lookup",
+		ArgumentType: MacroStringArgument,
 	}
 	MacroObjectLookup = &Macro{
-		ReturnType: Object,
-		EvalPhase:  MacrosEvalPhaseB,
-		VerbName:   "Lookup",
+		ReturnType:   Object,
+		EvalPhase:    MacrosEvalPhaseB,
+		VerbName:     "Lookup",
+		ArgumentType: MacroStringArgument,
 	}
 
 	// Phase C – importers
 
 	LoadObjectJSON = &Macro{
-		ReturnType: Object,
-		EvalPhase:  MacrosEvalPhaseC,
-		VerbName:   "LoadJSON",
+		ReturnType:   Object,
+		EvalPhase:    MacrosEvalPhaseC,
+		VerbName:     "LoadJSON",
+		ArgumentType: MacroStringArgument,
 	}
 	LoadArrayJSON = &Macro{
-		ReturnType: Array,
-		EvalPhase:  MacrosEvalPhaseC,
-		VerbName:   "LoadJSON",
+		ReturnType:   Array,
+		EvalPhase:    MacrosEvalPhaseC,
+		VerbName:     "LoadJSON",
+		ArgumentType: MacroStringArgument,
 	}
 
 	// Phase D – string functions
 
 	MacroStringJoin = &Macro{
-		ReturnType: String,
-		EvalPhase:  MacrosEvalPhaseD,
-		VerbName:   "Join",
+		ReturnType:   String,
+		EvalPhase:    MacrosEvalPhaseD,
+		VerbName:     "Join",
+		ArgumentType: MacroArrayArgument,
 	}
 	MacroStringAsJSON = &Macro{
-		ReturnType: String,
-		EvalPhase:  MacrosEvalPhaseD,
-		VerbName:   "AsJSON",
+		ReturnType:   String,
+		EvalPhase:    MacrosEvalPhaseD,
+		VerbName:     "AsJSON",
+		ArgumentType: MacroObjectArgument,
 	}
 	MacroStringAsYAML = &Macro{
-		ReturnType: String,
-		EvalPhase:  MacrosEvalPhaseD,
-		VerbName:   "AsYAML",
+		ReturnType:   String,
+		EvalPhase:    MacrosEvalPhaseD,
+		VerbName:     "AsYAML",
+		ArgumentType: MacroObjectArgument,
 	}
 	MacroStringAsBASE64 = &Macro{
-		ReturnType: String,
-		EvalPhase:  MacrosEvalPhaseD,
-		VerbName:   "AsBASE64",
+		ReturnType:   String,
+		EvalPhase:    MacrosEvalPhaseD,
+		VerbName:     "AsBASE64",
+		ArgumentType: MacroStringArgument,
 	}
 
 	// Phase E – extra unused phase
