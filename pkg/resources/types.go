@@ -99,7 +99,7 @@ type Secret struct {
 	Name       string `yaml:"name" hcl:",key" deepcopier:"skip"`
 	Metadata   `yaml:",inline" hcl:",squash" deepcopier:"skip"`
 	Data       map[string][]byte `yaml:"data,omitempty" hcl:"data"`
-	StringData map[string]string `json:"stringData,omitempty" hcl:"string_data"`
+	StringData map[string]string `yaml:"stringData,omitempty" hcl:"string_data"`
 	// TODO: kubegen.String.ReadFile
 	ReadFromFiles []string          `yaml:"readFromFiles,omitempty" hcl:"data_from_files" deepcopier:"skip"`
 	Type          corev1.SecretType `yaml:"type,omitempty" hcl:"type"`
@@ -204,7 +204,7 @@ type ConfigMapVolumeSource struct {
 	LocalObjectReference `yaml:",inline" hcl:",squash"`
 	Items                []KeyToPath `yaml:"items,omitempty" hcl:"items"`
 	DefaultMode          *int32      `yaml:"defaultMode,omitempty" hcl:"default_mode"`
-	Optional             *bool       `json:"optional,omitempty" hcl:"optional"`
+	Optional             *bool       `yaml:"optional,omitempty" hcl:"optional"`
 }
 
 type LocalObjectReference struct {
