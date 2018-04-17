@@ -218,12 +218,24 @@ func (i *Volume) Convert() (*corev1.Volume, error) {
 			if s.SecretName == "" {
 				s.SecretName = i.Name
 			}
+			if i.VolumeSource.Secret.DefaultMode != nil {
+				s.DefaultMode = i.VolumeSource.Secret.DefaultMode
+			}
+			if i.VolumeSource.Secret.Optional != nil {
+				s.Optional = i.VolumeSource.Secret.Optional
+			}
 			volume.VolumeSource.Secret = &s
 		case 3:
 			s := corev1.ConfigMapVolumeSource{}
 			deepcopier.Copy(i.VolumeSource.ConfigMap).To(&s)
 			if s.Name == "" {
 				s.Name = i.Name
+			}
+			if i.VolumeSource.ConfigMap.DefaultMode != nil {
+				s.DefaultMode = i.VolumeSource.ConfigMap.DefaultMode
+			}
+			if i.VolumeSource.ConfigMap.Optional != nil {
+				s.Optional = i.VolumeSource.ConfigMap.Optional
 			}
 			volume.VolumeSource.ConfigMap = &s
 		case 4:
