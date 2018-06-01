@@ -1,0 +1,9 @@
+title: kubegen
+
+remote_theme: errordeveloper/good-clean-read
+
+#url: https://errordeveloper.github.io
+#baseurl: /kubegen/
+
+gems:
+  - jekyll-readme-index

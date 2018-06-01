@@ -1,4 +1,4 @@
-# `kubegen` – simple way to describe Kubernetes resources
+# `kubegen` – a simple way to describe Kubernetes resources
 
 Kubernetes resource definitions are too verbose, and there is no built-in framework for reusability.
 Writing good resource templates is hard, whether you are rolling your own or using Helm.
